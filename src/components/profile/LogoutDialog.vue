@@ -1,0 +1,89 @@
+<!-------- (LogoutDialog.vue) ./src/components/LogoutDialog.vue ------------>
+<script setup>
+defineEmits(['cancel', 'confirm'])
+</script>
+
+<template>
+  <div class="dialog-overlay" @click.self="$emit('cancel')">
+    <div class="dialog-card">
+      <h2 class="dialog-title">Logout</h2>
+      <p class="dialog-text">Are you sure you want to logout?</p>
+      
+      <div class="dialog-actions">
+        <button class="btn-cancel" @click="$emit('cancel')">No</button>
+        <button class="btn-confirm" @click="$emit('confirm')">Yes</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(28, 35, 37, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  padding: 20px;
+  font-family: 'Inter', -apple-system, sans-serif;
+}
+
+.dialog-card {
+  background-color: #FFFFFF;
+  border-radius: 20px;
+  padding: 32px 24px;
+  width: 100%;
+  max-width: 320px;
+  text-align: center;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+.dialog-title {
+  margin: 0 0 12px 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1A1A1A;
+}
+
+.dialog-text {
+  margin: 0 0 24px 0;
+  font-size: 14px;
+  color: #888888;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-cancel, .btn-confirm {
+  flex: 1;
+  padding: 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-cancel {
+  background-color: transparent;
+  border: 1px solid #5D8374;
+  color: #5D8374;
+}
+
+.btn-cancel:hover { background-color: #F4F8F6; }
+
+.btn-confirm {
+  background-color: #5D8374;
+  border: 1px solid #5D8374;
+  color: #FFFFFF;
+}
+
+.btn-confirm:hover { background-color: #4A6B5E; }
+</style>
