@@ -70,8 +70,8 @@ const setStored = (key, value) => {
   localStorage.setItem(STORAGE_KEY_PREFIX + key, JSON.stringify(value))
 }
 
-const currentLanguage = ref(getStored('language', null)) // null means not set yet
-const currentScreen = ref('splash') // Always start with splash on load/refresh
+const currentLanguage = ref(getStored('language', 'en')) 
+const currentScreen = ref(getStored('screen', 'splash')) 
 const theme = ref(getStored('theme', 'light'))
 
 const isGlobalLoading = ref(false)
@@ -197,6 +197,13 @@ const fetchInitialData = async () => {
 
 onMounted(() => {
   fetchInitialData()
+
+  // Auto-redirect if already logged in
+  if (userData.value.id !== 'guest') {
+    if (['splash', 'login', 'signup'].includes(currentScreen.value)) {
+      currentScreen.value = 'home'
+    }
+  }
 
   // Handle browser back/forward buttons
   window.addEventListener('popstate', (event) => {
@@ -450,10 +457,55 @@ const handleUpdateProfile = async (val) => {
   }
 }
 
+const handleProductDelete = async (productId) => {
+  isGlobalLoading.value = true;
+  loadingMessage.value = 'Removing heritage item...';
+  try {
+    // 1. Delete from favorites first (foreign key constraint might be there, but good practice anyway)
+    await db.execute({
+      sql: "DELETE FROM favorites WHERE product_id = ?",
+      args: [productId]
+    })
+    
+    // 2. Delete the product
+    await db.execute({
+      sql: "DELETE FROM products WHERE id = ? AND owner_id = ?",
+      args: [productId, userData.value.id]
+    })
+
+    window.alert('Item removed successfully.')
+    await fetchInitialData()
+    navigateTo('home')
+  } catch (e) {
+    console.error('Delete product error:', e)
+    window.alert('Error deleting item. Please try again.')
+  } finally {
+    isGlobalLoading.value = false;
+  }
+}
+
 const handleLogout = () => {
-  userData.value = { id: 'guest', username: 'johnabram', firstName: 'John', lastName: 'Abram', email: 'johnabram@gmail.com', whatsapp: '+255700000000', avatar: 'https://i.pravatar.cc/150?u=johnabram', userType: 'buyer', needs: '', gives: '', theme: 'light' };
-  theme.value = 'light';
-  localStorage.clear();
+  // Reset user data to guest but keep personal preferences like theme/language in storage if desired
+  // Here we just reset the reactive state and update localStorage selectively
+  userData.value = { 
+    id: 'guest', 
+    username: 'johnabram', 
+    firstName: 'John', 
+    lastName: 'Abram', 
+    email: 'johnabram@gmail.com', 
+    whatsapp: '+255700000000', 
+    avatar: 'https://i.pravatar.cc/150?u=johnabram', 
+    userType: 'buyer', 
+    needs: '', 
+    gives: '', 
+    theme: 'light' 
+  };
+  
+  // We don't call localStorage.clear() anymore to preserve language and theme settings
+  setStored('user_data', userData.value);
+  setStored('screen', 'login');
+  setStored('favorites', []);
+  
   navigateTo('login');
 }
 
@@ -512,7 +564,7 @@ const handleSearch = (query) => {
     <Splash v-if="currentScreen === 'splash'" 
       :language="currentLanguage"
       @select-language="(lang) => currentLanguage = lang"
-      @loaded="navigateTo('login')" 
+      @loaded="userData.id !== 'guest' ? navigateTo('home') : navigateTo('login')" 
     />
 
     <!-- AUTHENTICATION FLOW -->

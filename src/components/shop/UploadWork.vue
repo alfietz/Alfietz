@@ -1,6 +1,6 @@
 <!-------- (UploadWork.vue) ./src/components/shop/UploadWork.vue ------------>
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 
 const props = defineProps({
   categories: {
@@ -12,6 +12,7 @@ const props = defineProps({
 const emit = defineEmits(['go-back', 'upload'])
 
 const IMGBB_API_KEY = '789903544b6554a772331b1ffe6e4cc4'
+const STORAGE_KEY = 'alfie_draft_upload'
 
 const productData = ref({
   name: '',
@@ -22,6 +23,21 @@ const productData = ref({
   colors: [],
   image: 'https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?q=80&w=800'
 })
+
+onMounted(() => {
+  const saved = localStorage.getItem(STORAGE_KEY)
+  if (saved) {
+    try {
+      productData.value = JSON.parse(saved)
+    } catch (e) {
+      console.error('Failed to load draft:', e)
+    }
+  }
+})
+
+watch(productData, (val) => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(val))
+}, { deep: true })
 
 const colorInput = ref('#5D8374')
 const errorMessage = ref('')
@@ -121,6 +137,9 @@ ${productData.value.description}
     price: `TSh ${Number(productData.value.price).toLocaleString()}`,
     description: enrichedDescription
   }
+  
+  // Clear draft on success
+  localStorage.removeItem(STORAGE_KEY)
   emit('upload', formattedData)
 }
 </script>

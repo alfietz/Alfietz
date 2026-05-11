@@ -11,6 +11,10 @@ const props = defineProps({
   t: {
     type: Function,
     required: true
+  },
+  currentUserId: {
+    type: String,
+    required: true
   }
 })
 
@@ -19,6 +23,10 @@ const reviews = ref([])
 const loading = ref(true)
 const error = ref(null)
 const parsedColors = ref([])
+
+const isOwner = computed(() => {
+  return product.value && product.value.owner_id === props.currentUserId
+})
 
 onMounted(async () => {
   try {
@@ -127,7 +135,13 @@ const connectToWhatsApp = () => {
   hasConnected.value = true
 }
 
-defineEmits(['go-back', 'go-reviews', 'go-feedback', 'toggle-favorite'])
+const emit = defineEmits(['go-back', 'go-reviews', 'go-feedback', 'toggle-favorite', 'delete'])
+
+const handleDelete = () => {
+  if (confirm('Are you sure you want to delete this heritage item? This action cannot be undone.')) {
+    emit('delete', product.value.id)
+  }
+}
 </script>
 
 <template>
@@ -149,10 +163,15 @@ defineEmits(['go-back', 'go-reviews', 'go-feedback', 'toggle-favorite'])
         <button class="icon-btn back-btn" @click="$emit('go-back')">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
         </button>
-        <button class="icon-btn fav-btn" @click="$emit('toggle-favorite', product)">
-          <svg v-if="product.liked" width="20" height="20" viewBox="0 0 24 24" fill="#333" stroke="#333" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
-          <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
-        </button>
+        <div class="action-btns">
+          <button v-if="isOwner" class="icon-btn delete-btn" @click="handleDelete">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C62828" stroke-width="2"><path d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
+          <button class="icon-btn fav-btn" @click="$emit('toggle-favorite', product)">
+            <svg v-if="product.liked" width="20" height="20" viewBox="0 0 24 24" fill="#333" stroke="#333" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+            <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+          </button>
+        </div>
       </div>
       <img :src="product.image" :alt="product.name" class="main-image" />
     </div>
@@ -276,6 +295,11 @@ defineEmits(['go-back', 'go-reviews', 'go-feedback', 'toggle-favorite'])
   justify-content: space-between;
 }
 
+.action-btns {
+  display: flex;
+  gap: 12px;
+}
+
 .icon-btn {
   width: 44px;
   height: 44px;
@@ -286,6 +310,14 @@ defineEmits(['go-back', 'go-reviews', 'go-feedback', 'toggle-favorite'])
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.delete-btn {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.delete-btn:hover {
+  background: #FFEBEE;
 }
 
 .main-image {
@@ -471,5 +503,4 @@ button:not(.icon-btn):hover {
   transform: translateY(-1px);
   box-shadow: 0 8px 25px rgba(0,0,0,0.15);
 }
-  </style>
-
+</style>

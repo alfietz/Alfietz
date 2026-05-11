@@ -1,6 +1,6 @@
 <!-------- (Login.vue) ./src/components/Login.vue ------------>
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 
 const props = defineProps({
   t: {
@@ -9,10 +9,21 @@ const props = defineProps({
   }
 })
 
+const STORAGE_KEY = 'alfie_login_email'
+
 const showPassword = ref(false)
 const email = ref('')
 const password = ref('')
 const errorMessage = ref('')
+
+onMounted(() => {
+  const savedEmail = localStorage.getItem(STORAGE_KEY)
+  if (savedEmail) email.value = savedEmail
+})
+
+watch(email, (val) => {
+  localStorage.setItem(STORAGE_KEY, val)
+})
 
 const emit = defineEmits(['go-back', 'go-signup', 'go-forgot', 'login'])
 

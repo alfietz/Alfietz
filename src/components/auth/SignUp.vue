@@ -1,6 +1,6 @@
 <!-------- (SignUp.vue) ./src/components/SignUp.vue ------------>
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 
 const props = defineProps({
   t: {
@@ -8,6 +8,8 @@ const props = defineProps({
     required: true
   }
 })
+
+const STORAGE_KEY = 'alfie_signup_draft'
 
 const showPassword = ref(false)
 const firstName = ref('')
@@ -18,6 +20,34 @@ const whatsapp = ref('')
 const password = ref('')
 const userType = ref('buyer')
 const errorMessage = ref('')
+
+onMounted(() => {
+  const saved = localStorage.getItem(STORAGE_KEY)
+  if (saved) {
+    try {
+      const data = JSON.parse(saved)
+      firstName.value = data.firstName || ''
+      lastName.value = data.lastName || ''
+      username.value = data.username || ''
+      email.value = data.email || ''
+      whatsapp.value = data.whatsapp || ''
+      userType.value = data.userType || 'buyer'
+    } catch (e) {
+      console.error('Failed to load signup draft:', e)
+    }
+  }
+})
+
+watch([firstName, lastName, username, email, whatsapp, userType], () => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    firstName: firstName.value,
+    lastName: lastName.value,
+    username: username.value,
+    email: email.value,
+    whatsapp: whatsapp.value,
+    userType: userType.value
+  }))
+})
 
 const emit = defineEmits(['go-back', 'go-login', 'signup'])
 
@@ -41,6 +71,9 @@ const validateForm = () => {
 
 const handleSignUp = () => {
   if (!validateForm()) return
+
+  // Clear draft on success
+  localStorage.removeItem(STORAGE_KEY)
 
   emit('signup', {
     firstName: firstName.value,
