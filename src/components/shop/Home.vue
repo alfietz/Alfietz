@@ -579,6 +579,18 @@ watch(searchQuery, (newVal) => {
   display: none;
 }
 
+.scroll-container :deep(.product-card) {
+  width: 280px;
+  flex-shrink: 0;
+  scroll-snap-align: start;
+}
+
+@media (min-width: 768px) {
+  .scroll-container :deep(.product-card) {
+    width: 340px;
+  }
+}
+
 .category-card {
   width: 140px; /* Slightly wider for better text fit */
   padding: 16px;
