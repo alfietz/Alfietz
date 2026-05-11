@@ -62,12 +62,16 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="auth-page">
-    <div class="header-row">
+  <div class="auth-page pattern-heritage animate-fade">
+    <div class="top-nav">
       <button class="back-btn" @click="$emit('go-back')">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
       </button>
-      <h1 class="title">Verify code</h1>
+    </div>
+
+    <div class="welcome-text">
+      <h1 class="tribe-title">Verify</h1>
+      <h2 class="tribe-highlight">Code</h2>
     </div>
     
     <p class="subtitle">
@@ -76,7 +80,6 @@ onMounted(() => {
     </p>
     
     <div class="form-container">
-      <!-- Unique PinCode wrapper from design -->
       <div class="pin-group-wrapper">
         <label class="pin-group-label">PinCode</label>
         <div class="pin-inputs" @paste="onPaste">
@@ -108,53 +111,126 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.auth-page { padding: 24px 20px; font-family: 'Inter', sans-serif; background: var(--bg-white); min-height: 100vh; margin: 0 auto; }
-.header-row { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
-.title { font-size: 22px; font-weight: 600; color: var(--secondary-brown); margin: 0; }
-.subtitle { color: var(--text-muted); font-size: 14px; line-height: 1.5; margin-bottom: 32px; }
-.email-highlight { color: #5D8374; font-weight: 500; }
-.form-container { display: flex; flex-direction: column; gap: 24px; }
+.auth-page {
+  padding: 40px 24px;
+  max-width: 500px;
+  margin: 0 auto;
+  position: relative;
+  overflow-x: hidden;
+}
 
-/* Special PinCode Border logic */
+.top-nav {
+  margin-bottom: 40px;
+}
+
+.welcome-text {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.tribe-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  margin-bottom: 8px;
+}
+
+.tribe-highlight {
+  font-size: 48px;
+  font-weight: 800;
+  background: linear-gradient(to right, var(--text-primary), var(--accent-amber));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: 1px;
+}
+
+.subtitle {
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1.6;
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.email-highlight {
+  color: var(--accent-amber);
+  font-weight: 700;
+}
+
 .pin-group-wrapper {
   position: relative;
-  border: 1px solid #E48F6D; /* Orange border from design */
-  border-radius: 8px;
-  padding: 24px 16px 16px 16px;
+  border: 2px solid var(--accent-amber);
+  border-radius: var(--radius-md);
+  padding: 32px 16px 20px 16px;
   margin-top: 10px;
+  background: var(--input-bg);
+  box-shadow: 0 4px 15px var(--accent-glow);
 }
+
 .pin-group-label {
   position: absolute;
   top: -12px;
-  left: -1px;
-  background: #E48F6D; /* Orange badge */
+  left: 20px;
+  background: var(--accent-amber);
   color: white;
-  padding: 4px 8px;
+  padding: 4px 12px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
   border-radius: 4px;
 }
+
 .pin-inputs {
   display: flex;
   justify-content: space-between;
   gap: 12px;
 }
+
 .pin-box {
   width: 100%;
   aspect-ratio: 1;
   max-width: 60px;
-  border: 1px solid #E5E5E5;
-  border-radius: 12px;
+  border: 2px solid var(--input-border);
+  border-radius: var(--radius-sm);
+  background: var(--wood-walnut);
   text-align: center;
   font-size: 24px;
-  font-weight: 600;
-  color: #333;
+  font-weight: 800;
+  color: var(--text-primary);
   outline: none;
+  transition: all 0.3s ease;
 }
-.pin-box:focus { border-color: #5D8374; }
 
-.error-message { color: #E53935; font-size: 13px; font-weight: 500; text-align: center; margin-top: -8px; }
-.resend-text { text-align: center; font-size: 13px; color: #666; margin-top: -8px; }
-.resend-text .link { color: #5D8374; text-decoration: none; font-weight: 500; }
-.primary-btn { background: #5D8374; color: white; border: none; border-radius: 12px; padding: 16px; font-size: 16px; font-weight: 600; cursor: pointer; }
+.pin-box:focus {
+  border-color: var(--accent-amber);
+  box-shadow: 0 0 10px var(--accent-glow);
+  transform: translateY(-2px);
+}
+
+.error-message {
+  color: #EF4444;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.resend-text {
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.resend-text .link {
+  color: var(--accent-amber);
+  text-decoration: none;
+  font-weight: 700;
+  margin-left: 4px;
+}
+
+.resend-text .link:hover {
+  text-decoration: underline;
+}
 </style>

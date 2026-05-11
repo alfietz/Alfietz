@@ -16,23 +16,20 @@ defineEmits(['navigate'])
 
 <template>
   <nav class="bottom-nav">
-    <div class="nav-item" :class="{ active: activeTab === 'home' }" @click="$emit('navigate', 'home')">
-      <span class="nav-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" :stroke="activeTab === 'home' ? 'var(--primary-green)' : 'var(--text-muted)'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-      </span>
-      <span>{{ t('home') }}</span>
-    </div>
-    <div class="nav-item" :class="{ active: activeTab === 'favorites' }" @click="$emit('navigate', 'favorites')">
-      <span class="nav-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" :stroke="activeTab === 'favorites' ? 'var(--primary-green)' : 'var(--text-muted)'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
-      </span>
-      <span>{{ t('favorites') }}</span>
-    </div>
-    <div class="nav-item" :class="{ active: activeTab === 'profile' }" @click="$emit('navigate', 'profile')">
-      <span class="nav-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" :stroke="activeTab === 'profile' ? 'var(--primary-green)' : 'var(--text-muted)'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-      </span>
-      <span>{{ t('profile') }}</span>
+    <div 
+      v-for="item in ['home', 'favorites', 'profile']"
+      :key="item"
+      class="nav-item" 
+      :class="{ active: activeTab === item }" 
+      @click="$emit('navigate', item)"
+    >
+      <div class="icon-container">
+        <svg v-if="item === 'home'" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <svg v-else-if="item === 'favorites'" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+        <svg v-else-if="item === 'profile'" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <div v-if="activeTab === item" class="active-dot"></div>
+      </div>
+      <span class="nav-label">{{ t(item) }}</span>
     </div>
   </nav>
 </template>
@@ -45,12 +42,14 @@ defineEmits(['navigate'])
   transform: translateX(-50%);
   width: 100%;
   max-width: 1440px;
-  background: white;
+  background-color: var(--glass-bg);
+  backdrop-filter: blur(25px);
   display: flex;
   justify-content: space-around;
-  padding: 16px 20px 24px 20px;
-  border-top: 1px solid var(--border-light);
-  z-index: 100;
+  padding: 12px 10px 32px 10px; /* Extra bottom padding for modern mobile home indicators */
+  border-top: 1px solid var(--glass-border);
+  z-index: 1000;
+  box-shadow: 0 -10px 25px rgba(0,0,0,0.5);
 }
 
 @media (min-width: 768px) {
@@ -58,23 +57,55 @@ defineEmits(['navigate'])
     display: none;
   }
 }
+
 .nav-item {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   color: var(--text-muted);
-  font-size: 12px;
   cursor: pointer;
-  gap: 4px;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
 }
-.nav-item.active {
-  color: var(--primary-green);
-  font-weight: 600;
-}
-.nav-icon { 
+
+.icon-container {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin-bottom: 4px;
+}
+
+.nav-item.active {
+  color: var(--text-amber);
+  transform: translateY(-4px);
+}
+
+.nav-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.8;
+}
+
+.nav-item.active .nav-label {
+  opacity: 1;
+}
+
+.active-dot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 6px;
+  height: 6px;
+  background-color: var(--accent-amber);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--accent-glow);
 }
 </style>

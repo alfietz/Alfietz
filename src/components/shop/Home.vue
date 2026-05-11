@@ -26,24 +26,74 @@ const handleSearch = () => {
 
 <template>
   <div class="home-container">
-    <!-- Search Bar -->
+    <!-- Search Bar (Ancestral Tech Style) -->
     <div class="search-container">
-      <div class="search-bar">
+      <div class="search-wrapper group">
         <span class="search-icon" @click="handleSearch">🔍</span>
         <input 
           type="text" 
           v-model="searchQuery" 
-          placeholder="Search for trends..." 
+          placeholder="Search for cultural trends, fabrics, or artifacts..." 
           class="search-input" 
           @keyup.enter="handleSearch"
         />
+        <!-- Futuristic scanner line effect on focus -->
+        <div class="scanner-line-effect"></div>
       </div>
     </div>
 
-    <!-- Greetings / Hero Banner -->
-    <section class="hero-banner">
-      <p class="hero-subtext">Celebrating African Craftsmanship</p>
-      <button class="order-btn" @click="$emit('go-explore', 'Explore more')">Discover Heritage</button>
+    <!-- HERO SECTION (Glassmorphic & Heritage Coded) -->
+    <section class="hero-section">
+      <div class="hero-fingerprint">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.5">
+          <path d="M12 10c0-1.1.9-2 2-2s2 .9 2 2-2 3-2 3m0-3c0-3.3-2.7-6-6-6s-6 2.7-6 6c0 1.1.3 2.1.8 3M12 22v-3m0-4c2.2 0 4-1.8 4-4s-1.8-4-4-4-4 1.8-4 4 1.8 4 4 4zm0 8c-3.3 0-6-2.7-6-6v-1m0 0c0-1.1.9-2 2-2s2 .9 2 2-2 3-2 3"/>
+        </svg>
+      </div>
+      <div class="hero-content">
+        <h1 class="hero-title">Celebrating African Craftsmanship</h1>
+        <p class="hero-description">Where ancestral weaving techniques meet precision futuristic cuts. Discover heritage coded for the modern era.</p>
+        <button class="hero-cta-btn" @click="$emit('go-explore', 'Explore more')">
+          DISCOVER HERITAGE
+          <span class="btn-arrow">→</span>
+        </button>
+      </div>
+      
+      <!-- Abstract decorative element representing wood rings + digital signals -->
+      <div class="hero-visual">
+        <div class="ring ring-1"></div>
+        <div class="ring ring-2"></div>
+        <div class="ring ring-3"></div>
+        <div class="hexagon-inner">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+            <path d="M12 2l8.66 5v10L12 22l-8.66-5V7L12 2z"/>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- Featured Collections (Sleek Modules) -->
+    <section class="section">
+      <div class="section-header-row">
+        <h2 class="tech-section-title">Heritage Collections</h2>
+      </div>
+      <div class="scroll-container collections-grid">
+        <div class="collection-module kente group" @click="$emit('go-explore', 'Kente Royal')">
+          <div class="module-tech-overlay"></div>
+          <div class="module-content">
+            <span class="module-tag">FEATURED</span>
+            <h3 class="module-title">The Royal Kente</h3>
+            <p class="module-subtitle">Hand-loomed majesty for the modern era.</p>
+          </div>
+        </div>
+        <div class="collection-module ankara group" @click="$emit('go-explore', 'Ankara Essence')">
+          <div class="module-tech-overlay"></div>
+          <div class="module-content">
+            <span class="module-tag">NEW DROP</span>
+            <h3 class="module-title">Urban Ankara Essence</h3>
+            <p class="module-subtitle">Bold prints engineered for the city.</p>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- Categories Section -->
@@ -106,97 +156,391 @@ const handleSearch = () => {
         />
       </div>
     </section>
+
+    <!-- Future Heritage / Teaser Section (Wooden Vibes) -->
+    <section class="section future-heritage">
+      <div class="wood-banner">
+        <div class="wood-content">
+          <span class="teaser-label">Something Beautiful is Coming</span>
+          <h2 class="teaser-title">Whispers of the Savannah</h2>
+          <p class="teaser-text">
+            We are weaving new stories into our heritage. Soon, discover exclusive handmade leathercraft and AR try-ons that bring the tribe to your doorstep.
+          </p>
+          <div class="countdown-teaser">
+            <span>Coming Early June 2026</span>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
 </template>
 
 <style scoped>
 .home-container {
-  padding: 20px 20px 100px 20px;
+  padding: 24px 24px 120px 24px;
 }
 
-/* Header */
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-}
-
-.logo-container.home-logo {
-  width: 56px;
-  height: 56px;
-  margin-bottom: 0;
-  margin-left: 0;
-  padding: 8px;
-  cursor: pointer;
-}
-
-.header-icons {
-  display: flex;
-  gap: 12px;
-}
-
-/* Search Bar */
+/* Search Bar (Ancestral Tech) */
 .search-container {
-  margin-bottom: 32px;
+  margin-bottom: 40px;
 }
 
-.search-bar {
+.search-wrapper {
+  position: relative;
   display: flex;
   align-items: center;
-  background-color: var(--primary-tan);
-  border-radius: var(--radius-md);
-  padding: 12px 16px;
+  background: var(--input-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 16px 20px;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+  transition: all 0.3s ease;
+}
+
+.search-wrapper:focus-within {
+  border-color: var(--accent-amber);
+  box-shadow: 0 0 15px var(--accent-glow);
 }
 
 .search-icon {
-  margin-right: 12px;
-  opacity: 0.6;
-  cursor: pointer;
+  margin-right: 14px;
+  opacity: 0.5;
+  font-size: 18px;
 }
 
 .search-input {
   background: transparent;
   border: none;
   width: 100%;
-  font-size: 16px;
-  color: var(--secondary-brown);
+  font-size: 15px;
+  color: var(--text-primary);
   outline: none;
 }
 
-.hero-banner {
-  text-align: center;
-  margin-bottom: 40px;
-  padding: 32px 24px;
-  background: var(--secondary-brown);
-  border-radius: var(--radius-lg);
+.search-input::placeholder {
+  color: var(--input-placeholder);
+}
+
+.scanner-line-effect {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 1px;
+  background-color: var(--accent-amber);
+  transition: width 0.5s ease-out;
+  opacity: 0.6;
+}
+
+.search-wrapper:focus-within .scanner-line-effect {
+  width: 100%;
+}
+
+/* HERO SECTION (Ancestral Tech) */
+.hero-section {
+  position: relative;
+  background: linear-gradient(135deg, #1A110A 0%, #2A1810 100%);
+  border: 1px solid var(--glass-border);
+  border-radius: 32px;
+  padding: 40px;
+  overflow: hidden;
+  margin-bottom: 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+}
+
+@media (min-width: 768px) {
+  .hero-section {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 64px;
+  }
+}
+
+.hero-fingerprint {
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 240px;
+  height: 240px;
+  color: var(--accent-amber);
+  opacity: 0.08;
+  pointer-events: none;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 480px;
+}
+
+.hero-title {
+  font-size: 32px;
+  line-height: 1.1;
+  font-weight: 800;
+  margin-bottom: 20px;
+  background: linear-gradient(to right, #FFFBEB, var(--accent-amber));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+@media (min-width: 768px) {
+  .hero-title {
+    font-size: 48px;
+  }
+}
+
+.hero-description {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  margin-bottom: 32px;
+}
+
+.hero-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 32px;
+  background: linear-gradient(135deg, var(--accent-amber), #92400E);
   color: white;
-  box-shadow: var(--shadow-md);
-}
-
-.hero-subtext {
-  color: var(--primary-tan);
-  font-size: 18px;
-  font-weight: 500;
-  margin: 0 0 20px 0;
-  letter-spacing: 0.5px;
-}
-
-.order-btn {
-  background: var(--accent-gold);
-  color: var(--secondary-brown);
   border: none;
-  padding: 12px 32px;
-  border-radius: 30px;
+  border-radius: 16px;
   font-weight: 700;
-  font-size: 15px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 10px 20px rgba(217,119,6,0.2);
+}
+
+.hero-cta-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 30px rgba(217,119,6,0.4);
+}
+
+.btn-arrow {
+  font-size: 20px;
+  transition: transform 0.3s ease;
+}
+
+.hero-cta-btn:hover .btn-arrow {
+  transform: translateX(4px);
+}
+
+.hero-visual {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ring {
+  position: absolute;
+  border: 1px solid rgba(217,119,6,0.2);
+  border-radius: 50%;
+}
+
+.ring-1 { width: 100%; height: 100%; animation: spin-slow 20s linear infinite; }
+.ring-2 { width: 80%; height: 80%; animation: spin-slow 15s linear infinite reverse; opacity: 0.6; }
+.ring-3 { width: 60%; height: 60%; animation: spin-slow 25s linear infinite; opacity: 0.4; }
+
+.hexagon-inner {
+  width: 64px;
+  height: 64px;
+  color: var(--accent-amber);
+  opacity: 0.8;
+}
+
+/* Collections Modules */
+.tech-section-title {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.tech-section-title::before {
+  content: "";
+  width: 4px;
+  height: 24px;
+  background: var(--accent-amber);
+  border-radius: 2px;
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+
+.collections-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 24px;
+}
+
+@media (min-width: 768px) {
+  .collections-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.collection-module {
+  position: relative;
+  height: 220px;
+  border-radius: 24px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.05);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.collection-module:hover {
+  border-color: rgba(217,119,6,0.4);
+}
+
+.collection-module.kente {
+  background: linear-gradient(135deg, #8B5A2B 0%, #3E2723 100%);
+}
+
+.collection-module.ankara {
+  background: linear-gradient(135deg, #4A3021 0%, #1A110A 100%);
+}
+
+.module-tech-overlay {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 20px 20px;
+  opacity: 0.2;
+}
+
+.module-content {
+  position: relative;
+  z-index: 2;
+  transform: translateY(10px);
+  transition: transform 0.3s ease;
+}
+
+.collection-module:hover .module-content {
+  transform: translateY(0);
+}
+
+.module-tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  padding: 4px 10px;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  margin-bottom: 12px;
+  color: var(--text-amber);
+}
+
+.module-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: white;
+  margin-bottom: 4px;
+}
+
+.module-subtitle {
+  font-size: 13px;
+  color: rgba(255,255,255,0.6);
+  opacity: 0;
+  transition: opacity 0.3s ease 0.1s;
+}
+
+.collection-module:hover .module-subtitle {
+  opacity: 1;
+}
+
+/* Future Heritage Teaser */
+.future-heritage {
+  margin-top: 48px;
+}
+
+.wood-banner {
+  background: var(--wood-gradient);
+  border-radius: var(--radius-lg);
+  padding: 40px 24px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Add a subtle wood grain overlay via CSS */
+.wood-banner::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='400' height='400' viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.6' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.15'/%3E%3C/svg%3E");
+  opacity: 0.2;
+  pointer-events: none;
+}
+
+.wood-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  color: white;
+}
+
+.teaser-label {
+  display: inline-block;
+  background: var(--accent-gold);
+  color: var(--text-primary);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 1px;
+  margin-bottom: 16px;
 }
 
-.order-btn:hover {
-  transform: scale(1.05);
-  background: #ffca28;
+.teaser-title {
+  font-size: 28px;
+  font-weight: 800;
+  margin: 0 0 12px 0;
+  color: var(--text-primary);
+  font-family: serif; /* Elegant contrast */
+}
+
+.teaser-text {
+  font-size: 14px;
+  line-height: 1.6;
+  max-width: 500px;
+  margin: 0 auto 24px auto;
+  opacity: 0.85;
+}
+
+.countdown-teaser {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-gold);
+  border: 1px border rgba(251, 192, 45, 0.3);
+  padding: 8px 16px;
+  border-radius: 8px;
+  display: inline-block;
 }
 
 /* Sections */
@@ -222,7 +566,7 @@ const handleSearch = () => {
   min-width: 120px;
   padding: 16px;
   height: 120px;
-  background-color: var(--primary-tan);
+  background-color: var(--wood-walnut);
   border-radius: var(--radius-lg);
   display: flex;
   align-items: flex-end;
@@ -241,38 +585,32 @@ const handleSearch = () => {
 
 .cat-name-home {
   font-weight: 700;
-  color: var(--secondary-brown);
+  color: var(--text-primary);
   font-size: 14px;
 }
 
 .cat-example-home {
   font-size: 10px;
-  color: var(--primary-green);
+  color: var(--text-amber);
   font-style: italic;
   font-weight: 500;
 }
 
 .explore-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(1, 1fr);
   gap: 16px;
 }
 
 @media (min-width: 768px) {
   .explore-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (min-width: 1024px) {
-  .explore-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (min-width: 1280px) {
   .explore-grid {
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 </style>

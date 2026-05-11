@@ -66,6 +66,7 @@ async function init() {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT,
         specialty TEXT,
+        bio TEXT,
         rating REAL,
         likes_count INTEGER DEFAULT 0,
         clients_count INTEGER DEFAULT 0,
@@ -189,20 +190,20 @@ async function init() {
     }
 
     const sellers = [
-      { name: 'Amina Tailors', specialty: 'Ankara Specialist', rating: 4.9, likes: 1200, clients: 450, avatar: 'https://i.pravatar.cc/150?u=amina', is_verified: 1 },
-      { name: 'Kofi Designs', specialty: 'Kente Royal Wear', rating: 4.8, likes: 980, clients: 320, avatar: 'https://i.pravatar.cc/150?u=kofi', is_verified: 1 },
-      { name: 'Zahara Crafts', specialty: 'Maasai Beadwork', rating: 5.0, likes: 1500, clients: 600, avatar: 'https://i.pravatar.cc/150?u=zahara', is_verified: 0 },
-      { name: 'Moussa Robes', specialty: 'Agbada Master', rating: 4.7, likes: 850, clients: 210, avatar: 'https://i.pravatar.cc/150?u=moussa', is_verified: 1 },
-      { name: 'Elena Prints', specialty: 'Modern Dashiki', rating: 4.5, likes: 600, clients: 150, avatar: 'https://i.pravatar.cc/150?u=elena', is_verified: 0 },
-      { name: 'Juma Leather', specialty: 'Tribal Footwear', rating: 4.2, likes: 400, clients: 90, avatar: 'https://i.pravatar.cc/150?u=juma', is_verified: 0 },
-      { name: 'Sara Sews', specialty: 'Normal Clothes', rating: 3.8, likes: 150, clients: 40, avatar: 'https://i.pravatar.cc/150?u=sara', is_verified: 0 },
-      { name: 'Newbie Stitches', specialty: 'Casual Wear', rating: 0.0, likes: 0, clients: 0, avatar: 'https://i.pravatar.cc/150?u=newbie', is_verified: 0 }
+      { name: 'Amina Tailors', specialty: 'Ankara Specialist', bio: 'Amina is a 3rd generation tailor from Lagos, specializing in modern Ankara silhouettes that honor traditional motifs.', rating: 4.9, likes: 1200, clients: 450, avatar: 'https://i.pravatar.cc/150?u=amina', is_verified: 1 },
+      { name: 'Kofi Designs', specialty: 'Kente Royal Wear', bio: 'Master weaver Kofi brings the spirit of Ashanti royalty to every garment, using hand-loomed Kente from his home village.', rating: 4.8, likes: 980, clients: 320, avatar: 'https://i.pravatar.cc/150?u=kofi', is_verified: 1 },
+      { name: 'Zahara Crafts', specialty: 'Maasai Beadwork', bio: 'A collective of Maasai women artisans led by Zahara, preserving the ancient art of beadwork through sustainable fashion.', rating: 5.0, likes: 1500, clients: 600, avatar: 'https://i.pravatar.cc/150?u=zahara', is_verified: 0 },
+      { name: 'Moussa Robes', specialty: 'Agbada Master', bio: 'Moussa is renowned for his grand Agbada robes, blending silk and cotton with intricate embroidery that tells a story.', rating: 4.7, likes: 850, clients: 210, avatar: 'https://i.pravatar.cc/150?u=moussa', is_verified: 1 },
+      { name: 'Elena Prints', specialty: 'Modern Dashiki', bio: 'Elena redefines the Dashiki for the urban youth, focusing on bold colors and contemporary fits.', rating: 4.5, likes: 600, clients: 150, avatar: 'https://i.pravatar.cc/150?u=elena', is_verified: 0 },
+      { name: 'Juma Leather', specialty: 'Tribal Footwear', bio: 'Juma crafts durable, stylish leather sandals inspired by nomadic footwear from the Sahel region.', rating: 4.2, likes: 400, clients: 90, avatar: 'https://i.pravatar.cc/150?u=juma', is_verified: 0 },
+      { name: 'Sara Sews', specialty: 'Normal Clothes', bio: 'Sara provides high-quality everyday wear with a touch of African textile influence.', rating: 3.8, likes: 150, clients: 40, avatar: 'https://i.pravatar.cc/150?u=sara', is_verified: 0 },
+      { name: 'Newbie Stitches', specialty: 'Casual Wear', bio: 'A fresh talent in the heritage scene, exploring simple yet elegant designs.', rating: 0.0, likes: 0, clients: 0, avatar: 'https://i.pravatar.cc/150?u=newbie', is_verified: 0 }
     ]
 
     for (const s of sellers) {
       await client.execute({
-        sql: "INSERT INTO sellers (name, specialty, rating, likes_count, clients_count, avatar, is_verified) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        args: [s.name, s.specialty, s.rating, s.likes, s.clients, s.avatar, s.is_verified]
+        sql: "INSERT INTO sellers (name, specialty, bio, rating, likes_count, clients_count, avatar, is_verified) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        args: [s.name, s.specialty, s.bio, s.rating, s.likes, s.clients, s.avatar, s.is_verified]
       })
     }
 

@@ -28,7 +28,7 @@ defineEmits(['go-back', 'go-details', 'toggle-like'])
 
 <style scoped>
 .favorites-page {
-  background-color: var(--bg-white);
+  background-color: var(--wood-deep);
   min-height: 100vh;
   padding: 24px 20px;
 }
@@ -43,7 +43,7 @@ defineEmits(['go-back', 'go-details', 'toggle-like'])
 .title {
   font-size: 22px;
   font-weight: 600;
-  color: var(--secondary-brown);
+  color: var(--text-primary);
   margin: 0;
 }
 

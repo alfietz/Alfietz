@@ -69,11 +69,10 @@ const connectToWhatsApp = () => {
     <!-- Tailor Details Section -->
     <div class="content-section">
       
-      <!-- Bio -->
       <div class="bio-section">
         <h3 class="section-title">About the Artisan</h3>
         <p class="description">
-          Mastering the art of traditional African tailoring for over 10 years. Specializing in bespoke {{ seller.specialty.toLowerCase() }} with a modern heritage twist. Every stitch is a commitment to excellence.
+          {{ seller.bio || 'Preserving African heritage through every stitch and pattern.' }}
         </p>
       </div>
 
@@ -130,15 +129,15 @@ const connectToWhatsApp = () => {
 
 <style scoped>
 .tailor-page {
-  background-color: var(--bg-white);
+  background-color: var(--wood-deep);
   min-height: 100vh;
-  color: var(--text-main);
+  color: var(--text-primary);
   padding-bottom: 90px;
   position: relative;
 }
 
 .cover-section {
-  background-color: var(--primary-tan);
+  background-color: var(--wood-walnut);
   width: 100%;
   padding: 20px 20px 40px 20px;
   position: relative;
@@ -155,7 +154,7 @@ const connectToWhatsApp = () => {
 }
 
 .icon-btn {
-  background-color: var(--bg-white);
+  background-color: var(--wood-deep);
   box-shadow: var(--shadow-sm);
   border-radius: 50%;
   width: 40px;
@@ -181,7 +180,7 @@ const connectToWhatsApp = () => {
   height: 100%;
   border-radius: 50%;
   object-fit: cover;
-  border: 4px solid var(--bg-white);
+  border: 4px solid var(--wood-deep);
   box-shadow: var(--shadow-md);
 }
 
@@ -189,26 +188,26 @@ const connectToWhatsApp = () => {
   position: absolute;
   bottom: 5px;
   right: 5px;
-  background: var(--primary-green);
+  background: var(--accent-amber);
   width: 28px;
   height: 28px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 3px solid var(--bg-white);
+  border: 3px solid var(--wood-deep);
 }
 
 .tailor-name {
   font-size: 24px;
   font-weight: 800;
-  color: var(--secondary-brown);
+  color: var(--text-primary);
   margin: 0 0 4px 0;
 }
 
 .tailor-specialty {
   font-size: 14px;
-  color: var(--primary-green);
+  color: var(--text-amber);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -228,7 +227,7 @@ const connectToWhatsApp = () => {
 .rating-text {
   font-size: 13px;
   font-weight: 600;
-  color: var(--text-main);
+  color: var(--text-primary);
 }
 
 /* Content Section */
@@ -240,13 +239,13 @@ const connectToWhatsApp = () => {
   font-size: 16px;
   font-weight: 700;
   margin: 0 0 12px 0;
-  color: var(--secondary-brown);
+  color: var(--text-primary);
 }
 
 .description {
   font-size: 14px;
   line-height: 1.6;
-  color: var(--text-main);
+  color: var(--text-primary);
   margin-bottom: 32px;
 }
 
@@ -285,10 +284,10 @@ const connectToWhatsApp = () => {
 }
 
 .review-card {
-  background: var(--bg-white);
+  background: var(--wood-deep);
   padding: 16px;
   border-radius: var(--radius-md);
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--glass-border);
 }
 
 .review-top {
@@ -315,7 +314,7 @@ const connectToWhatsApp = () => {
   margin: 0 0 2px 0;
   font-size: 14px;
   font-weight: 600;
-  color: var(--text-main);
+  color: var(--text-primary);
 }
 
 .review-time {
@@ -355,9 +354,9 @@ const connectToWhatsApp = () => {
   transform: translateX(-50%);
   width: 100%;
   max-width: 1440px;
-  background: var(--bg-white);
+  background: var(--wood-deep);
   padding: 16px 24px 24px 24px;
-  border-top: 1px solid var(--border-light);
+  border-top: 1px solid var(--glass-border);
   z-index: 100;
 }
 
@@ -368,8 +367,8 @@ const connectToWhatsApp = () => {
 
 .feedback-btn {
   flex: 1;
-  background-color: var(--primary-tan);
-  color: var(--secondary-brown);
+  background-color: var(--wood-walnut);
+  color: var(--text-primary);
   border: none;
   border-radius: 14px;
   padding: 16px;
@@ -380,7 +379,7 @@ const connectToWhatsApp = () => {
 
 .add-to-cart-btn {
   flex: 2;
-  background-color: var(--primary-green);
+  background-color: var(--text-amber);
   color: white;
   border: none;
   border-radius: 14px;

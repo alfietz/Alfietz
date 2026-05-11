@@ -34,7 +34,7 @@ defineEmits(['cancel', 'confirm'])
 }
 
 .dialog-card {
-  background-color: #FFFFFF;
+  background: var(--wood-deep);
   border-radius: 20px;
   padding: 32px 24px;
   width: 100%;
@@ -47,13 +47,13 @@ defineEmits(['cancel', 'confirm'])
   margin: 0 0 12px 0;
   font-size: 20px;
   font-weight: 700;
-  color: #1A1A1A;
+  color: var(--text-primary);
 }
 
 .dialog-text {
   margin: 0 0 24px 0;
   font-size: 14px;
-  color: #888888;
+  color: var(--text-muted);
 }
 
 .dialog-actions {
@@ -74,16 +74,16 @@ defineEmits(['cancel', 'confirm'])
 .btn-cancel {
   background-color: transparent;
   border: 1px solid #5D8374;
-  color: #5D8374;
+  color: var(--text-amber);
 }
 
-.btn-cancel:hover { background-color: #F4F8F6; }
+.btn-cancel:hover { background: var(--wood-walnut); }
 
 .btn-confirm {
-  background-color: #5D8374;
+  background: var(--accent-amber);
   border: 1px solid #5D8374;
-  color: #FFFFFF;
+  color: white;
 }
 
-.btn-confirm:hover { background-color: #4A6B5E; }
+.btn-confirm:hover { background: var(--wood-polished); }
 </style>

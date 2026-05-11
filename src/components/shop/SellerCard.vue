@@ -58,14 +58,14 @@ defineProps({
   height: 64px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid var(--primary-tan);
+  border: 2px solid var(--wood-walnut);
 }
 
 .verify-badge {
   position: absolute;
   bottom: 0;
   right: 0;
-  background: var(--primary-green);
+  background: var(--accent-amber);
   width: 18px;
   height: 18px;
   border-radius: 50%;
@@ -78,13 +78,13 @@ defineProps({
 .seller-name {
   font-size: 14px;
   font-weight: 700;
-  color: #5D4037; /* Consistent Dark Brown */
+  color: var(--text-primary); /* Consistent Dark Brown */
   margin: 0 0 4px 0;
 }
 
 .seller-specialty {
   font-size: 11px;
-  color: #6D4C41; /* Consistent Muted Brown */
+  color: var(--text-muted); /* Consistent Muted Brown */
   margin: 0 0 8px 0;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -105,7 +105,7 @@ defineProps({
 .rating-value, .likes-value {
   font-size: 11px;
   font-weight: 600;
-  color: #5D4037;
+  color: var(--text-primary);
 }
 
 .divider {
@@ -115,6 +115,6 @@ defineProps({
 }
 
 .likes-value {
-  color: var(--primary-green);
+  color: var(--text-amber);
 }
 </style>

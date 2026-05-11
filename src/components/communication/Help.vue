@@ -77,24 +77,24 @@ const toggleFaq = (index) => {
 </template>
 
 <style scoped>
-.help-page { background-color: var(--bg-white); min-height: 100vh; padding: 24px 20px; }
+.help-page { background-color: var(--wood-deep); min-height: 100vh; padding: 24px 20px; }
 .header-row { display: flex; align-items: center; gap: 16px; margin-bottom: 32px; }
-.title { font-size: 22px; font-weight: 600; color: var(--secondary-brown); margin: 0; }
+.title { font-size: 22px; font-weight: 600; color: var(--text-primary); margin: 0; }
 
-.contact-card { display: flex; align-items: center; background: #F4F8F6; border: 1px solid #E1EBE6; border-radius: 16px; padding: 16px; margin-bottom: 32px; }
+.contact-card { display: flex; align-items: center; background: var(--wood-walnut); border: 1px solid var(--glass-border); border-radius: 16px; padding: 16px; margin-bottom: 32px; }
 .contact-icon { width: 48px; height: 48px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 16px; flex-shrink: 0; }
 .contact-info { flex: 1; }
-.contact-info h3 { margin: 0 0 4px 0; font-size: 15px; color: #1A1A1A; }
-.contact-info p { margin: 0; font-size: 12px; color: #666; }
-.chat-btn { background: #5D8374; color: white; border: none; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 13px; cursor: pointer; }
+.contact-info h3 { margin: 0 0 4px 0; font-size: 15px; color: var(--text-primary); }
+.contact-info p { margin: 0; font-size: 12px; color: var(--text-muted); }
+.chat-btn { background: var(--accent-amber); color: white; border: none; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 13px; cursor: pointer; }
 
-.section-title { font-size: 18px; font-weight: 600; color: #1A1A1A; margin: 0 0 16px 0; }
+.section-title { font-size: 18px; font-weight: 600; color: var(--text-primary); margin: 0 0 16px 0; }
 .faq-list { display: flex; flex-direction: column; gap: 12px; }
-.faq-item { display: flex; justify-content: space-between; align-items: center; background: #F8F8F8; padding: 16px 20px; border-radius: 12px; cursor: pointer; transition: background 0.2s; }
-.faq-item:hover { background: #F0F0F0; }
-.faq-item.active { border-bottom-left-radius: 0; border-bottom-right-radius: 0; background: #F0F0F0; }
-.faq-question { margin: 0; font-size: 14px; font-weight: 500; color: #333; }
-.faq-answer { background: #F8F8F8; padding: 0 20px 16px 20px; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; font-size: 13px; color: #666; line-height: 1.5; border-top: none; }
+.faq-item { display: flex; justify-content: space-between; align-items: center; background: var(--wood-walnut); padding: 16px 20px; border-radius: 12px; cursor: pointer; transition: background 0.2s; }
+.faq-item:hover { background: var(--wood-polished); }
+.faq-item.active { border-bottom-left-radius: 0; border-bottom-right-radius: 0; background: var(--wood-polished); }
+.faq-question { margin: 0; font-size: 14px; font-weight: 500; color: var(--text-primary); }
+.faq-answer { background: var(--wood-walnut); padding: 0 20px 16px 20px; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; font-size: 13px; color: var(--text-muted); line-height: 1.5; border-top: none; }
 .chevron { transition: transform 0.3s ease; }
 .chevron.rotated { transform: rotate(180deg); }
 </style>

@@ -23,7 +23,7 @@ defineEmits(['go-back'])
 
 <style scoped>
 .app-bar {
-  background-color: var(--bg-white);
+  background-color: var(--wood-deep);
   display: flex;
   align-items: center;
   gap: 16px;
@@ -36,6 +36,6 @@ defineEmits(['go-back'])
   font-size: 20px;
   font-weight: 600;
   margin: 0;
-  color: var(--text-main);
+  color: var(--text-primary);
 }
 </style>

@@ -59,7 +59,7 @@ const selectLang = (lang) => {
 
 <style scoped>
 .splash-page {
-  background-color: var(--bg-white); 
+  background-color: var(--wood-deep); 
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -80,7 +80,7 @@ const selectLang = (lang) => {
   height: 160px;
   padding: 28px;
   margin-bottom: 16px;
-  border: 4px solid var(--primary-tan);
+  border: 4px solid var(--wood-walnut);
 }
 
 .tagline-container {
@@ -88,7 +88,7 @@ const selectLang = (lang) => {
 }
 
 .tagline {
-  color: var(--primary-green);
+  color: var(--text-amber);
   font-size: 16px;
   font-weight: 500;
   margin: 0;
@@ -110,7 +110,7 @@ const selectLang = (lang) => {
 }
 
 .select-text {
-  color: var(--secondary-brown);
+  color: var(--text-primary);
   font-weight: 600;
   font-size: 14px;
 }
@@ -126,13 +126,13 @@ const selectLang = (lang) => {
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
-  border: 2px solid var(--primary-tan);
+  border: 2px solid var(--wood-walnut);
   background: transparent;
-  color: var(--primary-green);
+  color: var(--text-amber);
 }
 
 .lang-btn:hover {
-  background-color: var(--primary-tan);
+  background-color: var(--wood-walnut);
   color: white;
 }
 

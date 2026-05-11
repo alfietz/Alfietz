@@ -91,29 +91,33 @@ const handleSignUp = () => {
 </script>
 
 <template>
-  <div class="auth-page">
-    <button class="back-btn" @click="$emit('go-back')">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-    </button>
-    <div class="logo-container" style="margin-top: 20px;">
-      <img src="../../assets/logo.png" alt="Alfie Logo" class="logo-img" />
+  <div class="auth-page pattern-heritage animate-fade">
+    <div class="top-nav">
+      <button class="back-btn" @click="$emit('go-back')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
     </div>
-    <h1 class="page-title" style="margin-top: 20px;">{{ t('joinTheHeritage') }}</h1>
-    
+
+    <div class="welcome-text">
+      <h1 class="tribe-title">Join The</h1>
+      <h2 class="tribe-highlight">Heritage</h2>
+    </div>
+
     <div class="form-container">
+      <div class="input-row">
+        <div class="input-group">
+          <label>{{ t('firstName') }}</label>
+          <input type="text" v-model="firstName" placeholder="John" />
+        </div>
+        <div class="input-group">
+          <label>{{ t('lastName') }}</label>
+          <input type="text" v-model="lastName" placeholder="Charles" />
+        </div>
+      </div>
+
       <div class="input-group">
         <label>{{ t('username') }}</label>
         <input type="text" v-model="username" placeholder="@unique_name" />
-      </div>
-
-      <div class="input-group">
-        <label>{{ t('firstName') }}</label>
-        <input type="text" v-model="firstName" placeholder="john" />
-      </div>
-
-      <div class="input-group">
-        <label>{{ t('lastName') }}</label>
-        <input type="text" v-model="lastName" placeholder="charles" />
       </div>
 
       <div class="input-group">
@@ -127,7 +131,7 @@ const handleSignUp = () => {
       </div>
 
       <div class="user-type-group">
-        <label class="group-label">{{ t('userType') }}:</label>
+        <label class="group-label">{{ t('userType') }}</label>
         <div class="type-options">
           <button 
             type="button" 
@@ -150,44 +154,87 @@ const handleSignUp = () => {
 
       <div class="input-group">
         <label>{{ t('password') }}</label>
-        <div style="position: relative; display: flex; align-items: center; width: 100%;">
-          <input :type="showPassword ? 'text' : 'password'" v-model="password" :placeholder="t('passwordPlaceholder')" style="padding-right: 48px;" />
+        <div class="pass-wrapper">
+          <input :type="showPassword ? 'text' : 'password'" v-model="password" :placeholder="t('passwordPlaceholder')" />
           <button class="eye-btn" @click="showPassword = !showPassword">
-            <svg v-if="!showPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A0A0A0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><path d="m3 3 18 18"/></svg>
-            <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A0A0A0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg v-if="!showPassword" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/><path d="m3 3 18 18"/></svg>
+            <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
           </button>
         </div>
       </div>
 
       <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
 
-      <button class="primary-btn" style="margin-top: 12px;" @click="handleSignUp">{{ t('signup') }}</button>
+      <button class="primary-btn" @click="handleSignUp">{{ t('signup') }}</button>
 
       <div class="bottom-text">
         <span>{{ t('alreadyHaveAccount') }} </span>
-        <a href="#" class="link" @click.prevent="$emit('go-login')">{{ t('logIn') }}</a>
+        <a href="#" class="login-link" @click.prevent="$emit('go-login')">{{ t('logIn') }}</a>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.eye-btn { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 0; display: flex; z-index: 5; }
-.error-message { color: #E53935; font-size: 13px; font-weight: 500; margin: 8px 0; }
-.bottom-text { text-align: center; font-size: 14px; color: var(--text-muted); margin-top: 32px; }
-.bottom-text .link { color: var(--primary-green); text-decoration: none; font-weight: 600; }
+.auth-page {
+  padding: 40px 24px;
+  max-width: 600px;
+  margin: 0 auto;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.top-nav {
+  margin-bottom: 40px;
+}
+
+.welcome-text {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.tribe-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 4px;
+}
+
+.tribe-highlight {
+  font-size: 40px;
+  font-weight: 800;
+  background: linear-gradient(to right, var(--text-primary), var(--accent-amber));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: 1px;
+}
+
+.input-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 480px) {
+  .input-row {
+    grid-template-columns: 1fr;
+  }
+}
 
 .user-type-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-top: 8px;
+  gap: 12px;
 }
 
 .group-label {
-  font-size: 13px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
   color: var(--text-muted);
-  font-weight: 500;
+  margin-left: 4px;
 }
 
 .type-options {
@@ -197,20 +244,63 @@ const handleSignUp = () => {
 
 .type-btn {
   flex: 1;
-  padding: 12px;
+  padding: 16px;
   border-radius: var(--radius-md);
-  border: 1px solid var(--border-light);
-  background: var(--bg-white);
+  border: 2px solid var(--input-border);
+  background: var(--input-bg);
   color: var(--text-muted);
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
 .type-btn.active {
-  background: var(--primary-green);
+  background: linear-gradient(135deg, var(--accent-amber), #B45309);
   color: white;
-  border-color: var(--primary-green);
+  border-color: var(--accent-amber);
+  box-shadow: 0 4px 15px var(--accent-glow);
+}
+
+.pass-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.eye-btn {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+}
+
+.error-message {
+  color: #EF4444;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.bottom-text {
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-top: 24px;
+}
+
+.login-link {
+  color: var(--text-amber);
+  text-decoration: none;
+  font-weight: 700;
+  margin-left: 4px;
+  border-bottom: 1px solid transparent;
+  transition: all 0.3s;
+}
+
+.login-link:hover {
+  border-color: var(--accent-amber);
+  text-shadow: 0 0 10px var(--accent-glow);
 }
 </style>

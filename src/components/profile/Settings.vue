@@ -1,6 +1,10 @@
 <!-------- (Settings.vue) ./src/components/Settings.vue ------------>
 <script setup>
 const props = defineProps({
+  userData: {
+    type: Object,
+    required: true
+  },
   theme: {
     type: String,
     default: 'light'
@@ -15,7 +19,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['go-back', 'go-help', 'go-privacy', 'go-terms', 'go-about', 'update:theme', 'update:language'])
+const emit = defineEmits(['go-back', 'go-help', 'go-privacy', 'go-terms', 'go-about', 'go-feedback', 'update:theme', 'update:language', 'update:role'])
 
 const toggleTheme = () => {
   const newTheme = props.theme === 'light' ? 'dark' : 'light'
@@ -25,19 +29,53 @@ const toggleTheme = () => {
 const setLanguage = (lang) => {
   emit('update:language', lang)
 }
+
+const openWhatsAppSupport = () => {
+  const url = `https://wa.me/255700000000?text=${encodeURIComponent("Hello Alfie Support, I need help with...")}`
+  window.open(url, '_blank')
+}
 </script>
 
 <template>
-  <div class="settings-page">
+  <div class="settings-page animate-fade">
     <div class="header-row">
       <button class="back-btn" @click="$emit('go-back')">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
       </button>
       <h1 class="title">{{ t('settings') }}</h1>
     </div>
 
     <div class="settings-list">
-      <!-- Appearance Group -->
+      <!-- Role Management Group -->
+      <div class="settings-group">
+        <h3 class="group-title">{{ t('accountType') }}</h3>
+        <div class="role-selector">
+          <button 
+            class="role-option" 
+            :class="{ active: userData.userType === 'buyer' }"
+            @click="$emit('update:role', 'buyer')"
+          >
+            <div class="role-icon">🛍️</div>
+            <div class="role-info">
+              <span class="role-name">Buyer</span>
+              <span class="role-desc">I want to explore and buy heritage trends.</span>
+            </div>
+          </button>
+          <button 
+            class="role-option" 
+            :class="{ active: userData.userType === 'supplier' }"
+            @click="$emit('update:role', 'supplier')"
+          >
+            <div class="role-icon">✂️</div>
+            <div class="role-info">
+              <span class="role-name">Tailor / Designer</span>
+              <span class="role-desc">I want to showcase and sell my work.</span>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Language Group -->
       <div class="settings-group">
         <h3 class="group-title">{{ t('language') }}</h3>
         <div class="lang-selector">
@@ -58,9 +96,10 @@ const setLanguage = (lang) => {
         </div>
       </div>
 
-      <div class="settings-group">
+      <!-- Appearance Group (Mobile Only) -->
+      <div class="settings-group mobile-only">
         <h3 class="group-title">{{ t('theme') || 'Appearance' }}</h3>
-        
+
         <div class="setting-item" @click="toggleTheme">
           <span class="setting-text">Dark Mode</span>
           <div class="toggle-switch" :class="{ 'is-active': theme === 'dark' }">
@@ -71,25 +110,33 @@ const setLanguage = (lang) => {
 
       <div class="settings-group">
         <h3 class="group-title">Support & Info</h3>
-        
+
+        <div class="setting-item" @click="openWhatsAppSupport">
+          <div class="setting-info">
+            <span class="setting-text">WhatsApp Support</span>
+            <span class="setting-hint">Chat directly with our team</span>
+          </div>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-amber)" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-13.4 8.38 8.38 0 0 1 3.8.9L21 3z"/></svg>
+        </div>
+
         <div class="setting-item" @click="$emit('go-help')">
           <span class="setting-text">{{ t('help') }}</span>
-          <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A0A0A0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
         </div>
 
         <div class="setting-item" @click="$emit('go-privacy')">
           <span class="setting-text">{{ t('privacyPolicy') }}</span>
-          <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A0A0A0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
         </div>
 
         <div class="setting-item" @click="$emit('go-terms')">
           <span class="setting-text">{{ t('termsConditions') }}</span>
-          <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A0A0A0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
         </div>
 
         <div class="setting-item" @click="$emit('go-about')">
           <span class="setting-text">{{ t('aboutUs') }}</span>
-          <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A0A0A0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
         </div>
       </div>
     </div>
@@ -97,66 +144,141 @@ const setLanguage = (lang) => {
 </template>
 
 <style scoped>
-.settings-page { background-color: var(--bg-white); min-height: 100vh; padding: 24px 20px; }
-.header-row { display: flex; align-items: center; gap: 16px; margin-bottom: 32px; }
-.title { font-size: 22px; font-weight: 600; color: var(--secondary-brown); margin: 0; }
-.settings-list { display: flex; flex-direction: column; gap: 24px; }
-.group-title { font-size: 14px; font-weight: 600; color: var(--text-muted); margin: 0 0 12px 12px; text-transform: uppercase; letter-spacing: 0.5px; }
-.setting-item { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: var(--primary-tan); border-radius: 12px; margin-bottom: 8px; cursor: pointer; transition: background 0.2s; }
-.setting-item:hover { opacity: 0.9; }
-.setting-text { font-size: 15px; font-weight: 500; color: var(--text-main); }
-.chevron { color: #A0A0A0; }
+.settings-page { background-color: var(--bg-dark); min-height: 100vh; padding: 32px 24px; }
+.header-row { display: flex; align-items: center; gap: 20px; margin-bottom: 40px; }
+.title { font-size: 24px; font-weight: 800; color: var(--text-primary); margin: 0; letter-spacing: 1px; }
+.settings-list { display: flex; flex-direction: column; gap: 32px; }
+.group-title { font-size: 11px; font-weight: 700; color: var(--text-muted); margin: 0 0 12px 4px; text-transform: uppercase; letter-spacing: 1.5px; }
+.setting-item { display: flex; align-items: center; justify-content: space-between; padding: 20px; background: var(--wood-walnut); border: 1px solid var(--glass-border); border-radius: 16px; margin-bottom: 12px; cursor: pointer; transition: all 0.3s; }
+.setting-item:hover { border-color: var(--accent-amber); background: var(--wood-polished); }
+.setting-text { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+
+.setting-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.setting-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.chevron { color: var(--text-muted); }
+
+.mobile-only {
+  display: block;
+}
+
+@media (min-width: 768px) {
+  .mobile-only {
+    display: none;
+  }
+}
 
 .lang-selector {
   display: flex;
   gap: 12px;
-  margin: 0 12px 12px;
+}
+
+.role-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.role-option {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid var(--glass-border);
+  background: var(--wood-walnut);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.3s;
+  text-align: left;
+}
+
+.role-option.active {
+  background: var(--wood-polished);
+  border-color: var(--accent-amber);
+  box-shadow: 0 0 15px var(--accent-glow);
+}
+
+.role-icon {
+  font-size: 24px;
+}
+
+.role-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.role-name {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.role-option.active .role-name {
+  color: var(--accent-amber);
+}
+
+.role-desc {
+  font-size: 12px;
+  color: var(--text-muted);
 }
 
 .lang-option {
   flex: 1;
-  padding: 12px;
-  border-radius: 8px;
-  border: 2px solid var(--primary-tan);
-  background: transparent;
-  color: var(--primary-green);
-  font-weight: 600;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background: var(--wood-walnut);
+  color: var(--text-muted);
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s;
 }
 
 .lang-option.active {
-  background-color: var(--primary-tan);
+  background: linear-gradient(135deg, var(--accent-amber), #B45309);
   color: white;
+  border-color: var(--accent-amber);
+  box-shadow: 0 0 15px var(--accent-glow);
 }
 
 /* Toggle Switch Styles */
 .toggle-switch {
-  width: 44px;
-  height: 24px;
-  background-color: var(--border-light);
-  border-radius: 12px;
+  width: 50px;
+  height: 28px;
+  background-color: var(--border-tech);
+  border-radius: 14px;
   position: relative;
-  transition: background-color 0.3s;
+  transition: all 0.3s;
+  border: 1px solid var(--glass-border);
 }
 
 .toggle-switch.is-active {
-  background-color: var(--primary-green);
+  background-color: var(--accent-amber);
+  box-shadow: 0 0 10px var(--accent-glow);
 }
 
 .toggle-handle {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   background-color: white;
   border-radius: 50%;
   position: absolute;
   top: 2px;
   left: 2px;
   transition: transform 0.3s;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .toggle-switch.is-active .toggle-handle {
-  transform: translateX(20px);
+  transform: translateX(22px);
 }
 </style>

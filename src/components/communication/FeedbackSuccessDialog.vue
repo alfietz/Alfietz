@@ -38,7 +38,7 @@ defineEmits(['close'])
 }
 
 .dialog-card {
-  background-color: #FFFFFF;
+  background: var(--wood-deep);
   border-radius: 20px;
   padding: 32px 24px;
   width: 100%;
@@ -53,7 +53,7 @@ defineEmits(['close'])
 .icon-circle {
   width: 80px;
   height: 80px;
-  background-color: #5D8374;
+  background: var(--accent-amber);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -65,13 +65,13 @@ defineEmits(['close'])
   margin: 0 0 12px 0;
   font-size: 18px;
   font-weight: 700;
-  color: #1A1A1A;
+  color: var(--text-primary);
 }
 
 .dialog-text {
   margin: 0 0 32px 0;
   font-size: 13px;
-  color: #888888;
+  color: var(--text-muted);
   line-height: 1.5;
 }
 
@@ -82,13 +82,13 @@ defineEmits(['close'])
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  background-color: #5D8374;
+  background: var(--accent-amber);
   border: none;
-  color: #FFFFFF;
+  color: white;
   transition: background-color 0.2s;
 }
 
 .btn-primary:hover {
-  background-color: #4A6B5E;
+  background: var(--wood-polished);
 }
 </style>

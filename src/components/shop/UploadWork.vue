@@ -20,7 +20,8 @@ const productData = ref({
   category_id: '',
   description: '',
   material: '',
-  colors: [],
+  status: 'In Stock',
+  colors: [], // { hex: string, name: string, image: string, inStock: boolean, isUploading: boolean }
   image: 'https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?q=80&w=800'
 })
 
@@ -28,7 +29,16 @@ onMounted(() => {
   const saved = localStorage.getItem(STORAGE_KEY)
   if (saved) {
     try {
-      productData.value = JSON.parse(saved)
+      const parsed = JSON.parse(saved)
+      // Migration for old drafts
+      if (parsed.colors) {
+        parsed.colors = parsed.colors.map(c => ({
+          ...c,
+          name: c.name || '',
+          inStock: c.inStock !== undefined ? c.inStock : true
+        }))
+      }
+      productData.value = { ...productData.value, ...parsed }
     } catch (e) {
       console.error('Failed to load draft:', e)
     }
@@ -39,7 +49,8 @@ watch(productData, (val) => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(val))
 }, { deep: true })
 
-const colorInput = ref('#5D8374')
+const colorInput = ref('#D97706')
+const variantNameInput = ref('')
 const errorMessage = ref('')
 const isMainImageUploading = ref(false)
 
@@ -80,14 +91,21 @@ const handleMainImageUpload = async (event) => {
 }
 
 const addColor = () => {
-  // Check if hex already exists
-  if (!productData.value.colors.find(c => c.hex === colorInput.value)) {
-    productData.value.colors.push({ 
-      hex: colorInput.value, 
-      image: '', 
-      isUploading: false 
-    })
+  // Check if hex already exists or name is empty
+  if (!variantNameInput.value.trim()) {
+    errorMessage.value = 'Please enter a name for the color variant.'
+    return
   }
+  
+  productData.value.colors.push({ 
+    hex: colorInput.value, 
+    name: variantNameInput.value.trim(),
+    image: '', 
+    inStock: true,
+    isUploading: false 
+  })
+  variantNameInput.value = ''
+  errorMessage.value = ''
 }
 
 const handleVariantImageUpload = async (index, event) => {
@@ -120,8 +138,9 @@ const handleSubmit = () => {
   
   errorMessage.value = ''
 
+  // For backward compatibility in description but also structured JSON
   const colorList = productData.value.colors.length > 0 
-    ? productData.value.colors.map(c => c.hex).join(', ') 
+    ? productData.value.colors.map(c => `${c.name} (${c.hex})`).join(', ') 
     : 'Default';
   
   const enrichedDescription = `
@@ -135,7 +154,8 @@ ${productData.value.description}
   const formattedData = {
     ...productData.value,
     price: `TSh ${Number(productData.value.price).toLocaleString()}`,
-    description: enrichedDescription
+    description: enrichedDescription,
+    variants_json: JSON.stringify(productData.value.colors)
   }
   
   // Clear draft on success
@@ -168,9 +188,18 @@ ${productData.value.description}
         </div>
       </div>
 
-      <div class="input-group">
-        <label>Trend Name</label>
-        <input type="text" v-model="productData.name" placeholder="e.g. Royal Kente Blazer" />
+      <div class="input-row">
+        <div class="input-group flex-2">
+          <label>Trend Name</label>
+          <input type="text" v-model="productData.name" placeholder="e.g. Royal Kente Blazer" />
+        </div>
+        <div class="input-group flex-1">
+          <label>General Stock</label>
+          <select v-model="productData.status" class="heritage-select">
+            <option value="In Stock">In Stock</option>
+            <option value="Out of Stock">Out of Stock</option>
+          </select>
+        </div>
       </div>
 
       <div class="input-row">
@@ -200,16 +229,20 @@ ${productData.value.description}
       <!-- Color Variants with Image Upload -->
       <div class="input-group">
         <label>Color Variants & Variant Images</label>
-        <div class="color-picker-row">
+        <div class="variant-entry-row">
           <input type="color" v-model="colorInput" class="color-dot-input" />
-          <button type="button" class="add-color-btn" @click="addColor">Add Color Variant</button>
+          <input type="text" v-model="variantNameInput" placeholder="Color Name (e.g. Deep Sea Blue)" class="variant-name-input" />
+          <button type="button" class="add-color-btn" @click="addColor">Add Variant</button>
         </div>
         
         <div v-if="productData.colors.length > 0" class="variant-list">
           <div v-for="(variant, index) in productData.colors" :key="index" class="variant-row">
             <div class="variant-info">
               <span class="color-preview" :style="{ backgroundColor: variant.hex }"></span>
-              <span class="color-hex">{{ variant.hex }}</span>
+              <div class="variant-text">
+                <span class="variant-name-display">{{ variant.name }}</span>
+                <span class="color-hex">{{ variant.hex }}</span>
+              </div>
             </div>
             
             <div class="variant-upload">
@@ -225,6 +258,14 @@ ${productData.value.description}
                 @change="handleVariantImageUpload(index, $event)" 
                 class="file-input-small"
               />
+            </div>
+
+            <div class="variant-stock-toggle">
+              <label class="toggle-switch">
+                <input type="checkbox" v-model="variant.inStock" />
+                <span class="slider"></span>
+              </label>
+              <span class="stock-label">{{ variant.inStock ? 'In' : 'Out' }}</span>
             </div>
             
             <button class="remove-variant" @click="removeColor(index)">&times;</button>
@@ -252,7 +293,7 @@ ${productData.value.description}
 
 <style scoped>
 .upload-page {
-  background-color: var(--bg-white);
+  background-color: var(--wood-deep);
   min-height: 100vh;
   padding: 24px 20px;
   display: flex;
@@ -269,7 +310,7 @@ ${productData.value.description}
 .title {
   font-size: 22px;
   font-weight: 600;
-  color: var(--secondary-brown);
+  color: var(--text-primary);
   margin: 0;
 }
 
@@ -288,36 +329,39 @@ ${productData.value.description}
   flex-direction: column;
 }
 
+.flex-1 { flex: 1; }
+.flex-2 { flex: 2; }
+
 .input-group label {
   position: absolute;
   top: -8px;
   left: 12px;
-  background: var(--bg-white);
+  background: var(--wood-deep);
   padding: 0 4px;
   font-size: 11px;
   color: var(--text-light);
   z-index: 1;
 }
 
-.input-group input {
-  border: 1px solid var(--border-light);
+.input-group input:not(.color-dot-input):not(.file-input) {
+  border: 1px solid var(--glass-border);
   border-radius: 12px;
   padding: 16px;
   font-size: 15px;
-  color: var(--text-main);
+  color: var(--text-primary);
   background: transparent;
   outline: none;
   transition: border-color 0.2s;
 }
 
 .input-group input:focus {
-  border-color: var(--primary-green);
+  border-color: var(--text-amber);
 }
 
 .price-input-wrapper {
   display: flex;
   align-items: center;
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--glass-border);
   border-radius: 12px;
   background: transparent;
   overflow: hidden;
@@ -327,13 +371,32 @@ ${productData.value.description}
   padding: 0 12px 0 16px;
   font-size: 14px;
   font-weight: 700;
-  color: var(--primary-green);
+  color: var(--text-amber);
 }
 
 .price-input {
   border: none !important;
   padding-left: 0 !important;
   flex: 1;
+}
+
+/* Variant Entry Row */
+.variant-entry-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.variant-name-input {
+  flex: 1;
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 14px;
+  background: transparent;
+  color: white;
+  outline: none;
 }
 
 /* Variant List Styles */
@@ -348,17 +411,28 @@ ${productData.value.description}
   display: flex;
   align-items: center;
   gap: 12px;
-  background: var(--bg-white);
+  background: rgba(255, 255, 255, 0.03);
   padding: 12px;
   border-radius: 12px;
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--glass-border);
 }
 
 .variant-info {
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-width: 80px;
+  gap: 12px;
+  min-width: 120px;
+}
+
+.variant-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.variant-name-display {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .variant-upload {
@@ -373,7 +447,8 @@ ${productData.value.description}
   height: 40px;
   border-radius: 6px;
   overflow: hidden;
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--glass-border);
+  flex-shrink: 0;
 }
 
 .variant-preview img {
@@ -383,24 +458,70 @@ ${productData.value.description}
 }
 
 .file-input-small {
-  font-size: 11px;
+  font-size: 10px;
   width: 100%;
+  max-width: 120px;
+}
+
+.variant-stock-toggle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.stock-label {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--text-muted);
 }
 
 .remove-variant {
   background: none;
   border: none;
-  color: #E53935;
+  color: #EF4444;
   font-size: 20px;
   cursor: pointer;
   padding: 4px;
 }
 
+/* Toggle Switch */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 34px;
+  height: 20px;
+}
+
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #4B5563;
+  transition: .4s;
+  border-radius: 20px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 14px; width: 14px;
+  left: 3px; bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider { background-color: #10B981; }
+input:checked + .slider:before { transform: translateX(14px); }
+
 /* Loader */
 .loader {
   width: 24px;
   height: 24px;
-  border: 3px solid var(--primary-green);
+  border: 3px solid var(--accent-amber);
   border-bottom-color: transparent;
   border-radius: 50%;
   display: inline-block;
@@ -419,44 +540,39 @@ ${productData.value.description}
 }
 
 /* Color Picker Styles */
-.color-picker-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 4px;
-}
-
 .color-dot-input {
   width: 44px !important;
   height: 44px !important;
   padding: 0 !important;
   border-radius: 50% !important;
   cursor: pointer;
-  border: 2px solid var(--border-light) !important;
+  border: 2px solid var(--glass-border) !important;
+  background: transparent;
 }
 
 .add-color-btn {
-  background: var(--primary-tan);
-  border: 1px solid var(--primary-green);
-  color: var(--primary-green);
-  padding: 8px 16px;
-  border-radius: 20px;
+  background: var(--wood-walnut);
+  border: 1px solid var(--accent-amber);
+  color: var(--text-amber);
+  padding: 10px 16px;
+  border-radius: 12px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
 }
 
 .color-preview {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
-  border: 1px solid rgba(0,0,0,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  flex-shrink: 0;
 }
 
 .color-hex {
-  font-size: 11px;
+  font-size: 10px;
   font-family: monospace;
-  color: var(--text-main);
+  color: var(--text-muted);
 }
 
 .input-row {
@@ -469,11 +585,11 @@ ${productData.value.description}
 }
 
 .heritage-select {
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--glass-border);
   border-radius: 12px;
   padding: 16px;
   font-size: 15px;
-  color: var(--text-main);
+  color: var(--text-primary);
   background: transparent;
   width: 100%;
   outline: none;
@@ -486,11 +602,11 @@ ${productData.value.description}
 }
 
 .heritage-textarea {
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--glass-border);
   border-radius: 12px;
   padding: 16px;
   font-size: 15px;
-  color: var(--text-main);
+  color: var(--text-primary);
   background: transparent;
   outline: none;
   min-height: 120px;
@@ -499,7 +615,7 @@ ${productData.value.description}
 }
 
 .heritage-textarea:focus, .heritage-select:focus {
-  border-color: var(--primary-green);
+  border-color: var(--text-amber);
 }
 
 .bottom-action {

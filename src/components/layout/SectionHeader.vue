@@ -46,7 +46,7 @@ defineEmits(['view-all'])
 .section-title {
   font-size: 18px;
   font-weight: 700;
-  color: var(--secondary-brown);
+  color: var(--text-primary);
   margin: 0;
 }
 
@@ -54,7 +54,7 @@ defineEmits(['view-all'])
   display: flex;
   align-items: center;
   gap: 4px;
-  color: var(--primary-green);
+  color: var(--text-amber);
   font-size: 14px;
   font-weight: 600;
   background: none;
@@ -66,7 +66,7 @@ defineEmits(['view-all'])
 }
 
 .view-all-btn:hover {
-  background-color: var(--primary-tan);
+  background-color: var(--wood-walnut);
   transform: translateX(2px);
 }
 

@@ -44,7 +44,7 @@ const handleSubmit = () => {
 
 <style scoped>
 .feedback-page {
-  background-color: var(--bg-white);
+  background-color: var(--wood-deep);
   min-height: 100vh;
   padding: 24px 20px;
   display: flex;
@@ -61,7 +61,7 @@ const handleSubmit = () => {
 .title {
   font-size: 22px;
   font-weight: 600;
-  color: var(--secondary-brown);
+  color: var(--text-primary);
   margin: 0;
 }
 
@@ -72,11 +72,11 @@ const handleSubmit = () => {
 .feedback-input {
   width: 100%;
   height: 200px;
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--glass-border);
   border-radius: 12px;
   padding: 16px;
   font-size: 15px;
-  color: var(--text-main);
+  color: var(--text-primary);
   background: transparent;
   outline: none;
   resize: none;
@@ -84,7 +84,7 @@ const handleSubmit = () => {
 }
 
 .feedback-input:focus {
-  border-color: var(--primary-green);
+  border-color: var(--text-amber);
 }
 
 .feedback-input::placeholder {
@@ -98,7 +98,7 @@ const handleSubmit = () => {
 
 .primary-btn {
   width: 100%;
-  background: #5D8374;
+  background: var(--accent-amber);
   color: white;
   border: none;
   border-radius: 12px;

@@ -64,7 +64,7 @@ defineEmits(['go-back', 'write-review'])
 
 <style scoped>
 .reviews-page {
-  background-color: #FFFFFF;
+  background: var(--wood-deep);
   min-height: 100vh;
   font-family: 'Inter', -apple-system, sans-serif;
   padding: 24px 20px;
@@ -82,7 +82,7 @@ defineEmits(['go-back', 'write-review'])
 }
 
 .back-btn {
-  background-color: #F5F5F5;
+  background: var(--wood-polished);
   border: none;
   border-radius: 50%;
   width: 40px;
@@ -96,7 +96,7 @@ defineEmits(['go-back', 'write-review'])
 .title {
   font-size: 22px;
   font-weight: 600;
-  color: #1A1A1A;
+  color: var(--text-primary);
   margin: 0;
 }
 
@@ -111,7 +111,7 @@ defineEmits(['go-back', 'write-review'])
 .rating-score {
   font-size: 32px;
   font-weight: 700;
-  color: #1A1A1A;
+  color: var(--text-primary);
   margin: 0 0 8px 0;
 }
 
@@ -128,7 +128,7 @@ defineEmits(['go-back', 'write-review'])
 
 .rating-count {
   font-size: 13px;
-  color: #888888;
+  color: var(--text-muted);
   margin: 8px 0 0 0;
 }
 
@@ -170,19 +170,19 @@ defineEmits(['go-back', 'write-review'])
   margin: 0;
   font-size: 14px;
   font-weight: 600;
-  color: #1A1A1A;
+  color: var(--text-primary);
 }
 
 .review-time {
   font-size: 12px;
-  color: #888888;
+  color: var(--text-muted);
 }
 
 .review-text {
   margin: 0;
   font-size: 13px;
   line-height: 1.5;
-  color: #555555;
+  color: var(--text-muted);
 }
 
 /* Bottom Action */
@@ -193,7 +193,7 @@ defineEmits(['go-back', 'write-review'])
 
 .primary-btn {
   width: 100%;
-  background: #5D8374;
+  background: var(--accent-amber);
   color: white;
   border: none;
   border-radius: 12px;

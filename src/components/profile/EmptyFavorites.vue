@@ -22,7 +22,7 @@
 
 <style scoped>
 .empty-state-page {
-  background-color: #FFFFFF;
+  background: var(--wood-deep);
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -42,7 +42,7 @@
 .icon-circle {
   width: 88px;
   height: 88px;
-  background-color: #5D8374; /* App Primary Green */
+  background: var(--accent-amber); /* App Primary Green */
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -53,13 +53,13 @@
 .title {
   font-size: 18px;
   font-weight: 700;
-  color: #1A1A1A;
+  color: var(--text-primary);
   margin: 0 0 12px 0;
 }
 
 .subtitle {
   font-size: 13px;
-  color: #888888;
+  color: var(--text-muted);
   line-height: 1.5;
   margin: 0;
 }

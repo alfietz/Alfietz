@@ -47,18 +47,18 @@ defineEmits(['go-back'])
 </template>
 
 <style scoped>
-.about-page { background-color: var(--bg-white); min-height: 100vh; padding: 24px 20px; display: flex; flex-direction: column; }
+.about-page { background-color: var(--wood-deep); min-height: 100vh; padding: 24px 20px; display: flex; flex-direction: column; }
 .header-row { display: flex; align-items: center; gap: 16px; margin-bottom: 32px; flex-shrink: 0; }
-.title { font-size: 22px; font-weight: 600; color: var(--secondary-brown); margin: 0; }
+.title { font-size: 22px; font-weight: 600; color: var(--text-primary); margin: 0; }
 
 .about-content { flex: 1; display: flex; flex-direction: column; align-items: center; }
 
 .brand-showcase { display: flex; flex-direction: column; align-items: center; margin-bottom: 40px; margin-top: 20px; }
 .company-name { font-size: 14px; font-weight: 500; color: var(--text-muted); margin: 0; }
 
-.mission-card { background: var(--primary-tan); border-radius: 16px; padding: 24px; width: 100%; margin-bottom: 40px; }
-.mission-card h3 { font-size: 18px; font-weight: 600; color: var(--primary-green); margin: 0 0 12px 0; }
-.mission-card p { font-size: 14px; color: var(--text-main); line-height: 1.6; margin: 0 0 16px 0; }
+.mission-card { background: var(--wood-walnut); border-radius: 16px; padding: 24px; width: 100%; margin-bottom: 40px; }
+.mission-card h3 { font-size: 18px; font-weight: 600; color: var(--text-amber); margin: 0 0 12px 0; }
+.mission-card p { font-size: 14px; color: var(--text-primary); line-height: 1.6; margin: 0 0 16px 0; }
 .mission-card p:last-child { margin-bottom: 0; }
 
 .version-info { text-align: center; margin-top: auto; padding-bottom: 24px; }

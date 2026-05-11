@@ -57,7 +57,7 @@ defineEmits(['go-back'])
 
 <style scoped>
 .notifications-page {
-  background-color: var(--bg-white);
+  background-color: var(--wood-deep);
   min-height: 100vh;
   padding: 24px 20px;
 }
@@ -74,7 +74,7 @@ defineEmits(['go-back'])
   font-size: 20px;
   font-weight: 600;
   margin: 0;
-  color: var(--secondary-brown);
+  color: var(--text-primary);
 }
 
 /* List Styles */
@@ -85,7 +85,7 @@ defineEmits(['go-back'])
 }
 
 .notification-card {
-  background-color: var(--primary-tan);
+  background-color: var(--wood-walnut);
   border-radius: 12px;
   padding: 16px;
   display: flex;
@@ -112,7 +112,7 @@ defineEmits(['go-back'])
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background-color: var(--border-light);
+  background-color: var(--glass-border);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -132,11 +132,11 @@ defineEmits(['go-back'])
 
 /* --- Unread State Overrides --- */
 .is-unread .icon-circle {
-  background-color: var(--primary-green);
+  background-color: var(--text-amber);
 }
 
 .is-unread .item-name {
-  color: var(--text-main);
+  color: var(--text-primary);
 }
 
 .is-unread .item-time {

@@ -18,13 +18,13 @@ defineProps({
 .category-card {
   min-width: 100px;
   height: 120px;
-  background-color: #F4EBE1; /* Primary Light Brown */
+  background: var(--wood-walnut); /* Primary Light Brown */
   border-radius: 16px;
   display: flex;
   align-items: flex-end;
   justify-content: center;
   padding-bottom: 16px;
-  color: #888888;
+  color: var(--text-muted);
   font-weight: 500;
   flex-shrink: 0;
   cursor: pointer;
@@ -33,6 +33,6 @@ defineProps({
 
 .category-card:hover {
   transform: translateY(-4px);
-  background-color: #eaddce; /* Slightly darker on hover */
+  background: var(--wood-polished); /* Slightly darker on hover */
 }
 </style>

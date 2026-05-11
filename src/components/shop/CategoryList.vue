@@ -38,7 +38,7 @@ defineEmits(['go-back', 'select-category'])
 
 <style scoped>
 .category-list-page {
-  background-color: var(--bg-white);
+  background-color: var(--wood-deep);
   min-height: 100vh;
   padding: 24px 20px 100px;
 }
@@ -53,7 +53,7 @@ defineEmits(['go-back', 'select-category'])
 .title {
   font-size: 22px;
   font-weight: 600;
-  color: var(--secondary-brown);
+  color: var(--text-primary);
   margin: 0;
 }
 
@@ -64,7 +64,7 @@ defineEmits(['go-back', 'select-category'])
 }
 
 .category-item {
-  background: var(--primary-tan);
+  background: var(--wood-walnut);
   padding: 20px;
   border-radius: var(--radius-lg);
   display: flex;
@@ -81,13 +81,13 @@ defineEmits(['go-back', 'select-category'])
 .cat-name {
   font-size: 16px;
   font-weight: 700;
-  color: var(--secondary-brown);
+  color: var(--text-primary);
   margin: 0 0 4px 0;
 }
 
 .cat-examples {
   font-size: 13px;
-  color: var(--primary-green);
+  color: var(--text-amber);
   font-style: italic;
   margin: 0 0 8px 0;
 }
@@ -99,6 +99,6 @@ defineEmits(['go-back', 'select-category'])
 }
 
 .cat-chevron {
-  color: var(--primary-green);
+  color: var(--text-amber);
 }
 </style>

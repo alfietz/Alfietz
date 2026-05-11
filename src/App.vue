@@ -40,6 +40,8 @@ import WriteReview from './components/communication/WriteReview.vue'
 // Sub-pages (Profile & Settings)
 import EditProfile from './components/profile/EditProfile.vue'
 import Settings from './components/profile/Settings.vue'
+import TailorConsole from './components/profile/TailorConsole.vue'
+import Orders from './components/profile/Orders.vue'
 import Help from './components/communication/Help.vue'
 import PrivacyPolicy from './components/legal/PrivacyPolicy.vue'
 import TermsConditions from './components/legal/TermsConditions.vue'
@@ -410,8 +412,8 @@ const handleUploadWork = async (data) => {
   loadingMessage.value = 'Weaving your work into the heritage...';
   try {
     await db.execute({
-      sql: 'INSERT INTO products (name, price, description, image, category_id, owner_id) VALUES (?, ?, ?, ?, ?, ?)',
-      args: [data.name, data.price, data.description, data.image, data.category_id, userData.value.id]
+      sql: 'INSERT INTO products (name, price, description, image, category_id, owner_id, status, variants_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      args: [data.name, data.price, data.description, data.image, data.category_id, userData.value.id, data.status, data.variants_json]
     });
     window.alert('Work published successfully!');
     await fetchInitialData();
@@ -435,23 +437,6 @@ const handleFeedback = async (msg) => {
     navigateTo('settings');
   } catch (e) {
     console.error('Feedback error:', e);
-  } finally {
-    isGlobalLoading.value = false;
-  }
-}
-
-const handleUpdateProfile = async (val) => {
-  isGlobalLoading.value = true;
-  loadingMessage.value = 'Updating your heritage profile...';
-  userData.value = val; 
-  try {
-    await db.execute({
-      sql: 'UPDATE users SET username = ?, first_name = ?, last_name = ?, whatsapp = ?, user_type = ?, needs = ?, gives = ? WHERE id = ?',
-      args: [val.username, val.firstName, val.lastName, val.whatsapp, val.userType, val.needs, val.gives, val.id]
-    });
-    navigateTo('profile');
-  } catch (e) {
-    console.error('Profile update error:', e);
   } finally {
     isGlobalLoading.value = false;
   }
@@ -484,6 +469,28 @@ const handleProductDelete = async (productId) => {
   }
 }
 
+const handleUpdateRole = async (newRole) => {
+  if (userData.value.id === 'guest') return
+  
+  isGlobalLoading.value = true
+  loadingMessage.value = 'Switching roles...'
+  
+  try {
+    await db.execute({
+      sql: 'UPDATE users SET user_type = ? WHERE id = ?',
+      args: [newRole, userData.value.id]
+    })
+    
+    userData.value.userType = newRole
+    window.alert(`Role successfully switched to ${newRole === 'supplier' ? 'Tailor' : 'Buyer'}!`)
+  } catch (e) {
+    console.error('Role update error:', e)
+    window.alert('Error switching roles. Please try again.')
+  } finally {
+    isGlobalLoading.value = false
+  }
+}
+
 const handleLogout = () => {
   // Reset user data to guest but keep personal preferences like theme/language in storage if desired
   // Here we just reset the reactive state and update localStorage selectively
@@ -509,42 +516,72 @@ const handleLogout = () => {
   navigateTo('login');
 }
 
-const handleSearch = (query) => {
-  const q = query.toLowerCase();
-  
-  // 1. Search products (name or description)
-  const products = allProducts.value.filter(p => 
-    p.name.toLowerCase().includes(q) || 
-    p.description.toLowerCase().includes(q)
-  );
-  
-  // 2. Search by category name
-  const catMatchIds = categories.value
-    .filter(c => c.name.toLowerCase().includes(q))
-    .map(c => c.id);
+const handleSearch = async (query) => {
+  isGlobalLoading.value = true;
+  loadingMessage.value = 'Searching the heritage...';
+  try {
+    const q = `%${query.toLowerCase()}%`;
+    const res = await db.execute({
+      sql: `
+        SELECT p.*, u.username as owner_username, c.name as category_name
+        FROM products p
+        LEFT JOIN categories c ON p.category_id = c.id
+        LEFT JOIN users u ON p.owner_id = u.id
+        WHERE p.name LIKE ? 
+           OR p.description LIKE ? 
+           OR c.name LIKE ? 
+           OR u.username LIKE ?
+        ORDER BY p.likes_count DESC
+      `,
+      args: [q, q, q, q]
+    });
     
-  const catProducts = allProducts.value.filter(p => catMatchIds.includes(p.category_id));
-
-  // 3. Search by seller name
-  const sellerMatchIds = trendingSellers.value
-    .filter(s => s.name.toLowerCase().includes(q))
-    .map(s => s.id);
-  const sellerProducts = allProducts.value.filter(p => sellerMatchIds.includes(p.owner_id));
-  
-  // Combine all results and remove duplicates
-  const combined = [...products, ...catProducts, ...sellerProducts];
-  const uniqueResults = [];
-  const seenIds = new Set();
-  
-  for (const item of combined) {
-    if (!seenIds.has(item.id)) {
-      uniqueResults.push(item);
-      seenIds.add(item.id);
+    // Fetch favorites
+    let favoriteIds = [];
+    if (userData.value.id !== 'guest') {
+      const favRes = await db.execute({
+        sql: "SELECT product_id FROM favorites WHERE user_id = ?",
+        args: [userData.value.id]
+      });
+      favoriteIds = favRes.rows.map(f => f.product_id);
     }
+    
+    searchResults.value = res.rows.map(p => ({
+      ...p,
+      liked: favoriteIds.includes(p.id)
+    }));
+    
+    navigateTo('search-results');
+  } catch (e) {
+    console.error('Search error:', e);
+  } finally {
+    isGlobalLoading.value = false;
   }
-  
-  searchResults.value = uniqueResults;
-  navigateTo('search-results');
+}
+
+const handleUpdateProfile = async (val) => {
+  isGlobalLoading.value = true;
+  loadingMessage.value = 'Updating your heritage profile...';
+  try {
+    await db.execute({
+      sql: `
+        UPDATE users 
+        SET username = ?, first_name = ?, last_name = ?, whatsapp = ?, avatar = ?, user_type = ?, needs = ?, gives = ?
+        WHERE id = ?
+      `,
+      args: [val.username, val.firstName, val.lastName, val.whatsapp, val.avatar, val.userType, val.needs, val.gives, val.id]
+    });
+    
+    userData.value = { ...val };
+    window.alert('Profile updated successfully!');
+    await fetchInitialData();
+    navigateTo('profile');
+  } catch (e) {
+    console.error('Update profile error:', e);
+    window.alert('Failed to update profile. Username might be taken.');
+  } finally {
+    isGlobalLoading.value = false;
+  }
 }
 </script>
 
@@ -555,9 +592,11 @@ const handleSearch = (query) => {
     <WebHeader 
       v-if="showNavBar" 
       :active-tab="currentScreen"
+      :theme="theme"
       :t="t"
       @navigate="navigateTo"
       @go-notifications="navigateTo('notifications')"
+      @toggle-theme="() => theme = (theme === 'light' ? 'dark' : 'light')"
     />
 
     <!-- SPLASH SCREEN -->
@@ -624,8 +663,22 @@ const handleSearch = (query) => {
       @go-back="navigateTo('home')"
       @go-edit-profile="navigateTo('edit-profile')"
       @go-settings="navigateTo('settings')"
+      @go-console="navigateTo('tailor-console')"
+      @go-orders="navigateTo('orders')"
       @go-upload="navigateTo('upload-work')"
       @logout="handleLogout"
+    />
+
+    <TailorConsole v-else-if="currentScreen === 'tailor-console'"
+      :user-data="userData"
+      :t="t"
+      @go-back="navigateTo('profile')"
+    />
+
+    <Orders v-else-if="currentScreen === 'orders'"
+      :user-data="userData"
+      :t="t"
+      @go-back="navigateTo('profile')"
     />
 
     <!-- SHOP & EXPLORE PAGES -->
@@ -737,7 +790,7 @@ const handleSearch = (query) => {
   margin: 0 auto;
   position: relative;
   min-height: 100vh;
-  background-color: var(--bg-white);
+  background-color: transparent;
   box-shadow: var(--shadow-md);
   overflow-x: hidden;
 }

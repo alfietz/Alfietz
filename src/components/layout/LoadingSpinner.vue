@@ -76,7 +76,7 @@ defineProps({
 .loading-text {
   font-size: 14px;
   font-weight: 600;
-  color: #5D4037; /* --secondary-brown */
+  color: var(--text-primary); /* --secondary-brown */
   margin: 0;
   letter-spacing: 0.5px;
 }

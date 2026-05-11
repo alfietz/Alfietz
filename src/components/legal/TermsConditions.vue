@@ -32,13 +32,13 @@ defineEmits(['go-back'])
 </template>
 
 <style scoped>
-.document-page { background-color: var(--bg-white); min-height: 100vh; padding: 24px 20px; display: flex; flex-direction: column; }
+.document-page { background-color: var(--wood-deep); min-height: 100vh; padding: 24px 20px; display: flex; flex-direction: column; }
 .header-row { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; flex-shrink: 0; }
-.title { font-size: 22px; font-weight: 600; color: var(--secondary-brown); margin: 0; }
+.title { font-size: 22px; font-weight: 600; color: var(--text-primary); margin: 0; }
 
 .content-scroll { flex: 1; overflow-y: auto; padding-bottom: 40px; }
 .last-updated { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; font-style: italic; }
-h2 { font-size: 16px; font-weight: 600; color: var(--secondary-brown); margin: 24px 0 8px 0; }
-p { font-size: 14px; color: var(--text-main); line-height: 1.6; margin: 0 0 16px 0; }
-strong { color: var(--primary-green); }
+h2 { font-size: 16px; font-weight: 600; color: var(--text-primary); margin: 24px 0 8px 0; }
+p { font-size: 14px; color: var(--text-primary); line-height: 1.6; margin: 0 0 16px 0; }
+strong { color: var(--text-amber); }
 </style>

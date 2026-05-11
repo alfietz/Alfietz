@@ -79,7 +79,7 @@ const handleSearch = () => {
 
 <style scoped>
 .search-page {
-  background-color: var(--bg-white);
+  background-color: var(--wood-deep);
   min-height: 100vh;
   padding: 20px;
   display: flex;
@@ -94,7 +94,7 @@ const handleSearch = () => {
 .search-bar {
   display: flex;
   align-items: center;
-  background-color: var(--primary-tan);
+  background-color: var(--wood-walnut);
   border-radius: 12px;
   padding: 12px 16px;
 }
@@ -111,7 +111,7 @@ const handleSearch = () => {
   outline: none;
   width: 100%;
   font-size: 15px;
-  color: var(--text-main);
+  color: var(--text-primary);
 }
 
 /* Browse Section */
@@ -123,7 +123,7 @@ const handleSearch = () => {
   font-size: 16px;
   font-weight: 700;
   margin-bottom: 16px;
-  color: var(--secondary-brown);
+  color: var(--text-primary);
 }
 
 .category-chips {
@@ -133,8 +133,8 @@ const handleSearch = () => {
 }
 
 .cat-chip {
-  background: var(--bg-white);
-  border: 1px solid var(--primary-tan);
+  background: var(--wood-deep);
+  border: 1px solid var(--wood-walnut);
   padding: 10px 16px;
   border-radius: 20px;
   display: flex;
@@ -145,18 +145,18 @@ const handleSearch = () => {
 }
 
 .cat-chip:hover {
-  background: var(--primary-tan);
+  background: var(--wood-walnut);
 }
 
 .chip-name {
   font-size: 14px;
   font-weight: 600;
-  color: var(--text-main);
+  color: var(--text-primary);
 }
 
 .chip-example {
   font-size: 10px;
-  color: var(--primary-green);
+  color: var(--text-amber);
   font-style: italic;
 }
 
@@ -174,7 +174,7 @@ const handleSearch = () => {
 .icon-circle {
   width: 80px;
   height: 80px;
-  background-color: var(--primary-green);
+  background-color: var(--text-amber);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -185,7 +185,7 @@ const handleSearch = () => {
 .empty-title {
   font-size: 18px;
   font-weight: 700;
-  color: var(--text-main);
+  color: var(--text-primary);
   margin: 0 0 12px 0;
 }
 

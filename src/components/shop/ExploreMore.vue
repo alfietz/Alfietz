@@ -44,7 +44,7 @@ defineEmits(['go-back', 'go-details', 'toggle-like'])
 
 <style scoped>
 .explore-page {
-  background-color: var(--bg-white);
+  background-color: var(--wood-deep);
   min-height: 100vh;
   padding: 24px 20px;
 }
@@ -60,31 +60,25 @@ defineEmits(['go-back', 'go-details', 'toggle-like'])
 .title {
   font-size: 22px;
   font-weight: 600;
-  color: var(--secondary-brown);
+  color: var(--text-primary);
   margin: 0;
 }
 
 .explore-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(1, 1fr);
   gap: 16px;
 }
 
 @media (min-width: 768px) {
   .explore-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (min-width: 1024px) {
-  .explore-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (min-width: 1280px) {
   .explore-grid {
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 </style>

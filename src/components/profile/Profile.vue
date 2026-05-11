@@ -56,10 +56,17 @@ const showLogoutDialog = ref(false)
           <span class="stat-label">{{ t('stats') }}</span>
         </div>
       </div>
-      <button class="primary-btn upload-btn" @click="$emit('go-upload')">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        {{ t('uploadWork') }}
-      </button>
+      
+      <div class="dashboard-actions">
+        <button class="console-btn" @click="$emit('go-console')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6" y2="6"/><line x1="6" y1="18" x2="6" y2="18"/></svg>
+          Tailor Console
+        </button>
+        <button class="primary-btn upload-btn" @click="$emit('go-upload')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          {{ t('uploadWork') }}
+        </button>
+      </div>
     </div>
 
     <!-- User Value Proposition (Needs/Gives) -->
@@ -67,26 +74,34 @@ const showLogoutDialog = ref(false)
       <div class="info-card">
         <h3 class="info-title">{{ userData.userType === 'buyer' ? t('needs') : t('gives') }}</h3>
         <p class="info-text">
-          {{ userData.userType === 'buyer' ? (userData.needs || '...') : (userData.gives || '...') }}
+          {{ userData.userType === 'buyer' ? (userData.needs || 'No specific needs listed.') : (userData.gives || 'No specific offerings listed.') }}
         </p>
       </div>
     </div>
 
     <!-- Menu List -->
     <div class="menu-list">
-      <div class="menu-item" @click="$emit('go-settings')">
+      <div class="menu-item" @click="$emit('go-orders')">
         <div class="menu-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-amber)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
         </div>
-        <span class="menu-text">{{ t('settings') }}</span>
-        <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A0A0A0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+        <span class="menu-text">{{ userData.userType === 'supplier' ? t('salesAndOrders') : t('heritageJourney') }}</span>
+        <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
       </div>
 
-      <div class="menu-item logout" @click="showLogoutDialog = true">
+      <div class="menu-item" @click="$emit('go-settings')">
         <div class="menu-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E48F6D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-amber)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         </div>
-        <span class="menu-text" style="color: #E48F6D;">{{ t('logout') }}</span>
+        <span class="menu-text">{{ t('settings') }}</span>
+        <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </div>
+
+      <div class="menu-item logout-trigger" @click="showLogoutDialog = true">
+        <div class="menu-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </div>
+        <span class="menu-text" style="color: #EF4444;">{{ t('logout') }}</span>
       </div>
     </div>
 
@@ -100,18 +115,18 @@ const showLogoutDialog = ref(false)
 </template>
 
 <style scoped>
-.profile-page { background-color: var(--bg-white); min-height: 100vh; padding: 24px 20px; }
+.profile-page { background-color: var(--wood-deep); min-height: 100vh; padding: 24px 20px; }
 .header-row { display: flex; align-items: center; gap: 16px; margin-bottom: 32px; }
-.back-btn { background-color: #F5F5F5; border: none; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-main); }
-.title { font-size: 22px; font-weight: 600; color: var(--secondary-brown); margin: 0; }
+.back-btn { background: var(--wood-polished); border: none; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-primary); }
+.title { font-size: 22px; font-weight: 600; color: var(--text-primary); margin: 0; }
 .user-header { display: flex; flex-direction: column; align-items: center; margin-bottom: 40px; }
 .avatar { width: 88px; height: 88px; border-radius: 50%; object-fit: cover; margin-bottom: 16px; }
 .name-badge-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-.user-name { font-size: 20px; font-weight: 600; color: var(--text-main); margin: 0; }
-.user-type-badge { background: var(--primary-green); color: white; font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 2px 8px; border-radius: 10px; }
-.user-username { font-size: 13px; color: var(--primary-green); font-weight: 600; margin: 4px 0 2px 0; }
+.user-name { font-size: 20px; font-weight: 600; color: var(--text-primary); margin: 0; }
+.user-type-badge { background: var(--accent-amber); color: white; font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 2px 8px; border-radius: 10px; }
+.user-username { font-size: 13px; color: var(--text-amber); font-weight: 600; margin: 4px 0 2px 0; }
 .user-email { font-size: 14px; color: var(--text-muted); margin: 0 0 16px 0; }
-.edit-btn { background: transparent; border: 1px solid var(--primary-green); color: var(--primary-green); padding: 8px 24px; border-radius: 20px; font-size: 14px; font-weight: 600; cursor: pointer; }
+.edit-btn { background: transparent; border-color: var(--accent-amber); color: var(--text-amber); padding: 8px 24px; border-radius: 20px; font-size: 14px; font-weight: 600; cursor: pointer; }
 
 .artisan-dashboard {
   margin-bottom: 32px;
@@ -125,8 +140,8 @@ const showLogoutDialog = ref(false)
 
 .stat-card {
   flex: 1;
-  background: var(--bg-white);
-  border: 1px solid var(--border-light);
+  background: var(--wood-deep);
+  border: 1px solid var(--glass-border);
   padding: 16px;
   border-radius: var(--radius-md);
   text-align: center;
@@ -137,7 +152,7 @@ const showLogoutDialog = ref(false)
   display: block;
   font-size: 20px;
   font-weight: 800;
-  color: var(--primary-green);
+  color: var(--text-amber);
 }
 
 .stat-label {
@@ -145,6 +160,33 @@ const showLogoutDialog = ref(false)
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+.dashboard-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.console-btn {
+  background: var(--wood-walnut);
+  border: 1px solid var(--accent-amber);
+  color: var(--accent-amber);
+  padding: 14px;
+  border-radius: var(--radius-md);
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.3s;
+  box-shadow: 0 4px 15px var(--accent-glow);
+}
+
+.console-btn:hover {
+  background: var(--wood-polished);
+  transform: translateY(-2px);
 }
 
 .upload-btn {
@@ -155,14 +197,18 @@ const showLogoutDialog = ref(false)
 }
 
 .info-section { margin-bottom: 32px; }
-.info-card { background: var(--primary-tan); padding: 20px; border-radius: 16px; border: 1px dashed var(--primary-green); }
-.info-title { font-size: 14px; font-weight: 700; color: var(--secondary-brown); text-transform: uppercase; margin: 0 0 8px 0; letter-spacing: 0.5px; }
-.info-text { font-size: 14px; color: var(--text-main); line-height: 1.5; margin: 0; }
+.info-card { background: var(--wood-walnut); padding: 20px; border-radius: 16px; border: 1px dashed var(--accent-amber); }
+.info-title { font-size: 14px; font-weight: 700; color: var(--text-primary); text-transform: uppercase; margin: 0 0 8px 0; letter-spacing: 0.5px; }
+.info-text { font-size: 14px; color: var(--text-muted); line-height: 1.5; margin: 0; }
 
 .menu-list { display: flex; flex-direction: column; gap: 16px; }
-.menu-item { display: flex; align-items: center; padding: 16px; background: var(--primary-tan); border-radius: 16px; cursor: pointer; transition: transform 0.2s; }
-.menu-item:hover { transform: translateY(-2px); opacity: 0.9; }
-.menu-icon { width: 40px; height: 40px; border-radius: 50%; background: var(--bg-white); display: flex; align-items: center; justify-content: center; margin-right: 16px; }
-.menu-text { flex: 1; font-size: 16px; font-weight: 500; color: var(--text-main); }
-.chevron { color: #A0A0A0; }
+.menu-item { display: flex; align-items: center; padding: 16px; background: var(--wood-walnut); border: 1px solid var(--glass-border); border-radius: 16px; cursor: pointer; transition: all 0.3s; }
+.menu-item:hover { border-color: var(--accent-amber); transform: translateX(4px); }
+.menu-icon { width: 40px; height: 40px; border-radius: 12px; background: var(--wood-deep); display: flex; align-items: center; justify-content: center; margin-right: 16px; }
+.menu-text { flex: 1; font-size: 16px; font-weight: 600; color: var(--text-primary); }
+.chevron { color: var(--text-muted); }
+
+.logout-trigger:hover {
+  border-color: #EF4444;
+}
 </style>

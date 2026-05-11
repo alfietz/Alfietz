@@ -113,6 +113,9 @@ export const translations = {
     editProfileBtn: "Hariri Wasifu",
     personalInfo: "Taarifa Binafsi",
     myHeritage: "Urithi Wangu",
-    stats: "Takwimu"
+    stats: "Takwimu",
+    accountType: "Aina ya Akaunti",
+    heritageJourney: "Safari Yangu ya Urithi",
+    salesAndOrders: "Mauzo na Oda"
   }
 };

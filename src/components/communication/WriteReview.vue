@@ -39,7 +39,7 @@ defineEmits(['go-back', 'submit'])
 
 <style scoped>
 .write-review-page {
-  background-color: #FFFFFF;
+  background: var(--wood-deep);
   min-height: 100vh;
   font-family: 'Inter', -apple-system, sans-serif;
   padding: 24px 20px;
@@ -57,7 +57,7 @@ defineEmits(['go-back', 'submit'])
 }
 
 .back-btn {
-  background-color: #F5F5F5;
+  background: var(--wood-polished);
   border: none;
   border-radius: 50%;
   width: 40px;
@@ -66,13 +66,13 @@ defineEmits(['go-back', 'submit'])
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #1A1A1A;
+  color: var(--text-primary);
 }
 
 .title {
   font-size: 22px;
   font-weight: 600;
-  color: #1A1A1A;
+  color: var(--text-primary);
   margin: 0;
 }
 
@@ -85,11 +85,11 @@ defineEmits(['go-back', 'submit'])
 .review-input {
   width: 100%;
   height: 180px;
-  border: 1px solid #E5E5E5;
+  border: 1px solid var(--glass-border);
   border-radius: 12px;
   padding: 16px;
   font-size: 15px;
-  color: #333;
+  color: var(--text-primary);
   outline: none;
   resize: none;
   font-family: inherit;
@@ -97,17 +97,17 @@ defineEmits(['go-back', 'submit'])
 }
 
 .review-input:focus {
-  border-color: #5D8374;
+  border-color: var(--text-amber);
 }
 
 .review-input::placeholder {
-  color: #A0A0A0;
+  color: var(--text-muted);
 }
 
 .char-count {
   text-align: right;
   font-size: 11px;
-  color: #5D8374; /* App green color from design */
+  color: var(--text-amber); /* App green color from design */
   margin-top: 8px;
 }
 
@@ -118,7 +118,7 @@ defineEmits(['go-back', 'submit'])
 
 .primary-btn {
   width: 100%;
-  background: #5D8374;
+  background: var(--accent-amber);
   color: white;
   border: none;
   border-radius: 12px;

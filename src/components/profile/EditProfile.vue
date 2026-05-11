@@ -11,8 +11,39 @@ const props = defineProps({
 
 const tempUser = ref({ ...props.userData })
 const errorMessage = ref('')
+const isUploading = ref(false)
+const IMGBB_API_KEY = '789903544b6554a772331b1ffe6e4cc4'
 
 const emit = defineEmits(['go-back', 'update:user-data'])
+
+const handleImageUpload = async (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+  
+  isUploading.value = true
+  errorMessage.value = ''
+  
+  const formData = new FormData()
+  formData.append('image', file)
+  
+  try {
+    const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+      method: 'POST',
+      body: formData
+    })
+    const result = await response.json()
+    if (result.success) {
+      tempUser.value.avatar = result.data.url
+    } else {
+      throw new Error(result.error?.message || 'Upload failed')
+    }
+  } catch (err) {
+    console.error('Avatar Upload Error:', err)
+    errorMessage.value = 'Failed to upload image.'
+  } finally {
+    isUploading.value = false
+  }
+}
 
 const validateForm = () => {
   if (!tempUser.value.username || !tempUser.value.firstName || !tempUser.value.lastName || !tempUser.value.whatsapp) {
@@ -51,11 +82,15 @@ const saveChanges = () => {
 
     <!-- Avatar Section -->
     <div class="avatar-section">
-      <div class="avatar-wrapper">
+      <div class="avatar-wrapper" :class="{ uploading: isUploading }">
         <img :src="tempUser.avatar" alt="Avatar" class="avatar-img" />
-        <button class="camera-btn">
+        <label class="camera-btn">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-        </button>
+          <input type="file" accept="image/*" class="hidden-input" @change="handleImageUpload" />
+        </label>
+        <div v-if="isUploading" class="upload-spinner-overlay">
+          <div class="mini-loader"></div>
+        </div>
       </div>
       <div class="user-info">
         <h2 class="user-name">{{ tempUser.firstName }} {{ tempUser.lastName }}</h2>
@@ -142,7 +177,7 @@ const saveChanges = () => {
 <style scoped>
 .error-message { color: #E53935; font-size: 13px; font-weight: 500; margin: 12px 0; text-align: center; }
 .profile-page {
-  background-color: var(--bg-white);
+  background-color: var(--wood-deep);
   min-height: 100vh;
   padding: 24px 20px;
   display: flex;
@@ -157,7 +192,7 @@ const saveChanges = () => {
 }
 
 .back-btn {
-  background-color: #F5F5F5;
+  background: var(--wood-polished);
   border: none;
   border-radius: 50%;
   width: 40px;
@@ -171,7 +206,7 @@ const saveChanges = () => {
 .title {
   font-size: 22px;
   font-weight: 600;
-  color: var(--secondary-brown);
+  color: var(--text-primary);
   margin: 0;
 }
 
@@ -194,12 +229,40 @@ const saveChanges = () => {
   object-fit: cover;
 }
 
+.hidden-input {
+  display: none;
+}
+
+.upload-spinner-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mini-loader {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--accent-amber);
+  border-bottom-color: transparent;
+  border-radius: 50%;
+  animation: rotation 1s linear infinite;
+}
+
+@keyframes rotation {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 .camera-btn {
   position: absolute;
   bottom: 0;
   right: 0;
   background: white;
-  border: 1px solid #E5E5E5;
+  border: 1px solid var(--glass-border);
   border-radius: 50%;
   width: 24px;
   height: 24px;
@@ -214,7 +277,7 @@ const saveChanges = () => {
   margin: 0 0 4px 0;
   font-size: 16px;
   font-weight: 600;
-  color: var(--text-main);
+  color: var(--text-primary);
 }
 
 .user-email {
@@ -241,7 +304,7 @@ const saveChanges = () => {
   position: absolute;
   top: -8px;
   left: 12px;
-  background: var(--bg-white);
+  background: var(--wood-deep);
   padding: 0 4px;
   font-size: 11px;
   color: var(--text-light);
@@ -249,18 +312,18 @@ const saveChanges = () => {
 }
 
 .input-group input {
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--glass-border);
   border-radius: 12px;
   padding: 16px;
   font-size: 15px;
-  color: var(--text-main);
+  color: var(--text-primary);
   background: transparent;
   outline: none;
   transition: border-color 0.2s;
 }
 
 .input-group input:focus {
-  border-color: #5D8374;
+  border-color: var(--text-amber);
 }
 
 .user-type-group {
@@ -284,8 +347,8 @@ const saveChanges = () => {
   flex: 1;
   padding: 12px;
   border-radius: var(--radius-md);
-  border: 1px solid var(--border-light);
-  background: var(--bg-white);
+  border: 1px solid var(--glass-border);
+  background: var(--wood-deep);
   color: var(--text-muted);
   font-size: 14px;
   font-weight: 600;
@@ -294,9 +357,9 @@ const saveChanges = () => {
 }
 
 .type-btn.active {
-  background: var(--primary-green);
+  background: var(--accent-amber);
   color: white;
-  border-color: var(--primary-green);
+  border-color: var(--text-amber);
 }
 
 .textarea-group {
@@ -304,11 +367,11 @@ const saveChanges = () => {
 }
 
 .bio-textarea {
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--glass-border);
   border-radius: 12px;
   padding: 16px;
   font-size: 15px;
-  color: var(--text-main);
+  color: var(--text-primary);
   background: transparent;
   outline: none;
   min-height: 100px;
@@ -317,7 +380,7 @@ const saveChanges = () => {
 }
 
 .bio-textarea:focus {
-  border-color: var(--primary-green);
+  border-color: var(--text-amber);
 }
 
 /* Disabled Input Specifics */
@@ -326,7 +389,7 @@ const saveChanges = () => {
 }
 
 .disabled-input {
-  background-color: var(--primary-tan) !important;
+  background-color: var(--wood-walnut) !important;
   color: var(--text-light) !important;
   border: none !important;
 }
@@ -339,7 +402,7 @@ const saveChanges = () => {
 
 .primary-btn {
   width: 100%;
-  background: #5D8374;
+  background: var(--accent-amber);
   color: white;
   border: none;
   border-radius: 12px;
