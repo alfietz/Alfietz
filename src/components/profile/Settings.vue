@@ -31,7 +31,10 @@ const setLanguage = (lang) => {
 }
 
 const openWhatsAppSupport = () => {
-  const url = `https://wa.me/255700000000?text=${encodeURIComponent("Hello Alfie Support, I need help with...")}`
+  const userName = props.userData.firstName || props.userData.username
+  const message = `Hello Alfie Support Team! 👋\n\nMy name is ${userName}. I'm currently using the Alfietz app and I'd like to reach out for some assistance. ✨\n\n[Please describe your issue or question here]\n\nThank you for your help!\n\nBest regards,\n${userName} ✍️`
+  
+  const url = `https://wa.me/255700000000?text=${encodeURIComponent(message)}`
   window.open(url, '_blank')
 }
 </script>

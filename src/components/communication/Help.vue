@@ -2,7 +2,22 @@
 <script setup>
 import { ref } from 'vue'
 
+const props = defineProps({
+  userData: {
+    type: Object,
+    required: true
+  }
+})
+
 defineEmits(['go-back'])
+
+const openWhatsAppSupport = () => {
+  const userName = props.userData.firstName || props.userData.username
+  const message = `Hello Alfie Support Team! 👋\n\nMy name is ${userName}. I'm reaching out from the Help Center for some assistance. ✨\n\n[Please describe your issue or question here]\n\nThank you for your help!\n\nBest regards,\n${userName} ✍️`
+  
+  const url = `https://wa.me/255700000000?text=${encodeURIComponent(message)}`
+  window.open(url, '_blank')
+}
 
 const faqs = ref([
   { 
@@ -50,7 +65,7 @@ const toggleFaq = (index) => {
         <h3>Need custom support?</h3>
         <p>Chat directly with REBi Group support.</p>
       </div>
-      <button class="chat-btn">Chat</button>
+      <button class="chat-btn" @click="openWhatsAppSupport">Chat</button>
     </div>
 
     <!-- FAQ Section -->

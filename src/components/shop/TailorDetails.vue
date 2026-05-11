@@ -9,6 +9,10 @@ const props = defineProps({
     type: Object,
     required: true
   },
+  userData: {
+    type: Object,
+    required: true
+  },
   portfolio: {
     type: Array,
     default: () => DEFAULT_PORTFOLIO
@@ -25,11 +29,14 @@ const hasConnected = ref(false)
 
 const connectToWhatsApp = () => {
   let phoneNumber = props.seller.whatsapp || "255700000000";
-  if (phoneNumber.startsWith('0')) {
-    phoneNumber = '+255' + phoneNumber.substring(1);
-  } 
-  const message = `Hello! I'm interested in commissioning a custom piece from you.`;
-  const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+  let normalized = phoneNumber.startsWith('0') ? '255' + phoneNumber.slice(1) : phoneNumber.replace('+', '')
+  
+  const buyerName = props.userData.firstName || props.userData.username
+  const tailorName = props.seller.firstName || props.seller.name || props.seller.username
+
+  const message = `Hello ${tailorName}! ✂️\n\nMy name is ${buyerName}, and I've been admiring your incredible work on Alfietz! 🌟\n\nI'm very interested in commissioning a custom piece from you and would love to discuss how we can bring a new heritage vision to life. 🧵✨\n\nLooking forward to hearing from you!\n\nBest regards,\n${buyerName} ✍️`;
+  
+  const url = `https://wa.me/${normalized}?text=${encodeURIComponent(message)}`;
   window.open(url, '_blank');
   hasConnected.value = true
 }

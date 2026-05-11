@@ -25,7 +25,7 @@ const fetchOrders = async () => {
   try {
     const res = await db.execute({
       sql: `
-        SELECT o.*, u.username as tailor_name 
+        SELECT o.*, u.username as tailor_name, u.whatsapp as tailor_phone, u.first_name as tailor_first_name
         FROM orders o 
         JOIN users u ON o.tailor_id = u.id 
         WHERE o.customer_id = ? 
@@ -38,6 +38,8 @@ const fetchOrders = async () => {
       id: o.id,
       item: o.item_name,
       tailor: o.tailor_name,
+      tailorFirstName: o.tailor_first_name,
+      tailorPhone: o.tailor_phone,
       date: new Date(o.created_at).toLocaleDateString(),
       price: o.price,
       status: o.status,
@@ -54,8 +56,19 @@ const getStatusClass = (status) => {
   return ''
 }
 
-const openWhatsApp = (phone, message = '') => {
-  const url = `https://wa.me/${phone.replace('+', '')}?text=${encodeURIComponent(message)}`
+const openWhatsApp = (order) => {
+  if (!order.tailorPhone) {
+    alert("Tailor contact info not available.");
+    return;
+  }
+  let normalized = order.tailorPhone.startsWith('0') ? '255' + order.tailorPhone.slice(1) : order.tailorPhone.replace('+', '')
+  
+  const buyerName = props.userData.firstName || props.userData.username
+  const tailorName = order.tailorFirstName || order.tailor
+
+  const message = `Hi ${tailorName}! 👋\n\nThis is ${buyerName}. I'm reaching out regarding my order #${order.id} for the "${order.item}". 📦\n\nI'd like to check on its status and see if there are any updates! Thank you for your amazing craft. ✨\n\nBest regards,\n${buyerName} ✍️`;
+  
+  const url = `https://wa.me/${normalized}?text=${encodeURIComponent(message)}`
   window.open(url, '_blank')
 }
 </script>
@@ -90,6 +103,10 @@ const openWhatsApp = (phone, message = '') => {
             <span class="order-price">{{ order.price }}</span>
             <span class="order-date">{{ order.date }}</span>
           </div>
+          <button class="message-tailor-btn" @click="openWhatsApp(order)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-13.4 8.38 8.38 0 0 1 3.8.9L21 3z"/></svg>
+            Message Tailor
+          </button>
         </div>
       </div>
     </div>
@@ -146,6 +163,36 @@ const openWhatsApp = (phone, message = '') => {
   overflow: hidden;
   background: var(--wood-deep);
   flex-shrink: 0;
+}
+
+.order-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.message-tailor-btn {
+  margin-top: 8px;
+  background: var(--accent-amber);
+  color: var(--wood-deep);
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: fit-content;
+}
+
+.message-tailor-btn:hover {
+  background: var(--accent-gold);
+  transform: scale(1.02);
 }
 
 .order-image img {

@@ -15,6 +15,10 @@ const props = defineProps({
   currentUserId: {
     type: String,
     required: true
+  },
+  userData: {
+    type: Object,
+    required: true
   }
 })
 
@@ -59,6 +63,7 @@ onMounted(async () => {
           p.*, 
           u.whatsapp as sellerPhone,
           u.username as sellerName,
+          u.first_name as sellerFirstName,
           c.name as categoryName
         FROM products p 
         LEFT JOIN users u ON p.owner_id = u.id
@@ -190,21 +195,31 @@ const connectToWhatsApp = (withOffer = false) => {
   }
   
   // Normalize Tanzania numbers
-  let normalized = phoneNumber.startsWith('0') ? '+255' + phoneNumber.slice(1) : phoneNumber
+  let normalized = phoneNumber.startsWith('0') ? '255' + phoneNumber.slice(1) : phoneNumber.replace('+', '')
   
-  let message = `Hello! I'm interested in ordering:
-Product: ${product.value.name}
-Price: ${product.value.price}
-Size: ${selectedSize.value}
-Color: ${variant.name} (${variant.hex})`
+  const buyerName = props.userData.firstName || props.userData.username
+  const sellerName = product.value.sellerFirstName || product.value.sellerName
+
+  let message = `Jambo ${sellerName}! ✨\n\n`
+  message += `My name is ${buyerName}, and I'm absolutely in love with your piece "${product.value.name}" on Alfietz! 😍\n\n`
+  message += `I'd like to place an order with these details:\n`
+  message += `🔹 Product: ${product.value.name}\n`
+  message += `🔹 Price: ${product.value.price}\n`
+  message += `🔹 Size: ${selectedSize.value}\n`
+  message += `🔹 Color: ${variant.name}\n`
 
   if (specialInstructions.value.trim()) {
-    message += `\n\nSpecial Requirements: ${specialInstructions.value.trim()}`
+    message += `\n📝 Special Requirements: ${specialInstructions.value.trim()}\n`
   }
   
   if (withOffer && offerAmount.value) {
-    message += `\n\nI'd like to make an offer of TSh ${offerAmount.value}. Would you consider this?`
+    message += `\n💰 My Offer: TSh ${offerAmount.value}\n`
+    message += `Would you be open to this offer? I'd love to make this heritage piece mine!\n`
+  } else {
+    message += `\nCould you please let me know how we can proceed with the payment and delivery? 🚚\n`
   }
+
+  message += `\nBest regards,\n${buyerName} ✍️`
 
   const url = `https://wa.me/${normalized}?text=${encodeURIComponent(message)}`
   window.open(url, '_blank')

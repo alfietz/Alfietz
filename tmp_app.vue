@@ -1,14 +1,52 @@
+<!-------- (App.vue) ./src/App.vue ------------>
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { db } from './db/client'
-import { useRouter, useRoute } from 'vue-router'
 
 // ==========================================
-// 1. IMPORT GLOBAL COMPONENTS
+// 1. IMPORT ALL COMPONENTS
 // ==========================================
 import NavigationBar from './components/layout/NavigationBar.vue'
 import WebHeader from './components/layout/WebHeader.vue'
 import LoadingSpinner from './components/layout/LoadingSpinner.vue'
+
+// Intro & Auth
+import Splash from './components/layout/Splash.vue'
+import Login from './components/auth/Login.vue'
+import SignUp from './components/auth/SignUp.vue'
+import ForgotPassword from './components/auth/ForgotPassword.vue'
+import VerifyCode from './components/auth/VerifyCode.vue'
+import ResetPassword from './components/auth/ResetPassword.vue'
+
+// Main Tabs
+import Home from './components/shop/Home.vue'
+import FavoritesList from './components/profile/FavoritesList.vue'
+import Profile from './components/profile/Profile.vue'
+
+// Sub-pages (Shop/Explore)
+import ProductDetails from './components/shop/ProductDetails.vue'
+import ExploreMore from './components/shop/ExploreMore.vue'
+import Notifications from './components/profile/Notifications.vue'
+import SearchPage from './components/shop/SearchPage.vue'
+import SearchResults from './components/shop/SearchResults.vue'
+import CategoryList from './components/shop/CategoryList.vue'
+import TailorDetails from './components/shop/TailorDetails.vue'
+import UploadWork from './components/shop/UploadWork.vue'
+
+// Sub-pages (Reviews)
+import ReviewsList from './components/communication/ReviewsList.vue'
+import WriteReview from './components/communication/WriteReview.vue'
+
+// Sub-pages (Profile & Settings)
+import EditProfile from './components/profile/EditProfile.vue'
+import Settings from './components/profile/Settings.vue'
+import TailorConsole from './components/profile/TailorConsole.vue'
+import Orders from './components/profile/Orders.vue'
+import Help from './components/communication/Help.vue'
+import PrivacyPolicy from './components/legal/PrivacyPolicy.vue'
+import TermsConditions from './components/legal/TermsConditions.vue'
+import AboutUs from './components/legal/AboutUs.vue'
+import Feedback from './components/communication/Feedback.vue'
 
 // i18n
 import { translations } from './translations'
@@ -18,6 +56,7 @@ import { translations } from './translations'
 // ==========================================
 const STORAGE_KEY_PREFIX = 'alfie_app_'
 
+// Helper to get from localStorage
 const getStored = (key, defaultValue) => {
   const stored = localStorage.getItem(STORAGE_KEY_PREFIX + key)
   if (stored === null) return defaultValue
@@ -28,19 +67,19 @@ const getStored = (key, defaultValue) => {
   }
 }
 
+// Helper to set to localStorage
 const setStored = (key, value) => {
   localStorage.setItem(STORAGE_KEY_PREFIX + key, JSON.stringify(value))
 }
 
-const router = useRouter()
-const route = useRoute()
-
 const currentLanguage = ref(getStored('language', 'en')) 
+const currentScreen = ref(getStored('screen', 'splash')) 
 const theme = ref(getStored('theme', 'light'))
 
 const isGlobalLoading = ref(false)
 const loadingMessage = ref('')
 
+// Translation helper
 const t = (key) => {
   const lang = currentLanguage.value || 'en'
   return translations[lang][key] || key
@@ -84,8 +123,10 @@ const filteredExploreItems = computed(() => {
   })
 })
 
+// Fetching Logic
 const fetchInitialData = async () => {
   try {
+    // 1. Sync User Profile & Theme
     if (userData.value.id !== 'guest') {
       const userRes = await db.execute({
         sql: "SELECT * FROM users WHERE id = ?",
@@ -110,18 +151,21 @@ const fetchInitialData = async () => {
       }
     }
 
+    // 2. Fetch Notifications
     const notifRes = await db.execute({
       sql: "SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC",
       args: [userData.value.id]
     })
     userNotifications.value = notifRes.rows.map(n => ({ id: n.id, name: n.message, time: 'Just now', unread: !!n.is_unread }))
 
+    // 3. Fetch Favorites
     const favRes = await db.execute({
       sql: "SELECT product_id FROM favorites WHERE user_id = ?",
       args: [userData.value.id]
     })
     const favoriteIds = favRes.rows.map(f => f.product_id)
 
+    // 4. Fetch User Stats (Uploaded Trends)
     const statsRes = await db.execute({
       sql: "SELECT COUNT(*) as total FROM products WHERE owner_id = ?",
       args: [userData.value.id]
@@ -135,7 +179,10 @@ const fetchInitialData = async () => {
     allProducts.value = products.rows.map(p => ({ ...p, liked: favoriteIds.includes(p.id) }))
     favoriteItems.value = allProducts.value.filter(p => p.liked)
     
+    // Trending = Top Liked
     trendingProducts.value = allProducts.value.slice(0, 4)
+    
+    // Explore More = Random or other products
     exploreItems.value = [...allProducts.value].sort(() => 0.5 - Math.random()).slice(0, 6)
 
     const sellers = await db.execute("SELECT * FROM sellers ORDER BY rating DESC, likes_count DESC, clients_count DESC")
@@ -155,16 +202,38 @@ onMounted(() => {
 
   // Auto-redirect if already logged in
   if (userData.value.id !== 'guest') {
-    if (['splash', 'login', 'signup'].includes(route.name)) {
-      router.push({ name: 'home' })
+    if (['splash', 'login', 'signup'].includes(currentScreen.value)) {
+      currentScreen.value = 'home'
     }
+  }
+
+  // Handle browser back/forward buttons
+  window.addEventListener('popstate', (event) => {
+    if (event.state && event.state.screen) {
+      currentScreen.value = event.state.screen
+      if (event.state.selectedProduct) selectedProduct.value = event.state.selectedProduct
+      if (event.state.selectedSeller) selectedSeller.value = event.state.selectedSeller
+      if (event.state.selectedCategory) selectedCategory.value = event.state.selectedCategory
+    }
+  })
+
+  // Initialize first history state
+  if (!history.state) {
+    history.replaceState({
+      screen: currentScreen.value,
+      selectedProduct: selectedProduct.value,
+      selectedSeller: selectedSeller.value,
+      selectedCategory: selectedCategory.value
+    }, '', '')
   }
 })
 
 // Auto-save watchers
+watch(currentScreen, (val) => setStored('screen', val))
 watch(currentLanguage, (val) => setStored('language', val))
 watch(theme, async (val) => {
   setStored('theme', val)
+  // Apply theme to body
   document.body.classList.remove('light-theme', 'dark-theme')
   document.body.classList.add(val + '-theme')
   
@@ -185,9 +254,20 @@ watch(selectedSeller, (val) => setStored('selected_seller', val), { deep: true }
 watch(selectedProduct, (val) => setStored('selected_product', val), { deep: true })
 watch(selectedCategory, (val) => setStored('selected_category', val))
 
+const mockNotifications = ref([
+  { id: 1, name: 'A master tailor is ready for your Maasai Beads order', time: '2 hours ago', unread: true },
+  { id: 2, name: 'New Kente Royal collection just dropped!', time: '5 hours ago', unread: true },
+  { id: 3, name: 'Your Ankara Infinity Dress has been shipped', time: '1 day ago', unread: false }
+])
+
 const navigateTo = async (screenName, extraState = {}) => {
+  currentScreen.value = screenName
+  
+  // Sync additional state if provided
   if (extraState.selectedProduct) {
     selectedProduct.value = extraState.selectedProduct
+    
+    // Fetch real reviews for this product
     try {
       const res = await db.execute({
         sql: `
@@ -204,7 +284,7 @@ const navigateTo = async (screenName, extraState = {}) => {
         author: `${r.first_name} ${r.last_name}`,
         rating: r.rating,
         text: r.text,
-        time: 'Recently',
+        time: 'Recently', // You could format created_at here
         avatar: r.avatar
       }))
     } catch (e) {
@@ -215,11 +295,25 @@ const navigateTo = async (screenName, extraState = {}) => {
   if (extraState.selectedSeller) selectedSeller.value = extraState.selectedSeller
   if (extraState.selectedCategory) selectedCategory.value = extraState.selectedCategory
 
-  router.push({ name: screenName })
+  // Push to browser history if not already there
+  const historyState = {
+    screen: screenName,
+    selectedProduct: selectedProduct.value,
+    selectedSeller: selectedSeller.value,
+    selectedCategory: selectedCategory.value
+  }
+  
+  if (!history.state || history.state.screen !== screenName) {
+    history.pushState(historyState, '', '')
+  }
+  
+  window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 const toggleLike = async (product) => {
   product.liked = !product.liked
+  
+  // Sync local state immediately
   const updateProduct = (list) => {
     const p = list.find(item => item.id === product.id)
     if (p) p.liked = product.liked
@@ -248,8 +342,6 @@ const toggleLike = async (product) => {
   }
 }
 
-const currentScreen = computed(() => route.name || 'splash')
-
 const showNavBar = computed(() => {
   return ['home', 'favorites', 'profile', 'category-list'].includes(currentScreen.value)
 })
@@ -257,6 +349,7 @@ const showNavBar = computed(() => {
 // ==========================================
 // 3. ACTION HANDLERS
 // ==========================================
+
 const handleLogin = async (data) => {
   isGlobalLoading.value = true;
   loadingMessage.value = 'Authenticating with the Tribe...';
@@ -353,14 +446,18 @@ const handleProductDelete = async (productId) => {
   isGlobalLoading.value = true;
   loadingMessage.value = 'Removing heritage item...';
   try {
+    // 1. Delete from favorites first (foreign key constraint might be there, but good practice anyway)
     await db.execute({
       sql: "DELETE FROM favorites WHERE product_id = ?",
       args: [productId]
     })
+    
+    // 2. Delete the product
     await db.execute({
       sql: "DELETE FROM products WHERE id = ? AND owner_id = ?",
       args: [productId, userData.value.id]
     })
+
     window.alert('Item removed successfully.')
     await fetchInitialData()
     navigateTo('home')
@@ -374,13 +471,16 @@ const handleProductDelete = async (productId) => {
 
 const handleUpdateRole = async (newRole) => {
   if (userData.value.id === 'guest') return
+  
   isGlobalLoading.value = true
   loadingMessage.value = 'Switching roles...'
+  
   try {
     await db.execute({
       sql: 'UPDATE users SET user_type = ? WHERE id = ?',
       args: [newRole, userData.value.id]
     })
+    
     userData.value.userType = newRole
     window.alert(`Role successfully switched to ${newRole === 'supplier' ? 'Tailor' : 'Buyer'}!`)
   } catch (e) {
@@ -392,11 +492,27 @@ const handleUpdateRole = async (newRole) => {
 }
 
 const handleLogout = () => {
+  // Reset user data to guest but keep personal preferences like theme/language in storage if desired
+  // Here we just reset the reactive state and update localStorage selectively
   userData.value = { 
-    id: 'guest', username: 'johnabram', firstName: 'John', lastName: 'Abram', email: 'johnabram@gmail.com', whatsapp: '+255700000000', avatar: 'https://i.pravatar.cc/150?u=johnabram', userType: 'buyer', needs: '', gives: '', theme: 'light' 
+    id: 'guest', 
+    username: 'johnabram', 
+    firstName: 'John', 
+    lastName: 'Abram', 
+    email: 'johnabram@gmail.com', 
+    whatsapp: '+255700000000', 
+    avatar: 'https://i.pravatar.cc/150?u=johnabram', 
+    userType: 'buyer', 
+    needs: '', 
+    gives: '', 
+    theme: 'light' 
   };
+  
+  // We don't call localStorage.clear() anymore to preserve language and theme settings
   setStored('user_data', userData.value);
+  setStored('screen', 'login');
   setStored('favorites', []);
+  
   navigateTo('login');
 }
 
@@ -411,11 +527,16 @@ const handleSearch = async (query) => {
         FROM products p
         LEFT JOIN categories c ON p.category_id = c.id
         LEFT JOIN users u ON p.owner_id = u.id
-        WHERE p.name LIKE ? OR p.description LIKE ? OR c.name LIKE ? OR u.username LIKE ?
+        WHERE p.name LIKE ? 
+           OR p.description LIKE ? 
+           OR c.name LIKE ? 
+           OR u.username LIKE ?
         ORDER BY p.likes_count DESC
       `,
       args: [q, q, q, q]
     });
+    
+    // Fetch favorites
     let favoriteIds = [];
     if (userData.value.id !== 'guest') {
       const favRes = await db.execute({
@@ -424,10 +545,12 @@ const handleSearch = async (query) => {
       });
       favoriteIds = favRes.rows.map(f => f.product_id);
     }
+    
     searchResults.value = res.rows.map(p => ({
       ...p,
       liked: favoriteIds.includes(p.id)
     }));
+    
     navigateTo('search-results');
   } catch (e) {
     console.error('Search error:', e);
@@ -448,6 +571,7 @@ const handleUpdateProfile = async (val) => {
       `,
       args: [val.username, val.firstName, val.lastName, val.whatsapp, val.avatar, val.userType, val.needs, val.gives, val.id]
     });
+    
     userData.value = { ...val };
     window.alert('Profile updated successfully!');
     await fetchInitialData();
@@ -459,13 +583,12 @@ const handleUpdateProfile = async (val) => {
     isGlobalLoading.value = false;
   }
 }
-
-// Router Event Handlers Mapping
-const handleGoBack = () => router.back()
 </script>
 
 <template>
   <div class="app-wrapper">
+    
+    <!-- DESKTOP HEADER (WEB MODE) -->
     <WebHeader 
       v-if="showNavBar" 
       :active-tab="currentScreen"
@@ -476,74 +599,178 @@ const handleGoBack = () => router.back()
       @toggle-theme="() => theme = (theme === 'light' ? 'dark' : 'light')"
     />
 
-    <router-view v-slot="{ Component }">
-      <keep-alive include="Home">
-        <component :is="Component" 
-          :language="currentLanguage"
-          :t="t"
-          :theme="theme"
-          :user-data="userData"
-          :categories="categories"
-          :trending-products="trendingProducts"
-          :trending-sellers="trendingSellers"
-          :explore-items="filteredExploreItems"
-          :favorite-items="favoriteItems"
-          :product-count="userProductCount"
-          :product-id="selectedProduct?.id"
-          :current-user-id="userData.id"
-          :category="selectedCategory"
-          :seller="selectedSeller"
-          :results="searchResults"
-          :notifications="userNotifications"
-          
-          @select-language="(lang) => currentLanguage = lang"
-          @loaded="userData.id !== 'guest' ? navigateTo('home') : navigateTo('login')"
-          @go-signup="navigateTo('signup')"
-          @go-login="navigateTo('login')"
-          @go-forgot="navigateTo('forgot-password')"
-          @go-back="handleGoBack"
-          @login="handleLogin"
-          @signup="handleSignUp"
-          @submit="(msg) => {
-             if(currentScreen === 'forgot-password') navigateTo('verify-code');
-             else if(currentScreen === 'verify-code') navigateTo('reset-password');
-             else if(currentScreen === 'reset-password') navigateTo('login');
-             else if(currentScreen === 'feedback') handleFeedback(msg);
-          }"
-          @go-details="(p) => navigateTo('product-details', { selectedProduct: p })"
-          @go-notifications="navigateTo('notifications')"
-          @go-search="navigateTo('search')"
-          @search="handleSearch"
-          @go-explore="(name) => navigateTo('explore', { selectedCategory: name || 'Explore more' })"
-          @go-categories="navigateTo('category-list')"
-          @go-trending="() => navigateTo('explore', { selectedCategory: 'Trending Trends' })"
-          @go-tailor="(seller) => navigateTo('tailor-details', { selectedSeller: seller })"
-          @toggle-like="toggleLike"
-          @go-edit-profile="navigateTo('edit-profile')"
-          @go-settings="navigateTo('settings')"
-          @go-console="navigateTo('tailor-console')"
-          @go-orders="navigateTo('orders')"
-          @go-upload="navigateTo('upload-work')"
-          @logout="handleLogout"
-          @go-reviews="navigateTo('reviews')"
-          @go-feedback="navigateTo('feedback')"
-          @toggle-favorite="(p) => toggleLike(p)"
-          @delete="handleProductDelete"
-          @select-category="(name) => navigateTo('explore', { selectedCategory: name })"
-          @go-write-review="navigateTo('write-review')"
-          @update:user-data="handleUpdateProfile"
-          @update:theme="(val) => theme = val"
-          @update:language="(val) => currentLanguage = val"
-          @update:role="handleUpdateRole"
-          @go-help="navigateTo('help')"
-          @go-privacy="navigateTo('privacy')"
-          @go-terms="navigateTo('terms')"
-          @go-about="navigateTo('about')"
-          @upload="handleUploadWork"
-        />
-      </keep-alive>
-    </router-view>
+    <!-- SPLASH SCREEN -->
+    <Splash v-if="currentScreen === 'splash'" 
+      :language="currentLanguage"
+      @select-language="(lang) => currentLanguage = lang"
+      @loaded="userData.id !== 'guest' ? navigateTo('home') : navigateTo('login')" 
+    />
 
+    <!-- AUTHENTICATION FLOW -->
+    <Login v-else-if="currentScreen === 'login'" 
+      :t="t"
+      @go-signup="navigateTo('signup')" 
+      @go-forgot="navigateTo('forgot-password')"
+      @go-back="navigateTo('splash')" 
+      @login="handleLogin"
+    />
+    <SignUp v-else-if="currentScreen === 'signup'" 
+      :t="t"
+      @go-login="navigateTo('login')" 
+      @go-back="navigateTo('login')" 
+      @signup="handleSignUp"
+    />
+    <ForgotPassword v-else-if="currentScreen === 'forgot-password'" 
+      @go-back="navigateTo('login')"
+      @submit="navigateTo('verify-code')"
+    />
+    <VerifyCode v-else-if="currentScreen === 'verify-code'" 
+      @go-back="navigateTo('forgot-password')"
+      @submit="navigateTo('reset-password')"
+    />
+    <ResetPassword v-else-if="currentScreen === 'reset-password'" 
+      @go-back="navigateTo('verify-code')"
+      @submit="navigateTo('login')"
+    />
+
+    <!-- MAIN APP TABS -->
+    <Home v-else-if="currentScreen === 'home'" 
+      :categories="categories"
+      :trending-products="trendingProducts"
+      :trending-sellers="trendingSellers"
+      :explore-items="exploreItems"
+      @go-details="(p) => navigateTo('product-details', { selectedProduct: p })"
+      @go-notifications="navigateTo('notifications')"
+      @go-search="navigateTo('search')"
+      @search="handleSearch"
+      @go-explore="(name) => navigateTo('explore', { selectedCategory: name || 'Explore more' })"
+      @go-categories="navigateTo('category-list')"
+      @go-trending="() => navigateTo('explore', { selectedCategory: 'Trending Trends' })"
+      @go-tailor="(seller) => navigateTo('tailor-details', { selectedSeller: seller })"
+      @toggle-like="toggleLike"
+    />
+    <FavoritesList v-else-if="currentScreen === 'favorites'" 
+      :favorite-items="favoriteItems"
+      @go-back="navigateTo('home')"
+      @go-details="(p) => navigateTo('product-details', { selectedProduct: p })"
+      @toggle-like="toggleLike"
+    />
+
+    <Profile v-else-if="currentScreen === 'profile'" 
+      :user-data="userData"
+      :product-count="userProductCount"
+      :t="t"
+      @go-back="navigateTo('home')"
+      @go-edit-profile="navigateTo('edit-profile')"
+      @go-settings="navigateTo('settings')"
+      @go-console="navigateTo('tailor-console')"
+      @go-orders="navigateTo('orders')"
+      @go-upload="navigateTo('upload-work')"
+      @logout="handleLogout"
+    />
+
+    <TailorConsole v-else-if="currentScreen === 'tailor-console'"
+      :user-data="userData"
+      :t="t"
+      @go-back="navigateTo('profile')"
+    />
+
+    <Orders v-else-if="currentScreen === 'orders'"
+      :user-data="userData"
+      :t="t"
+      @go-back="navigateTo('profile')"
+    />
+
+    <!-- SHOP & EXPLORE PAGES -->
+<ProductDetails v-else-if="currentScreen === 'product-details'" 
+      :product-id="selectedProduct?.id"
+      :current-user-id="userData.id"
+      :t="t"
+      @go-back="navigateTo('home')" 
+      @go-reviews="navigateTo('reviews')"
+      @go-feedback="navigateTo('feedback')"
+      @toggle-favorite="(p) => toggleLike(p)"
+      @delete="handleProductDelete"
+    />
+    <ExploreMore v-else-if="currentScreen === 'explore'" 
+      :category="selectedCategory"
+      :explore-items="filteredExploreItems"
+      @go-back="navigateTo('home')"
+      @go-details="(p) => navigateTo('product-details', { selectedProduct: p })"
+      @toggle-like="toggleLike"
+    />
+    <CategoryList v-else-if="currentScreen === 'category-list'" 
+      :categories="categories"
+      @go-back="navigateTo('home')"
+      @select-category="(name) => navigateTo('explore', { selectedCategory: name })"
+    />
+    <TailorDetails v-else-if="currentScreen === 'tailor-details'"
+      :seller="selectedSeller"
+      @go-back="navigateTo('home')"
+      @go-reviews="navigateTo('reviews')"
+      @go-feedback="navigateTo('feedback')"
+    />
+    <UploadWork v-else-if="currentScreen === 'upload-work'"
+      :categories="categories"
+      @go-back="navigateTo('profile')"
+      @upload="handleUploadWork"
+    />
+    <SearchPage v-else-if="currentScreen === 'search'" 
+      :t="t"
+      :categories="categories"
+      @go-back="navigateTo('home')"
+      @search="handleSearch"
+      @select-category="(name) => navigateTo('explore', { selectedCategory: name })"
+    />
+    <SearchResults v-else-if="currentScreen === 'search-results'" 
+      :results="searchResults"
+      @go-back="navigateTo('search')"
+      @go-details="(p) => navigateTo('product-details', { selectedProduct: p })"
+      @toggle-like="toggleLike"
+    />
+    <Notifications v-else-if="currentScreen === 'notifications'" 
+      :notifications="userNotifications"
+      @go-back="navigateTo('home')" 
+    />
+
+    <!-- REVIEWS -->
+    <ReviewsList v-else-if="currentScreen === 'reviews'" 
+      @go-back="navigateTo('product-details')"
+      @go-write-review="navigateTo('write-review')"
+    />
+    <WriteReview v-else-if="currentScreen === 'write-review'" @go-back="navigateTo('reviews')" />
+
+    <!-- PROFILE & SETTINGS PAGES -->
+    <EditProfile v-else-if="currentScreen === 'edit-profile'" 
+      :user-data="userData"
+      @update:user-data="handleUpdateProfile"
+      @go-back="navigateTo('profile')" 
+    />
+    
+    <Settings v-else-if="currentScreen === 'settings'" 
+      :theme="theme"
+      :language="currentLanguage"
+      :t="t"
+      @update:theme="(val) => theme = val"
+      @update:language="(val) => currentLanguage = val"
+      @go-back="navigateTo('profile')"
+      @go-help="navigateTo('help')"
+      @go-privacy="navigateTo('privacy')"
+      @go-terms="navigateTo('terms')"
+      @go-about="navigateTo('about')"
+      @go-feedback="navigateTo('feedback')"
+    />
+
+    <Help v-else-if="currentScreen === 'help'" @go-back="navigateTo('settings')" />
+    <PrivacyPolicy v-else-if="currentScreen === 'privacy'" @go-back="navigateTo('settings')" />
+    <TermsConditions v-else-if="currentScreen === 'terms'" @go-back="navigateTo('settings')" />
+    <AboutUs v-else-if="currentScreen === 'about'" @go-back="navigateTo('settings')" />
+    <Feedback v-else-if="currentScreen === 'feedback'" 
+      @go-back="navigateTo('settings')"
+      @submit="handleFeedback"
+    />
+
+    <!-- BOTTOM NAVIGATION BAR -->
     <NavigationBar 
       v-if="showNavBar" 
       :active-tab="currentScreen"
@@ -551,11 +778,14 @@ const handleGoBack = () => router.back()
       @navigate="navigateTo"
     />
 
+    <!-- GLOBAL LOADING OVERLAY -->
     <LoadingSpinner v-if="isGlobalLoading" :message="loadingMessage" />
+
   </div>
 </template>
 
 <style>
+/* App Wrapper - Responsive & Centered */
 .app-wrapper {
   width: 100%;
   max-width: 1440px;

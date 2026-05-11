@@ -36,7 +36,7 @@ const fetchData = async () => {
     // 1. Fetch Orders
     const ordersRes = await db.execute({
       sql: `
-        SELECT o.*, u.first_name, u.last_name 
+        SELECT o.*, u.first_name, u.last_name, u.whatsapp as customer_phone
         FROM orders o 
         JOIN users u ON o.customer_id = u.id 
         WHERE o.tailor_id = ? 
@@ -49,6 +49,8 @@ const fetchData = async () => {
       id: o.id,
       item: o.item_name,
       customer: `${o.first_name} ${o.last_name}`,
+      customerFirstName: o.first_name,
+      customerPhone: o.customer_phone,
       date: new Date(o.created_at).toLocaleDateString(),
       price: o.price,
       status: o.status,
@@ -58,7 +60,7 @@ const fetchData = async () => {
     // 2. Fetch Negotiations
     const negsRes = await db.execute({
       sql: `
-        SELECT n.*, u.first_name, u.last_name 
+        SELECT n.*, u.first_name, u.last_name, u.whatsapp as customer_phone
         FROM negotiations n 
         JOIN users u ON n.customer_id = u.id 
         WHERE n.tailor_id = ? 
@@ -70,6 +72,8 @@ const fetchData = async () => {
     negotiations.value = negsRes.rows.map(n => ({
       id: n.id,
       customer: `${n.first_name} ${n.last_name}`,
+      customerFirstName: n.first_name,
+      customerPhone: n.customer_phone,
       item: n.item_name,
       offer: n.proposed_price,
       status: n.status
@@ -117,8 +121,28 @@ const getStatusClass = (status) => {
   return ''
 }
 
-const openWhatsApp = (phone, message = '') => {
-  const url = `https://wa.me/${phone.replace('+', '')}?text=${encodeURIComponent(message)}`
+const openWhatsApp = (customerData, orderOrNeg, type = 'order') => {
+  const phone = customerData.customerPhone
+  if (!phone) {
+    alert("Customer contact info not available.");
+    return;
+  }
+  let normalized = phone.startsWith('0') ? '255' + phone.slice(1) : phone.replace('+', '')
+  
+  const tailorName = props.userData.firstName || props.userData.username
+  const customerName = customerData.customerFirstName || customerData.customer
+
+  let message = `Hello ${customerName}! ✨\n\nThis is ${tailorName} from Alfietz. ✂️\n\n`
+  
+  if (type === 'order') {
+    message += `I'm reaching out regarding your order #${orderOrNeg.id} for the "${orderOrNeg.item}". I'm currently working on it and wanted to give you an update! 🧵🌟\n\nLet me know if you have any questions.\n`
+  } else {
+    message += `I've seen your offer for the "${orderOrNeg.item}". I'd love to discuss this further with you! 🤝💫\n`
+  }
+
+  message += `\nBest regards,\n${tailorName} ✍️`
+  
+  const url = `https://wa.me/${normalized}?text=${encodeURIComponent(message)}`
   window.open(url, '_blank')
 }
 </script>
@@ -217,7 +241,7 @@ const openWhatsApp = (phone, message = '') => {
                 </td>
                 <td class="text-right">
                   <div class="action-group">
-                    <button class="action-btn" @click="openWhatsApp('+255700000000', `Hello, regarding your order ${order.id}...`)">
+                    <button class="action-btn" @click="openWhatsApp(order, order, 'order')">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-13.4 8.38 8.38 0 0 1 3.8.9L21 3z"/></svg>
                     </button>
                     <button class="action-btn">Update</button>
@@ -281,7 +305,7 @@ const openWhatsApp = (phone, message = '') => {
             <div class="neg-actions">
               <button class="accept-btn">Accept</button>
               <button class="decline-btn">Decline</button>
-              <button class="chat-btn" @click="openWhatsApp('+255700000000', `Hello ${neg.customer}, I've seen your offer for ${neg.item}...`)">
+              <button class="chat-btn" @click="openWhatsApp(neg, neg, 'negotiation')">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.79 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
               </button>
             </div>
