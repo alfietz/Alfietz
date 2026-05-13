@@ -59,95 +59,101 @@ const openWhatsAppSupport = () => {
       <h1 class="title">{{ t('settings') }}</h1>
     </div>
 
-    <div class="settings-content">
-      <!-- Section: User Heritage Role -->
-      <section class="settings-card">
-        <h3 class="card-label">Your Heritage Role</h3>
-        <div class="role-grid">
-          <button 
-            class="role-card tap-active" 
-            :class="{ active: userData.userType === 'buyer' }"
-            @click="handleAction(() => $emit('update:role', 'buyer'))"
-          >
-            <div class="role-circle">🛍️</div>
-            <span class="role-title">Buyer</span>
-          </button>
-          <button 
-            class="role-card tap-active" 
-            :class="{ active: userData.userType === 'supplier' }"
-            @click="handleAction(() => $emit('update:role', 'supplier'))"
-          >
-            <div class="role-circle">✂️</div>
-            <span class="role-title">Tailor</span>
-          </button>
-        </div>
-      </section>
-
-      <!-- Section: Language & Localization -->
-      <section class="settings-card">
-        <h3 class="card-label">{{ t('language') }}</h3>
-        <div class="pill-selector">
-          <button 
-            class="pill-btn tap-active" 
-            :class="{ active: language === 'en' }"
-            @click="handleAction(() => setLanguage('en'))"
-          >
-            English
-          </button>
-          <button 
-            class="pill-btn tap-active" 
-            :class="{ active: language === 'sw' }"
-            @click="handleAction(() => setLanguage('sw'))"
-          >
-            Kiswahili
-          </button>
-        </div>
-      </section>
-
-      <!-- Section: Personalization -->
-      <section class="settings-card">
-        <h3 class="card-label">Preferences</h3>
-        <div class="list-item tap-active" @click="handleAction(toggleTheme)">
-          <div class="item-lead">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
-            <span>Dark Appearance</span>
+    <div class="settings-container">
+      <!-- Left Column -->
+      <div class="settings-column">
+        <!-- Section: User Heritage Role -->
+        <section class="settings-card">
+          <h3 class="card-label">Your Heritage Role</h3>
+          <div class="role-grid">
+            <button 
+              class="role-card tap-active" 
+              :class="{ active: userData.userType === 'buyer' }"
+              @click="handleAction(() => $emit('update:role', 'buyer'))"
+            >
+              <div class="role-circle">🛍️</div>
+              <span class="role-title">Buyer</span>
+            </button>
+            <button 
+              class="role-card tap-active" 
+              :class="{ active: userData.userType === 'supplier' }"
+              @click="handleAction(() => $emit('update:role', 'supplier'))"
+            >
+              <div class="role-circle">✂️</div>
+              <span class="role-title">Tailor</span>
+            </button>
           </div>
-          <div class="custom-toggle" :class="{ 'on': theme === 'dark' }">
-            <div class="handle"></div>
-          </div>
-        </div>
-      </section>
+        </section>
 
-      <!-- Section: Support & Legal -->
-      <section class="settings-card">
-        <h3 class="card-label">Support & Resources</h3>
-        <div class="list-item tap-active" @click="handleAction(openWhatsAppSupport)">
-          <div class="item-lead">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-amber)" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-13.4 8.38 8.38 0 0 1 3.8.9L21 3z"/></svg>
-            <span>Contact Support</span>
+        <!-- Section: Language & Localization -->
+        <section class="settings-card">
+          <h3 class="card-label">{{ t('language') }}</h3>
+          <div class="pill-selector">
+            <button 
+              class="pill-btn tap-active" 
+              :class="{ active: language === 'en' }"
+              @click="handleAction(() => setLanguage('en'))"
+            >
+              English
+            </button>
+            <button 
+              class="pill-btn tap-active" 
+              :class="{ active: language === 'sw' }"
+              @click="handleAction(() => setLanguage('sw'))"
+            >
+              Kiswahili
+            </button>
           </div>
-          <span class="action-hint">WhatsApp</span>
-        </div>
-        <div class="list-item tap-active" @click="handleAction(() => $emit('go-help'))">
-          <span>{{ t('help') }}</span>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
-        </div>
-        <div class="list-item tap-active" @click="handleAction(() => $emit('go-privacy'))">
-          <span>{{ t('privacyPolicy') }}</span>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
-        </div>
-        <div class="list-item tap-active" @click="handleAction(() => $emit('go-terms'))">
-          <span>{{ t('termsConditions') }}</span>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
-        </div>
-      </section>
+        </section>
+      </div>
 
-      <!-- Dangerous Area -->
-      <button class="logout-btn tap-active" @click="handleAction(() => $emit('logout'))">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        <span>Logout from Heritage</span>
-      </button>
+      <!-- Right Column -->
+      <div class="settings-column">
+        <!-- Section: Personalization -->
+        <section class="settings-card">
+          <h3 class="card-label">Preferences</h3>
+          <div class="list-item tap-active" @click="handleAction(toggleTheme)">
+            <div class="item-lead">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+              <span>Dark Appearance</span>
+            </div>
+            <div class="custom-toggle" :class="{ 'on': theme === 'dark' }">
+              <div class="handle"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section: Support & Legal -->
+        <section class="settings-card">
+          <h3 class="card-label">Support & Resources</h3>
+          <div class="list-item tap-active" @click="handleAction(openWhatsAppSupport)">
+            <div class="item-lead">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-amber)" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-13.4 8.38 8.38 0 0 1 3.8.9L21 3z"/></svg>
+              <span>Contact Support</span>
+            </div>
+            <span class="action-hint">WhatsApp</span>
+          </div>
+          <div class="list-item tap-active" @click="handleAction(() => $emit('go-help'))">
+            <span>{{ t('help') }}</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+          </div>
+          <div class="list-item tap-active" @click="handleAction(() => $emit('go-privacy'))">
+            <span>{{ t('privacyPolicy') }}</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+          </div>
+          <div class="list-item tap-active" @click="handleAction(() => $emit('go-terms'))">
+            <span>{{ t('termsConditions') }}</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+          </div>
+        </section>
+      </div>
     </div>
+
+    <!-- Dangerous Area -->
+    <button class="logout-btn tap-active" @click="handleAction(() => $emit('logout'))">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      <span>Logout from Heritage</span>
+    </button>
   </div>
 </template>
 
@@ -156,6 +162,8 @@ const openWhatsAppSupport = () => {
   background-color: var(--wood-deep);
   min-height: 100vh;
   padding: 32px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .header-row {
@@ -171,7 +179,22 @@ const openWhatsAppSupport = () => {
   color: var(--text-primary);
 }
 
-.settings-content {
+.settings-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+@media (min-width: 1024px) {
+  .settings-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    align-items: start;
+  }
+}
+
+.settings-column {
   display: flex;
   flex-direction: column;
   gap: 24px;
