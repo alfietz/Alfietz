@@ -1,5 +1,3 @@
-import { next } from '@vercel/edge';
-
 export const config = {
   matcher: ['/product/:id*', '/tailor/:id*', '/legal/:path*'],
 };
@@ -81,5 +79,9 @@ export default async function middleware(req) {
     }
   }
 
-  return next();
+  return new Response(null, {
+    headers: {
+      'x-middleware-next': '1',
+    },
+  });
 }
