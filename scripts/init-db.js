@@ -29,6 +29,7 @@ async function init() {
         first_name TEXT,
         last_name TEXT,
         email TEXT UNIQUE,
+        password TEXT,
         whatsapp TEXT,
         avatar TEXT,
         user_type TEXT DEFAULT 'buyer',
@@ -123,8 +124,8 @@ async function init() {
 
     // 2.5 Insert Default Guest User
     await client.execute({
-      sql: "INSERT INTO users (id, username, first_name, last_name, email, whatsapp, avatar, user_type, theme) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-      args: ['guest', 'johnabram', 'John', 'Abram', 'johnabram@gmail.com', '+255700000000', 'https://i.pravatar.cc/150?u=johnabram', 'buyer', 'light']
+      sql: "INSERT INTO users (id, username, first_name, last_name, email, password, whatsapp, avatar, user_type, theme) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      args: ['guest', 'johnabram', 'John', 'Abram', 'johnabram@gmail.com', 'password123', '+255700000000', 'https://i.pravatar.cc/150?u=johnabram', 'buyer', 'light']
     })
 
     // 2.6 Seed Initial Notifications

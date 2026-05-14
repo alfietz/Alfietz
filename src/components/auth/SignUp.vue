@@ -9,8 +9,6 @@ const props = defineProps({
   }
 })
 
-const STORAGE_KEY = 'alfie_signup_draft'
-
 const showPassword = ref(false)
 const firstName = ref('')
 const lastName = ref('')
@@ -18,41 +16,14 @@ const username = ref('')
 const email = ref('')
 const whatsapp = ref('')
 const password = ref('')
+const confirmPassword = ref('')
 const userType = ref('buyer')
 const errorMessage = ref('')
-
-onMounted(() => {
-  const saved = localStorage.getItem(STORAGE_KEY)
-  if (saved) {
-    try {
-      const data = JSON.parse(saved)
-      firstName.value = data.firstName || ''
-      lastName.value = data.lastName || ''
-      username.value = data.username || ''
-      email.value = data.email || ''
-      whatsapp.value = data.whatsapp || ''
-      userType.value = data.userType || 'buyer'
-    } catch (e) {
-      console.error('Failed to load signup draft:', e)
-    }
-  }
-})
-
-watch([firstName, lastName, username, email, whatsapp, userType], () => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({
-    firstName: firstName.value,
-    lastName: lastName.value,
-    username: username.value,
-    email: email.value,
-    whatsapp: whatsapp.value,
-    userType: userType.value
-  }))
-})
 
 const emit = defineEmits(['go-back', 'go-login', 'signup'])
 
 const validateForm = () => {
-  if (!username.value || !firstName.value || !lastName.value || !email.value || !password.value) {
+  if (!username.value || !firstName.value || !lastName.value || !email.value || !password.value || !confirmPassword.value) {
     errorMessage.value = 'Please fill in all required fields.'
     return false
   }
@@ -65,15 +36,16 @@ const validateForm = () => {
     errorMessage.value = 'Password must be at least 6 characters long.'
     return false
   }
+  if (password.value !== confirmPassword.value) {
+    errorMessage.value = 'Passwords do not match.'
+    return false
+  }
   errorMessage.value = ''
   return true
 }
 
 const handleSignUp = () => {
   if (!validateForm()) return
-
-  // Clear draft on success
-  localStorage.removeItem(STORAGE_KEY)
 
   emit('signup', {
     firstName: firstName.value,
@@ -96,6 +68,13 @@ const handleSignUp = () => {
       <button class="back-btn" @click="$emit('go-back')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
       </button>
+    </div>
+
+    <div class="logo-hero">
+      <div class="logo-circle-large">
+        <img src="../../assets/logo.png" alt="Alfie Logo" class="logo-img" />
+        <div class="logo-glow"></div>
+      </div>
     </div>
 
     <div class="welcome-text">
@@ -163,6 +142,13 @@ const handleSignUp = () => {
         </div>
       </div>
 
+      <div class="input-group">
+        <label>{{ t('confirmPassword') }}</label>
+        <div class="pass-wrapper">
+          <input :type="showPassword ? 'text' : 'password'" v-model="confirmPassword" :placeholder="t('confirmPasswordPlaceholder')" />
+        </div>
+      </div>
+
       <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
 
       <button class="primary-btn" @click="handleSignUp">{{ t('signup') }}</button>
@@ -186,6 +172,39 @@ const handleSignUp = () => {
 
 .top-nav {
   margin-bottom: 40px;
+}
+
+.logo-hero {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 32px;
+}
+
+.logo-circle-large {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  border: 4px solid var(--accent-amber);
+}
+
+.logo-glow {
+  position: absolute;
+  inset: -10px;
+  background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+  opacity: 0.3;
+}
+
+.logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .welcome-text {
@@ -302,5 +321,17 @@ const handleSignUp = () => {
 .login-link:hover {
   border-color: var(--accent-amber);
   text-shadow: 0 0 10px var(--accent-glow);
+}
+
+.back-btn {
+  background-color: var(--wood-walnut) !important;
+  border: 1px solid var(--glass-border) !important;
+  color: var(--text-primary) !important;
+  transition: all 0.2s ease !important;
+}
+
+.back-btn:hover {
+  background-color: var(--wood-polished) !important;
+  border-color: var(--accent-amber) !important;
 }
 </style>

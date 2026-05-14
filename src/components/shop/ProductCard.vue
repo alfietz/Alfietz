@@ -19,7 +19,7 @@ defineEmits(['toggle-like', 'click'])
   <div class="product-card group" @click="$emit('click')">
     <!-- Image Box -->
     <div class="image-wrapper">
-      <img :src="product.image" :alt="product.name" class="product-img" :loading="loading" />
+      <img :src="product.image" :alt="'Photo of ' + product.name" class="product-img" :loading="loading" />
 
       <!-- Out of Stock Badge -->
       <div v-if="product.status === 'Out of Stock'" class="oos-badge">
@@ -31,6 +31,7 @@ defineEmits(['toggle-like', 'click'])
         class="heart-btn" 
         :class="{ 'liked animate-pop': product.liked }" 
         @click.stop="$emit('toggle-like', product)"
+        :aria-label="product.liked ? 'Remove from favorites' : 'Add to favorites'"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" :stroke="product.liked ? 'var(--accent-amber)' : 'currentColor'" stroke-width="2.5" :class="{ 'filled': product.liked }">
           <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
@@ -126,23 +127,24 @@ defineEmits(['toggle-like', 'click'])
   right: 8px;
   width: 32px; /* Smaller for mobile compact */
   height: 32px; 
-  background: rgba(0,0,0,0.5);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(13, 8, 5, 0.6);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   z-index: 5;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 @media (min-width: 768px) {
   .heart-btn {
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     top: 12px;
     right: 12px;
   }
@@ -153,12 +155,18 @@ defineEmits(['toggle-like', 'click'])
 }
 
 .heart-btn:hover {
-  background: rgba(0,0,0,0.7);
-  color: var(--accent-amber);
+  background: rgba(13, 8, 5, 0.8);
+  border-color: var(--accent-amber);
+}
+
+.heart-btn.liked {
+  background: rgba(217, 119, 6, 0.15);
+  border-color: var(--accent-amber);
 }
 
 .heart-btn.liked svg {
   fill: var(--accent-amber);
+  filter: drop-shadow(0 0 8px var(--accent-glow));
 }
 
 .tech-hud-overlay {
@@ -196,7 +204,7 @@ defineEmits(['toggle-like', 'click'])
   margin: 0;
   font-size: 14px;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text-amber);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -207,13 +215,13 @@ defineEmits(['toggle-like', 'click'])
 
 @media (min-width: 768px) {
   .product-name {
-    font-size: 15px;
+    font-size: 14px;
     line-height: 1.4;
   }
 }
 
 .product-card:hover .product-name {
-  color: var(--text-amber);
+  color: var(--accent-amber);
 }
 
 .price-row {

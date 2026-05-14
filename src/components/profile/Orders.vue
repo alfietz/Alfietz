@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { db } from '../../db/client'
+import BaseDialog from '../layout/BaseDialog.vue'
 
 const props = defineProps({
   userData: {
@@ -17,6 +18,23 @@ defineEmits(['go-back'])
 
 const orders = ref([])
 
+// Dialog State
+const dialog = ref({
+  show: false,
+  title: '',
+  message: '',
+  type: 'info'
+})
+
+const showDialog = (options) => {
+  dialog.value = {
+    show: true,
+    title: options.title || '',
+    message: options.message || '',
+    type: options.type || 'info'
+  }
+}
+
 onMounted(async () => {
   await fetchOrders()
 })
@@ -25,7 +43,7 @@ const fetchOrders = async () => {
   try {
     const res = await db.execute({
       sql: `
-        SELECT o.*, u.username as tailor_name, u.whatsapp as tailor_phone, u.first_name as tailor_first_name
+        SELECT o.*, u.username as tailor_name, u.whatsapp as tailor_phone, u.first_name as tailor_first_name, u.id as tailor_id
         FROM orders o 
         JOIN users u ON o.tailor_id = u.id 
         WHERE o.customer_id = ? 
@@ -38,6 +56,7 @@ const fetchOrders = async () => {
       id: o.id,
       item: o.item_name,
       tailor: o.tailor_name,
+      tailor_id: o.tailor_id,
       tailorFirstName: o.tailor_first_name,
       tailorPhone: o.tailor_phone,
       date: new Date(o.created_at).toLocaleDateString(),
@@ -58,7 +77,11 @@ const getStatusClass = (status) => {
 
 const openWhatsApp = (order) => {
   if (!order.tailorPhone) {
-    alert("Tailor contact info not available.");
+    showDialog({
+      title: 'Contact Error',
+      message: 'Tailor contact info not available.',
+      type: 'error'
+    })
     return;
   }
   let normalized = order.tailorPhone.startsWith('0') ? '255' + order.tailorPhone.slice(1) : order.tailorPhone.replace('+', '')
@@ -103,13 +126,29 @@ const openWhatsApp = (order) => {
             <span class="order-price">{{ order.price }}</span>
             <span class="order-date">{{ order.date }}</span>
           </div>
-          <button class="message-tailor-btn" @click="openWhatsApp(order)">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-13.4 8.38 8.38 0 0 1 3.8.9L21 3z"/></svg>
-            Message Tailor
-          </button>
+          <div class="footer-actions">
+            <button class="message-tailor-btn" @click="openWhatsApp(order)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-13.4 8.38 8.38 0 0 1 3.8.9L21 3z"/></svg>
+              WhatsApp
+            </button>
+            <button class="chat-btn" @click="$emit('go-chat', order.tailor_id)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-13.4 8.38 8.38 0 0 1 3.8.9L21 3z"/></svg>
+              In-App Chat
+            </button>
+          </div>
         </div>
       </div>
     </div>
+
+    <!-- Custom Dialog -->
+    <BaseDialog 
+      :show="dialog.show"
+      :title="dialog.title"
+      :message="dialog.message"
+      :type="dialog.type"
+      @close="dialog.show = false"
+      @confirm="dialog.show = false"
+    />
   </div>
 </template>
 
@@ -299,5 +338,16 @@ const openWhatsApp = (order) => {
   font-size: 48px;
   margin-bottom: 20px;
 }
+
+.back-btn {
+  background-color: var(--wood-walnut) !important;
+  border: 1px solid var(--glass-border) !important;
+  color: var(--text-primary) !important;
+  transition: all 0.2s ease !important;
+}
+
+.back-btn:hover {
+  background-color: var(--wood-polished) !important;
+  border-color: var(--accent-amber) !important;
+}
 </style>
-yle>

@@ -9,21 +9,10 @@ const props = defineProps({
   }
 })
 
-const STORAGE_KEY = 'alfie_login_email'
-
 const showPassword = ref(false)
 const email = ref('')
 const password = ref('')
 const errorMessage = ref('')
-
-onMounted(() => {
-  const savedEmail = localStorage.getItem(STORAGE_KEY)
-  if (savedEmail) email.value = savedEmail
-})
-
-watch(email, (val) => {
-  localStorage.setItem(STORAGE_KEY, val)
-})
 
 const emit = defineEmits(['go-back', 'go-signup', 'go-forgot', 'login'])
 
@@ -225,5 +214,17 @@ const handleLogin = () => {
 .join-link:hover {
   border-color: var(--accent-amber);
   text-shadow: 0 0 10px var(--accent-glow);
+}
+
+.back-btn {
+  background-color: var(--wood-walnut) !important;
+  border: 1px solid var(--glass-border) !important;
+  color: var(--text-primary) !important;
+  transition: all 0.2s ease !important;
+}
+
+.back-btn:hover {
+  background-color: var(--wood-polished) !important;
+  border-color: var(--accent-amber) !important;
 }
 </style>

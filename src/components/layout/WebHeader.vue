@@ -1,5 +1,7 @@
 <!-------- (WebHeader.vue) ./src/components/layout/WebHeader.vue ------------>
 <script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
+
 defineProps({
   activeTab: {
     type: String,
@@ -16,10 +18,24 @@ defineProps({
 })
 
 defineEmits(['navigate', 'go-notifications', 'toggle-theme'])
+
+const isScrolled = ref(false)
+
+const handleScroll = () => {
+  isScrolled.value = window.scrollY > 10
+}
+
+onMounted(() => {
+  window.addEventListener('scroll', handleScroll)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
+})
 </script>
 
 <template>
-  <header class="web-header">
+  <header class="web-header" :class="{ 'scrolled': isScrolled }">
     <div class="header-content">
       <!-- Logo area - Restored with Original Logo + Ancestral Glow -->
       <div class="logo" @click="$emit('navigate', 'home')">
@@ -49,7 +65,11 @@ defineEmits(['navigate', 'go-notifications', 'toggle-theme'])
       <!-- Actions -->
       <div class="header-actions">
         <!-- Theme Toggle (Visible on PC/Tablet only) -->
-        <button class="action-btn theme-toggle pc-only" @click="$emit('toggle-theme')">
+        <button 
+          class="action-btn theme-toggle pc-only" 
+          @click="$emit('toggle-theme')"
+          :aria-label="theme === 'light' ? 'Switch to dark theme' : 'Switch to light theme'"
+        >
           <svg v-if="theme === 'light'" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
           </svg>
@@ -58,13 +78,13 @@ defineEmits(['navigate', 'go-notifications', 'toggle-theme'])
           </svg>
         </button>
 
-        <button class="action-btn group mobile-hide">
+        <button class="action-btn group mobile-hide" aria-label="Cart">
           <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>
           </svg>
           <span class="badge"></span>
         </button>
-        <button class="action-btn group" @click="$emit('go-notifications')">
+        <button class="action-btn group" @click="$emit('go-notifications')" aria-label="Notifications">
           <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
           </svg>
@@ -76,29 +96,50 @@ defineEmits(['navigate', 'go-notifications', 'toggle-theme'])
 
 <style scoped>
 .web-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  width: 100%;
   background-color: var(--glass-bg);
   backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--glass-border);
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-  width: 100%;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.web-header.scrolled {
+  margin: 12px auto;
+  width: calc(100% - 24px);
+  max-width: 1400px;
+  border-radius: 24px;
+  background-color: rgba(42, 24, 16, 0.75); /* Glassy brown */
+  border: 1px solid rgba(251, 191, 36, 0.2);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  top: 12px;
 }
 
 .header-content {
   max-width: 1440px;
   margin: 0 auto;
-  padding: 0 12px; /* Tighter padding for small mobile */
-  height: 60px;    /* Slightly shorter */
+  padding: 0 12px; 
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  transition: height 0.4s ease;
+}
+
+.web-header.scrolled .header-content {
+  height: 64px;
 }
 
 @media (min-width: 768px) {
   .header-content {
     padding: 0 24px;
     height: 80px;
+  }
+  .web-header.scrolled .header-content {
+    height: 72px;
   }
 }
 

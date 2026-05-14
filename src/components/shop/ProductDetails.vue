@@ -1,7 +1,10 @@
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, h } from 'vue'
+import ProductCard from './ProductCard.vue'
 import SectionHeader from '../layout/SectionHeader.vue'
+import BaseDialog from '../layout/BaseDialog.vue'
 import { db } from '../../db/client'
+import { useRoute } from 'vue-router'
 
 const props = defineProps({
   productId: {
@@ -22,15 +25,54 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['go-back', 'go-reviews', 'go-feedback', 'toggle-favorite', 'delete'])
+const emit = defineEmits(['go-back', 'go-reviews', 'go-feedback', 'toggle-favorite', 'delete', 'go-edit'])
+
+const route = useRoute()
+
+// Dialog State
+const dialog = ref({
+  show: false,
+  title: '',
+  message: '',
+  type: 'info',
+  isConfirm: false,
+  confirmText: 'OK',
+  onConfirm: null
+})
+
+const showDialog = (options) => {
+  dialog.value = {
+    show: true,
+    title: options.title || '',
+    message: options.message || '',
+    type: options.type || 'info',
+    isConfirm: options.isConfirm || false,
+    confirmText: options.confirmText || 'OK',
+    onConfirm: options.onConfirm || null
+  }
+}
+
+const handleDialogConfirm = () => {
+  if (dialog.value.onConfirm) {
+    dialog.value.onConfirm()
+  }
+  dialog.value.show = false
+}
 
 // Hexagon SVG Component for Tech Vibe
 const Hexagon = {
-  template: `
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M12 2l8.66 5v10L12 22l-8.66-5V7L12 2z"/>
-    </svg>
-  `
+  render() {
+    return h('svg', {
+      viewBox: '0 0 24 24',
+      fill: 'none',
+      stroke: 'currentColor',
+      'stroke-width': '1.5',
+      'stroke-linecap': 'round',
+      'stroke-linejoin': 'round'
+    }, [
+      h('path', { d: 'M12 2l8.66 5v10L12 22l-8.66-5V7L12 2z' })
+    ])
+  }
 }
 
 const product = ref(null)
@@ -45,17 +87,43 @@ const isNegotiating = ref(false)
 const offerAmount = ref('')
 const selectedColorId = ref(null)
 const specialInstructions = ref('')
+const isStoryExpanded = ref(false)
+const similarProducts = ref([])
 
 const isOwner = computed(() => {
   return product.value && product.value.owner_id === props.currentUserId
 })
 
+const storyText = computed(() => {
+  if (!product.value || !product.value.description) return ''
+  return product.value.description.includes('\n\n') 
+    ? product.value.description.split('\n\n').slice(1).join('\n\n') 
+    : product.value.description
+})
+
+const truncatedStory = computed(() => {
+  const words = storyText.value.split(/\s+/)
+  if (words.length <= 10 || isStoryExpanded.value) return storyText.value
+  return words.slice(0, 10).join(' ') + '...'
+})
+
+const showMoreButton = computed(() => {
+  const words = storyText.value.split(/\s+/)
+  return words.length > 10
+})
+
 const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Custom Size']
 
-onMounted(async () => {
+const loadProductData = async (activeId) => {
   try {
     loading.value = true
+    error.value = null
     
+    if (!activeId) {
+      error.value = 'Product ID missing'
+      return
+    }
+
     // Fetch full product + seller info
     const prodRes = await db.execute({
       sql: `
@@ -70,7 +138,7 @@ onMounted(async () => {
         LEFT JOIN categories c ON p.category_id = c.id 
         WHERE p.id = ?
       `,
-      args: [props.productId]
+      args: [activeId]
     })
     
     if (prodRes.rows.length === 0) {
@@ -143,7 +211,7 @@ onMounted(async () => {
         WHERE r.product_id = ?
         ORDER BY r.created_at DESC
       `,
-      args: [props.productId]
+      args: [activeId]
     })
     reviews.value = revRes.rows.map(r => ({
       id: r.id,
@@ -153,12 +221,30 @@ onMounted(async () => {
       time: 'Recently',
       avatar: r.avatar
     }))
+
+    // Fetch similar products
+    const similarRes = await db.execute({
+      sql: "SELECT * FROM products WHERE category_id = ? AND id != ? LIMIT 4",
+      args: [product.value.category_id, activeId]
+    })
+    similarProducts.value = similarRes.rows
     
   } catch (e) {
     console.error('Fetch error:', e)
     error.value = 'Failed to load heritage item'
   } finally {
     loading.value = false
+  }
+}
+
+onMounted(async () => {
+  const activeId = route.params.id || props.productId
+  await loadProductData(activeId)
+})
+
+watch(() => route.params.id, async (newId) => {
+  if (newId) {
+    await loadProductData(newId)
   }
 })
 
@@ -178,19 +264,31 @@ const selectColor = (id) => {
 
 const connectToWhatsApp = (withOffer = false) => {
   if (!selectedSize.value) {
-    alert("Please select a size first.")
+    showDialog({
+      title: 'Size Required',
+      message: 'Please select a size first.',
+      type: 'warning'
+    })
     return
   }
   
   const variant = currentVariant.value
   if (!variant || !variant.inStock || product.value.status === 'Out of Stock') {
-    alert("Sorry, this selection is currently out of stock.")
+    showDialog({
+      title: 'Out of Stock',
+      message: 'Sorry, this selection is currently out of stock.',
+      type: 'error'
+    })
     return
   }
 
   let phoneNumber = product.value?.sellerPhone
   if (!phoneNumber) {
-    alert("Designer contact not available")
+    showDialog({
+      title: 'Contact Error',
+      message: 'Designer contact not available',
+      type: 'error'
+    })
     return
   }
   
@@ -228,8 +326,38 @@ const connectToWhatsApp = (withOffer = false) => {
 }
 
 const handleDelete = () => {
-  if (confirm('Are you sure you want to delete this heritage item? This action cannot be undone.')) {
-    emit('delete', product.value.id)
+  showDialog({
+    title: 'Delete Item',
+    message: 'Are you sure you want to delete this heritage item? This action cannot be undone.',
+    type: 'warning',
+    isConfirm: true,
+    confirmText: 'Delete',
+    onConfirm: () => {
+      emit('delete', product.value.id)
+    }
+  })
+}
+
+const shareProduct = async () => {
+  const shareData = {
+    title: `Alfietz - ${product.value.name}`,
+    text: `Check out this incredible heritage piece: "${product.value.name}" on Alfietz!`,
+    url: window.location.href
+  }
+
+  try {
+    if (navigator.share) {
+      await navigator.share(shareData)
+    } else {
+      await navigator.clipboard.writeText(window.location.href)
+      showDialog({
+        title: 'Link Copied',
+        message: 'Link copied to heritage clipboard! Share it with your tribe.',
+        type: 'success'
+      })
+    }
+  } catch (err) {
+    console.error('Sharing failed:', err)
   }
 }
 </script>
@@ -253,13 +381,6 @@ const handleDelete = () => {
     <div class="layout-container">
       <!-- DETAILS SECTION (Left on PC) -->
       <div class="content-section">
-        <!-- Move Top Bar here for mobile, but hide it if needed or handle it globally -->
-        <div class="mobile-top-bar md-hidden">
-          <button class="back-btn-float" @click="$emit('go-back')">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>
-          </button>
-        </div>
-
         <div class="header-row">
           <div class="title-group">
             <h1 class="product-title">{{ product.name }}</h1>
@@ -267,6 +388,29 @@ const handleDelete = () => {
           </div>
           <div class="price-pill">
             <span class="price-value">{{ product.price }}</span>
+          </div>
+        </div>
+
+        <!-- Color Section (Moved up) -->
+        <div v-if="parsedColors.length" class="color-section compact-colors">
+          <h3 class="section-title small">Available Patterns & Colors</h3>
+          <div class="color-options">
+            <div 
+              v-for="color in parsedColors" 
+              :key="color.id"
+              class="color-option-wrapper"
+              @click="selectColor(color.id)"
+            >
+              <div 
+                class="color-swatch"
+                :class="{ selected: selectedColorId === color.id, 'out-of-stock': !color.inStock, 'has-image': color.image }"
+                :style="!color.image ? { backgroundColor: color.hex } : {}"
+              >
+                <img v-if="color.image" :src="color.image" :alt="color.name" class="variant-img" />
+              </div>
+              <span class="color-name-label">{{ color.name }}</span>
+              <span v-if="!color.inStock" class="variant-oos">Sold Out</span>
+            </div>
           </div>
         </div>
         
@@ -285,11 +429,6 @@ const handleDelete = () => {
           </div>
         </div>
 
-        <div class="story-section">
-          <h3 class="section-title">The Story</h3>
-          <p class="description">{{ product.description.includes('\n\n') ? product.description.split('\n\n').slice(1).join('\n\n') : product.description }}</p>
-        </div>
-
         <!-- Size Selection -->
         <div class="selection-section">
           <h3 class="section-title">Select Size</h3>
@@ -306,6 +445,21 @@ const handleDelete = () => {
           </div>
         </div>
 
+        <!-- The Story (Moved here) -->
+        <div class="story-section compact">
+          <h4 class="story-label">The Story</h4>
+          <p class="description">
+            {{ truncatedStory }}
+            <button 
+              v-if="showMoreButton" 
+              class="more-btn" 
+              @click="isStoryExpanded = !isStoryExpanded"
+            >
+              {{ isStoryExpanded ? 'less' : 'more' }}
+            </button>
+          </p>
+        </div>
+
         <!-- Special Instructions -->
         <div class="selection-section">
           <h3 class="section-title">Special Requirements</h3>
@@ -316,38 +470,45 @@ const handleDelete = () => {
           ></textarea>
         </div>
 
-        <div v-if="parsedColors.length" class="color-section">
-          <h3 class="section-title">Available Patterns & Colors</h3>
-          <div class="color-options">
-            <div 
-              v-for="color in parsedColors" 
-              :key="color.id"
-              class="color-option-wrapper"
-              @click="selectColor(color.id)"
-            >
-              <button 
-                class="color-swatch"
-                :style="{ backgroundColor: color.hex }"
-                :class="{ selected: selectedColorId === color.id, 'out-of-stock': !color.inStock }"
-              ></button>
-              <span class="color-name-label">{{ color.name }}</span>
-              <span v-if="!color.inStock" class="variant-oos">Sold Out</span>
-            </div>
-          </div>
-        </div>
-
         <div class="reviews-section">
           <div class="section-header-row">
             <h3 class="section-title">Heritage Reviews</h3>
-            <button class="view-all-link" @click="$emit('go-reviews')">
+            <button v-if="reviews.length > 0" class="view-all-link" @click="$emit('go-reviews')">
               View all →
             </button>
           </div>
           <p v-if="!reviews.length" class="no-reviews">
             No reviews yet. Be the first to share your heritage experience!
           </p>
-          <div v-else class="review-list">
-            <!-- Reviews mapping here if needed -->
+          <div v-else class="review-preview-list">
+            <div v-for="review in reviews.slice(0, 2)" :key="review.id" class="review-item">
+              <div class="review-item-header">
+                <img :src="review.avatar" class="review-avatar" />
+                <div class="review-info">
+                  <span class="review-author">{{ review.author }}</span>
+                  <div class="star-rating mini">
+                    <span v-for="n in 5" :key="n" class="star" :class="n <= review.rating ? 'filled' : 'empty'">★</span>
+                  </div>
+                </div>
+              </div>
+              <p class="review-item-text">{{ review.text }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Similar Products Section -->
+        <div v-if="similarProducts.length > 0" class="similar-products-section">
+          <h3 class="section-title">Similar Heritage</h3>
+          <div class="similar-scroll-container">
+            <ProductCard 
+              v-for="item in similarProducts" 
+              :key="item.id" 
+              :product="item" 
+              loading="lazy"
+              class="similar-card"
+              @click="$emit('go-details', item)"
+              @toggle-like="(p) => $emit('toggle-favorite', p)"
+            />
           </div>
         </div>
 
@@ -357,16 +518,19 @@ const handleDelete = () => {
 
       <!-- IMAGE SECTION (Right on PC) -->
       <div class="image-section">
-        <div class="top-bar desktop-only">
+        <div class="top-bar">
           <button class="back-btn" @click="$emit('go-back')">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>
           </button>
           <div class="action-btns">
+            <button v-if="isOwner" class="icon-btn edit-btn-top" @click="$emit('go-edit', product)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-amber)" stroke-width="2.5"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
             <button v-if="isOwner" class="icon-btn delete-btn" @click="handleDelete">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C62828" stroke-width="2.5"><path d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
             </button>
             <button class="icon-btn fav-btn" @click="$emit('toggle-favorite', product)">
-              <svg v-if="product.liked" width="20" height="20" viewBox="0 0 24 24" fill="var(--accent-amber)" stroke="var(--accent-amber)" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+              <svg v-if="product.liked" width="20" height="20" viewBox="0 0 24 24" fill="var(--accent-amber)" stroke="var(--accent-amber)" stroke-width="2" class="filled"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
               <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
             </button>
           </div>
@@ -416,21 +580,53 @@ const handleDelete = () => {
       </div>
 
       <!-- Default Actions -->
-      <div v-else class="action-grid animate-fade">
-        <button class="negotiate-btn" @click="isNegotiating = true">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg>
-          Negotiate
-        </button>
-        <button 
-          class="connect-btn" 
-          :class="{ disabled: !currentVariant.inStock || product.status === 'Out of Stock' }"
-          @click="connectToWhatsApp(false)"
-        >
-          {{ !currentVariant.inStock || product.status === 'Out of Stock' ? 'Currently Unavailable' : 'Order via WhatsApp' }}
-          <svg v-if="currentVariant.inStock && product.status !== 'Out of Stock'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.79 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-        </button>
+      <div v-else class="action-wrapper animate-fade">
+        <div v-if="currentUserId === 'guest'" class="guest-action-box">
+          <button class="join-tribe-cta" @click="$emit('go-login')">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Join the Tribe to Connect
+          </button>
+        </div>
+        <div v-else class="action-grid">
+          <button class="chat-btn-action" @click="$emit('go-chat', product.owner_id)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-13.4 8.38 8.38 0 0 1 3.8.9L21 3z"/></svg>
+            Chat
+          </button>
+          <button class="negotiate-btn" @click="isNegotiating = true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg>
+            Negotiate
+          </button>
+          <button 
+            class="connect-btn" 
+            :class="{ disabled: !currentVariant.inStock || product.status === 'Out of Stock' }"
+            @click="connectToWhatsApp(false)"
+          >
+            {{ !currentVariant.inStock || product.status === 'Out of Stock' ? 'Currently Unavailable' : 'Order via WhatsApp' }}
+            <svg v-if="currentVariant.inStock && product.status !== 'Out of Stock'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.79 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          </button>
+        </div>
       </div>
     </div>
+
+    <!-- Heritage Share & Delete Dialog -->
+    <div class="share-trigger-overlay md-hidden">
+       <button class="fab-btn share-fab" @click="shareProduct">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+       </button>
+    </div>
+
+    <!-- Custom Global Dialog -->
+    <BaseDialog 
+      :show="dialog.show"
+      :title="dialog.title"
+      :message="dialog.message"
+      :type="dialog.type"
+      :is-confirm="dialog.isConfirm"
+      :confirm-text="dialog.confirmText"
+      @close="dialog.show = false"
+      @confirm="handleDialogConfirm"
+      @cancel="dialog.show = false"
+    />
   </div>
 </template>
 
@@ -466,10 +662,56 @@ const handleDelete = () => {
 .color-name-label { font-size: 11px; color: var(--text-muted); font-weight: 600; max-width: 60px; text-align: center; line-height: 1.2; }
 .variant-oos { font-size: 9px; color: #EF4444; font-weight: 800; text-transform: uppercase; }
 
-.color-swatch { width: 48px; height: 48px; border-radius: 14px; border: 3px solid transparent; cursor: pointer; transition: all 0.3s; }
+.color-swatch { 
+  width: 48px; 
+  height: 48px; 
+  border-radius: 14px; 
+  border: 3px solid transparent; 
+  cursor: pointer; 
+  transition: all 0.3s; 
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 .color-swatch.selected { border-color: var(--accent-amber); box-shadow: 0 0 15px var(--accent-glow); transform: scale(1.1); }
 .color-swatch.out-of-stock { opacity: 0.5; position: relative; }
 .color-swatch.out-of-stock::after { content: ''; position: absolute; top: 50%; left: 0; width: 100%; height: 2px; background: #EF4444; transform: translateY(-50%) rotate(-45deg); }
+.color-swatch.has-image { border-width: 2px; }
+
+.variant-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.story-section.compact { 
+  margin-bottom: 24px; 
+}
+
+.story-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 8px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.more-btn {
+  background: none;
+  border: none;
+  color: var(--accent-amber);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0 4px;
+  text-transform: lowercase;
+}
+
+.more-btn:hover {
+  text-decoration: underline;
+}
 
 .text-error { color: #EF4444 !important; }
 .connect-btn.disabled { background: #4B5563 !important; cursor: not-allowed; opacity: 0.7; }
@@ -661,13 +903,10 @@ const handleDelete = () => {
 }
 
 .product-title {
-  font-size: 28px; /* Slightly smaller for mobile */
+  font-size: 24px;
   font-weight: 800;
-  color: var(--text-primary);
+  color: var(--text-amber);
   line-height: 1.2;
-  background: linear-gradient(to right, var(--text-primary), var(--accent-amber));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
 }
 
 .price-pill {
@@ -736,6 +975,17 @@ const handleDelete = () => {
   margin-bottom: 16px;
 }
 
+.section-title.small {
+  font-size: 14px;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.compact-colors {
+  margin-bottom: 24px;
+}
+
 .description {
   font-size: 15px;
   line-height: 1.8;
@@ -758,6 +1008,58 @@ const handleDelete = () => {
   cursor: pointer;
 }
 
+.review-preview-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.review-item {
+  background: var(--wood-walnut);
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid var(--glass-border);
+}
+
+.review-item-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.review-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.review-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.review-author {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.star-rating.mini .star {
+  font-size: 12px;
+}
+
+.star.filled { color: #FFC107; }
+.star.empty { color: #E0E0E0; }
+
+.review-item-text {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
 .no-reviews {
   text-align: center;
   padding: 40px 20px;
@@ -767,6 +1069,56 @@ const handleDelete = () => {
   background: var(--wood-walnut);
   border: 1px dashed var(--glass-border);
   border-radius: 20px;
+}
+
+.similar-products-section {
+  margin-top: 48px;
+}
+
+.similar-scroll-container {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding: 4px 4px 24px 4px;
+  margin: 0 -4px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.similar-scroll-container::-webkit-scrollbar {
+  display: none;
+}
+
+.similar-card {
+  width: 180px;
+  flex-shrink: 0;
+  flex-direction: column !important;
+  height: auto !important;
+  border-radius: 24px !important;
+}
+
+.similar-card :deep(.image-wrapper) {
+  width: 100% !important;
+  height: 180px !important;
+  border-radius: 24px 24px 0 0 !important;
+}
+
+.similar-card :deep(.product-details) {
+  padding: 16px !important;
+  gap: 12px !important;
+}
+
+.similar-card :deep(.product-name) {
+  font-size: 13px !important;
+  -webkit-line-clamp: 1 !important;
+}
+
+.similar-card :deep(.price-row) {
+  margin-top: 0 !important;
+}
+
+.similar-card :deep(.add-btn) {
+  display: none !important; /* Simplify for similar items */
 }
 
 .bottom-spacer {
@@ -790,10 +1142,26 @@ const handleDelete = () => {
 
 .action-grid {
   display: grid;
-  grid-template-columns: 1fr 2fr;
+  grid-template-columns: 0.8fr 1fr 1.5fr;
   gap: 12px;
   width: 100%;
-  max-width: 600px;
+  max-width: 800px;
+}
+
+.chat-btn-action {
+  background: var(--wood-walnut);
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary);
+  border-radius: 20px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  min-height: 56px;
+  font-size: 14px;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .negotiate-btn {
@@ -886,5 +1254,70 @@ const handleDelete = () => {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.guest-action-box {
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  justify-content: center;
+}
+
+.join-tribe-cta {
+  width: 100%;
+  background: linear-gradient(135deg, var(--wood-walnut), var(--wood-deep));
+  border: 1px solid var(--accent-amber);
+  color: var(--text-amber);
+  border-radius: 20px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px;
+  min-height: 56px;
+  font-size: 16px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.join-tribe-cta:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, var(--wood-polished), var(--wood-walnut));
+  box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+  border-color: var(--text-amber);
+}
+
+.join-tribe-cta:active {
+  transform: translateY(0);
+}
+
+.back-btn {
+  background-color: var(--wood-walnut) !important;
+  border: 1px solid var(--glass-border) !important;
+  color: var(--text-primary) !important;
+  transition: all 0.2s ease !important;
+}
+
+.back-btn:hover {
+  background-color: var(--wood-polished) !important;
+  border-color: var(--accent-amber) !important;
+}
+
+.icon-btn.fav-btn {
+  background: rgba(13, 8, 5, 0.6) !important;
+  backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+.icon-btn.fav-btn:hover {
+  background: rgba(13, 8, 5, 0.8) !important;
+  border-color: var(--accent-amber) !important;
+}
+
+.fav-btn svg.filled {
+  filter: drop-shadow(0 0 8px var(--accent-glow));
 }
 </style>

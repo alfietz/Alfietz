@@ -1,5 +1,6 @@
-<!-------- (Settings.vue) ./src/components/Settings.vue ------------>
 <script setup>
+import { ref } from 'vue'
+
 const props = defineProps({
   userData: {
     type: Object,
@@ -19,7 +20,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['go-back', 'go-help', 'go-privacy', 'go-terms', 'go-about', 'go-feedback', 'update:theme', 'update:language', 'update:role'])
+const emit = defineEmits(['go-back', 'go-help', 'go-privacy', 'go-terms', 'go-about', 'go-feedback', 'update:theme', 'update:language', 'update:role', 'logout'])
 
 const toggleTheme = () => {
   const newTheme = props.theme === 'light' ? 'dark' : 'light'
@@ -30,258 +31,346 @@ const setLanguage = (lang) => {
   emit('update:language', lang)
 }
 
+const triggerHaptic = () => {
+  if (window.navigator && window.navigator.vibrate) {
+    window.navigator.vibrate(10) // Quick 10ms pulse
+  }
+}
+
+const handleAction = (callback) => {
+  triggerHaptic()
+  callback()
+}
+
 const openWhatsAppSupport = () => {
   const userName = props.userData.firstName || props.userData.username
-  const message = `Hello Alfie Support Team! 👋\n\nMy name is ${userName}. I'm currently using the Alfietz app and I'd like to reach out for some assistance. ✨\n\n[Please describe your issue or question here]\n\nThank you for your help!\n\nBest regards,\n${userName} ✍️`
-  
+  const message = `Hello Alfietz Support! 👋\n\nMy name is ${userName}. I need assistance with the heritage platform. ✨\n\n[Describe issue here]\n\nUser ID: ${props.userData.id}`
   const url = `https://wa.me/255700000000?text=${encodeURIComponent(message)}`
   window.open(url, '_blank')
 }
 </script>
 
 <template>
-  <div class="settings-page animate-fade">
+  <div class="settings-page safe-area-bottom">
     <div class="header-row">
-      <button class="back-btn" @click="$emit('go-back')">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      <button class="back-btn tap-active" @click="handleAction(() => $emit('go-back'))">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>
       </button>
       <h1 class="title">{{ t('settings') }}</h1>
     </div>
 
-    <div class="settings-list">
-      <!-- Role Management Group -->
-      <div class="settings-group">
-        <h3 class="group-title">{{ t('accountType') }}</h3>
-        <div class="role-selector">
-          <button 
-            class="role-option" 
-            :class="{ active: userData.userType === 'buyer' }"
-            @click="$emit('update:role', 'buyer')"
-          >
-            <div class="role-icon">🛍️</div>
-            <div class="role-info">
-              <span class="role-name">Buyer</span>
-              <span class="role-desc">I want to explore and buy heritage trends.</span>
-            </div>
-          </button>
-          <button 
-            class="role-option" 
-            :class="{ active: userData.userType === 'supplier' }"
-            @click="$emit('update:role', 'supplier')"
-          >
-            <div class="role-icon">✂️</div>
-            <div class="role-info">
-              <span class="role-name">Tailor / Designer</span>
-              <span class="role-desc">I want to showcase and sell my work.</span>
-            </div>
-          </button>
-        </div>
-      </div>
-
-      <!-- Language Group -->
-      <div class="settings-group">
-        <h3 class="group-title">{{ t('language') }}</h3>
-        <div class="lang-selector">
-          <button 
-            class="lang-option" 
-            :class="{ active: language === 'en' }"
-            @click="setLanguage('en')"
-          >
-            English
-          </button>
-          <button 
-            class="lang-option" 
-            :class="{ active: language === 'sw' }"
-            @click="setLanguage('sw')"
-          >
-            Kiswahili
-          </button>
-        </div>
-      </div>
-
-      <!-- Appearance Group (Mobile Only) -->
-      <div class="settings-group mobile-only">
-        <h3 class="group-title">{{ t('theme') || 'Appearance' }}</h3>
-
-        <div class="setting-item" @click="toggleTheme">
-          <span class="setting-text">Dark Mode</span>
-          <div class="toggle-switch" :class="{ 'is-active': theme === 'dark' }">
-            <div class="toggle-handle"></div>
+    <div class="settings-container">
+      <!-- Left Column -->
+      <div class="settings-column">
+        <!-- Section: User Heritage Role -->
+        <section class="settings-card">
+          <h3 class="card-label">Your Heritage Role</h3>
+          <div class="role-grid">
+            <button 
+              class="role-card tap-active" 
+              :class="{ active: userData.userType === 'buyer' }"
+              @click="handleAction(() => $emit('update:role', 'buyer'))"
+            >
+              <div class="role-circle">🛍️</div>
+              <span class="role-title">Buyer</span>
+            </button>
+            <button 
+              class="role-card tap-active" 
+              :class="{ active: userData.userType === 'supplier' }"
+              @click="handleAction(() => $emit('update:role', 'supplier'))"
+            >
+              <div class="role-circle">✂️</div>
+              <span class="role-title">Tailor</span>
+            </button>
           </div>
-        </div>
+        </section>
+
+        <!-- Section: Language & Localization -->
+        <section class="settings-card">
+          <h3 class="card-label">{{ t('language') }}</h3>
+          <div class="pill-selector">
+            <button 
+              class="pill-btn tap-active" 
+              :class="{ active: language === 'en' }"
+              @click="handleAction(() => setLanguage('en'))"
+            >
+              English
+            </button>
+            <button 
+              class="pill-btn tap-active" 
+              :class="{ active: language === 'sw' }"
+              @click="handleAction(() => setLanguage('sw'))"
+            >
+              Kiswahili
+            </button>
+          </div>
+        </section>
       </div>
 
-      <div class="settings-group">
-        <h3 class="group-title">Support & Info</h3>
-
-        <div class="setting-item" @click="openWhatsAppSupport">
-          <div class="setting-info">
-            <span class="setting-text">WhatsApp Support</span>
-            <span class="setting-hint">Chat directly with our team</span>
+      <!-- Right Column -->
+      <div class="settings-column">
+        <!-- Section: Personalization -->
+        <section class="settings-card">
+          <h3 class="card-label">Preferences</h3>
+          <div class="list-item tap-active" @click="handleAction(toggleTheme)">
+            <div class="item-lead">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+              <span>Dark Appearance</span>
+            </div>
+            <div class="custom-toggle" :class="{ 'on': theme === 'dark' }">
+              <div class="handle"></div>
+            </div>
           </div>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-amber)" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-13.4 8.38 8.38 0 0 1 3.8.9L21 3z"/></svg>
-        </div>
+        </section>
 
-        <div class="setting-item" @click="$emit('go-help')">
-          <span class="setting-text">{{ t('help') }}</span>
-          <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-        </div>
-
-        <div class="setting-item" @click="$emit('go-privacy')">
-          <span class="setting-text">{{ t('privacyPolicy') }}</span>
-          <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-        </div>
-
-        <div class="setting-item" @click="$emit('go-terms')">
-          <span class="setting-text">{{ t('termsConditions') }}</span>
-          <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-        </div>
-
-        <div class="setting-item" @click="$emit('go-about')">
-          <span class="setting-text">{{ t('aboutUs') }}</span>
-          <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-        </div>
+        <!-- Section: Support & Legal -->
+        <section class="settings-card">
+          <h3 class="card-label">Support & Resources</h3>
+          <div class="list-item tap-active" @click="handleAction(openWhatsAppSupport)">
+            <div class="item-lead">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-amber)" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-13.4 8.38 8.38 0 0 1 3.8.9L21 3z"/></svg>
+              <span>Contact Support</span>
+            </div>
+            <span class="action-hint">WhatsApp</span>
+          </div>
+          <div class="list-item tap-active" @click="handleAction(() => $emit('go-help'))">
+            <span>{{ t('help') }}</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+          </div>
+          <div class="list-item tap-active" @click="handleAction(() => $emit('go-privacy'))">
+            <span>{{ t('privacyPolicy') }}</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+          </div>
+          <div class="list-item tap-active" @click="handleAction(() => $emit('go-terms'))">
+            <span>{{ t('termsConditions') }}</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+          </div>
+        </section>
       </div>
     </div>
+
+    <!-- Dangerous Area -->
+    <button class="logout-btn tap-active" @click="handleAction(() => $emit('logout'))">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      <span>Logout from Heritage</span>
+    </button>
   </div>
 </template>
 
 <style scoped>
-.settings-page { background-color: var(--bg-dark); min-height: 100vh; padding: 32px 24px; }
-.header-row { display: flex; align-items: center; gap: 20px; margin-bottom: 40px; }
-.title { font-size: 24px; font-weight: 800; color: var(--text-primary); margin: 0; letter-spacing: 1px; }
-.settings-list { display: flex; flex-direction: column; gap: 32px; }
-.group-title { font-size: 11px; font-weight: 700; color: var(--text-muted); margin: 0 0 12px 4px; text-transform: uppercase; letter-spacing: 1.5px; }
-.setting-item { display: flex; align-items: center; justify-content: space-between; padding: 20px; background: var(--wood-walnut); border: 1px solid var(--glass-border); border-radius: 16px; margin-bottom: 12px; cursor: pointer; transition: all 0.3s; }
-.setting-item:hover { border-color: var(--accent-amber); background: var(--wood-polished); }
-.setting-text { font-size: 15px; font-weight: 600; color: var(--text-primary); }
-
-.setting-info {
-  display: flex;
-  flex-direction: column;
+.settings-page {
+  background-color: var(--wood-deep);
+  min-height: 100vh;
+  padding: 32px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-.setting-hint {
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-top: 2px;
-}
-
-.chevron { color: var(--text-muted); }
-
-.mobile-only {
-  display: block;
-}
-
-@media (min-width: 768px) {
-  .mobile-only {
-    display: none;
-  }
-}
-
-.lang-selector {
-  display: flex;
-  gap: 12px;
-}
-
-.role-selector {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.role-option {
+.header-row {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 16px;
-  border-radius: 16px;
-  border: 1px solid var(--glass-border);
-  background: var(--wood-walnut);
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: all 0.3s;
-  text-align: left;
+  margin-bottom: 32px;
 }
 
-.role-option.active {
-  background: var(--wood-polished);
-  border-color: var(--accent-amber);
-  box-shadow: 0 0 15px var(--accent-glow);
-}
-
-.role-icon {
+.title {
   font-size: 24px;
-}
-
-.role-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.role-name {
-  font-size: 16px;
   font-weight: 800;
   color: var(--text-primary);
 }
 
-.role-option.active .role-name {
-  color: var(--accent-amber);
+.settings-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
-.role-desc {
-  font-size: 12px;
+@media (min-width: 1024px) {
+  .settings-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    align-items: start;
+  }
+}
+
+.settings-column {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.settings-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card-label {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
   color: var(--text-muted);
+  letter-spacing: 1.5px;
+  margin-left: 4px;
 }
 
-.lang-option {
-  flex: 1;
-  padding: 16px;
-  border-radius: 12px;
-  border: 1px solid var(--glass-border);
+.role-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.role-card {
   background: var(--wood-walnut);
-  color: var(--text-muted);
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s;
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.3s ease;
 }
 
-.lang-option.active {
-  background: linear-gradient(135deg, var(--accent-amber), #B45309);
-  color: white;
+.role-card.active {
   border-color: var(--accent-amber);
+  background: var(--wood-polished);
   box-shadow: 0 0 15px var(--accent-glow);
 }
 
-/* Toggle Switch Styles */
-.toggle-switch {
-  width: 50px;
-  height: 28px;
-  background-color: var(--border-tech);
-  border-radius: 14px;
-  position: relative;
-  transition: all 0.3s;
+.role-circle {
+  width: 48px;
+  height: 48px;
+  background: var(--wood-deep);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.role-card.active .role-circle {
+  background: var(--accent-amber);
+}
+
+.role-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.pill-selector {
+  display: flex;
+  background: var(--wood-walnut);
+  padding: 4px;
+  border-radius: 16px;
   border: 1px solid var(--glass-border);
 }
 
-.toggle-switch.is-active {
-  background-color: var(--accent-amber);
-  box-shadow: 0 0 10px var(--accent-glow);
+.pill-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-muted);
 }
 
-.toggle-handle {
-  width: 22px;
-  height: 22px;
-  background-color: white;
+.pill-btn.active {
+  background: var(--accent-amber);
+  color: white;
+}
+
+.list-item {
+  background: var(--wood-walnut);
+  border: 1px solid var(--glass-border);
+  padding: 16px 20px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--text-primary);
+}
+
+.item-lead {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.action-hint {
+  font-size: 12px;
+  color: var(--text-amber);
+  font-weight: 700;
+}
+
+.custom-toggle {
+  width: 48px;
+  height: 24px;
+  background: var(--wood-deep);
+  border-radius: 12px;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.custom-toggle.on {
+  background: var(--accent-amber);
+}
+
+.handle {
+  width: 18px;
+  height: 18px;
+  background: white;
   border-radius: 50%;
   position: absolute;
-  top: 2px;
-  left: 2px;
-  transition: transform 0.3s;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  top: 3px;
+  left: 3px;
+  transition: transform 0.3s ease;
 }
 
-.toggle-switch.is-active .toggle-handle {
-  transform: translateX(22px);
+.custom-toggle.on .handle {
+  transform: translateX(24px);
+}
+
+.logout-btn {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 16px;
+  color: #EF4444;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.back-btn {
+  background-color: var(--wood-walnut) !important;
+  border: 1px solid var(--glass-border) !important;
+  color: var(--text-primary) !important;
+  transition: all 0.2s ease !important;
+}
+
+.back-btn:hover {
+  background-color: var(--wood-polished) !important;
+  border-color: var(--accent-amber) !important;
+}
+
+.back-btn {
+  background-color: var(--wood-walnut) !important;
+  border: 1px solid var(--glass-border) !important;
+  color: var(--text-primary) !important;
+  transition: all 0.2s ease !important;
+}
+
+.back-btn:hover {
+  background-color: var(--wood-polished) !important;
+  border-color: var(--accent-amber) !important;
 }
 </style>

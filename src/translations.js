@@ -6,6 +6,7 @@ export const translations = {
     username: "Username",
     email: "Email",
     password: "Password",
+    confirmPassword: "Confirm Password",
     firstName: "First Name",
     lastName: "Last Name",
     whatsapp: "WhatsApp Number",
@@ -41,6 +42,7 @@ export const translations = {
     theTribe: "The Tribe",
     emailAddress: "Email address",
     passwordPlaceholder: "••••••",
+    confirmPasswordPlaceholder: "••••••",
     continueWithGoogle: "Continue with Google",
     newToHeritage: "New to the heritage?",
     joinUs: "Join us",
@@ -64,6 +66,7 @@ export const translations = {
     username: "Jina la mtumiaji",
     email: "Barua pepe",
     password: "Nywila",
+    confirmPassword: "Thibitisha Nywila",
     firstName: "Jina la kwanza",
     lastName: "Jina la ukoo",
     whatsapp: "Namba ya WhatsApp",
@@ -99,6 +102,7 @@ export const translations = {
     theTribe: "The Tribe",
     emailAddress: "Barua pepe",
     passwordPlaceholder: "••••••",
+    confirmPasswordPlaceholder: "••••••",
     continueWithGoogle: "Endelea na Google",
     newToHeritage: "Mgeni kwenye urithi huu?",
     joinUs: "Jiunge nasi",
@@ -116,6 +120,13 @@ export const translations = {
     stats: "Takwimu",
     accountType: "Aina ya Akaunti",
     heritageJourney: "Safari Yangu ya Urithi",
-    salesAndOrders: "Mauzo na Oda"
+    salesAndOrders: "Mauzo na Oda",
+    safetyTips: "Vidokezo vya Usalama",
+    measurementsGuide: "Mwongozo wa Vipimo",
+    ipPolicy: "Haki Miliki",
+    returnPolicy: "Sera ya Kurudisha",
+    communityGuidelines: "Miongozo ya Jamii",
+    linkCopied: "Kiungo kimepakiwa kwenye ubao!",
+    shareText: "Angalia bidhaa hii nzuri ya urithi kwenye Alfietz!"
   }
 };

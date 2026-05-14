@@ -59,25 +59,31 @@ defineEmits(['go-back', 'go-details', 'toggle-like'])
 
 .results-grid {
   display: grid;
-  grid-template-columns: repeat(1, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 16px;
 }
 
-.empty-results {
-  text-align: center;
-  margin-top: 40px;
-  color: var(--text-muted);
+.back-btn {
+  background-color: var(--wood-walnut) !important;
+  border: 1px solid var(--glass-border) !important;
+  color: var(--text-primary) !important;
+  transition: all 0.2s ease !important;
 }
 
-@media (min-width: 768px) {
-  .results-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
+.back-btn:hover {
+  background-color: var(--wood-polished) !important;
+  border-color: var(--accent-amber) !important;
 }
 
-@media (min-width: 1024px) {
-  .results-grid {
-    grid-template-columns: repeat(5, 1fr);
-  }
+.back-btn {
+  background-color: var(--wood-walnut) !important;
+  border: 1px solid var(--glass-border) !important;
+  color: var(--text-primary) !important;
+  transition: all 0.2s ease !important;
+}
+
+.back-btn:hover {
+  background-color: var(--wood-polished) !important;
+  border-color: var(--accent-amber) !important;
 }
 </style>

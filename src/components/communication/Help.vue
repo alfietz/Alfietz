@@ -1,49 +1,11 @@
-<!-------- (Help.vue) ./src/components/Help.vue ------------>
 <script setup>
-import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 
-const props = defineProps({
-  userData: {
-    type: Object,
-    required: true
-  }
-})
-
+const router = useRouter()
 defineEmits(['go-back'])
 
-const openWhatsAppSupport = () => {
-  const userName = props.userData.firstName || props.userData.username
-  const message = `Hello Alfie Support Team! 👋\n\nMy name is ${userName}. I'm reaching out from the Help Center for some assistance. ✨\n\n[Please describe your issue or question here]\n\nThank you for your help!\n\nBest regards,\n${userName} ✍️`
-  
-  const url = `https://wa.me/255700000000?text=${encodeURIComponent(message)}`
-  window.open(url, '_blank')
-}
-
-const faqs = ref([
-  { 
-    question: 'How do I connect with a clothes maker?', 
-    answer: 'Simply browse our categories or use the search bar to find a style you like. Once you click on a product, you can use the "Connect with Designer" button to open a direct WhatsApp chat with the artisan.',
-    isOpen: false 
-  },
-  { 
-    question: 'How are designs priced?', 
-    answer: 'Prices vary based on the artisan, the complexity of the design, and the materials used. Most items have a starting price listed, but custom commissions can be negotiated directly with the tailor.',
-    isOpen: false 
-  },
-  { 
-    question: 'How long does custom tailoring take?', 
-    answer: 'Standard items usually take 1-2 weeks. For complex traditional wear like bridal gowns, it may take 4-6 weeks. Each artisan will provide a specific timeline during your initial consultation.',
-    isOpen: false 
-  },
-  { 
-    question: 'What is REBi Group\'s refund policy?', 
-    answer: 'REBi Group acts as a platform connecting you to independent artisans. While we vet our artisans for quality, specific refund policies are handled by each individual tailor. We recommend clarifying this before payment.',
-    isOpen: false 
-  }
-])
-
-const toggleFaq = (index) => {
-  faqs.value[index].isOpen = !faqs.value[index].isOpen
+const navigateTo = (routeName) => {
+  router.push({ name: routeName })
 }
 </script>
 
@@ -53,63 +15,128 @@ const toggleFaq = (index) => {
       <button class="back-btn" @click="$emit('go-back')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
       </button>
-      <h1 class="title">Help Center</h1>
+      <h1 class="title">Help & Legal Center</h1>
     </div>
 
-    <!-- Contact Support CTA -->
-    <div class="contact-card">
-      <div class="contact-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5D8374" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+    <div class="content-scroll">
+      
+      <div class="legal-section">
+        <h3>Heritage & Safety</h3>
+        <p class="section-desc">Resources to ensure a safe and accurate heritage experience.</p>
+        <div class="legal-links">
+          <button class="legal-link-btn" @click="navigateTo('safety')">
+            <span>Safety & Security Tips</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+          <button class="legal-link-btn" @click="navigateTo('measurements')">
+            <span>Measurement Guide</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+        </div>
       </div>
-      <div class="contact-info">
-        <h3>Need custom support?</h3>
-        <p>Chat directly with REBi Group support.</p>
-      </div>
-      <button class="chat-btn" @click="openWhatsAppSupport">Chat</button>
-    </div>
 
-    <!-- FAQ Section -->
-    <h3 class="section-title">Frequently Asked Questions</h3>
-    
-    <div class="faq-list">
-      <div v-for="(faq, index) in faqs" :key="index" class="faq-wrapper">
-        <div class="faq-item" @click="toggleFaq(index)" :class="{ active: faq.isOpen }">
-          <p class="faq-question">{{ faq.question }}</p>
-          <svg 
-            class="chevron" 
-            :class="{ rotated: faq.isOpen }"
-            width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A0A0A0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-          >
-            <path d="m6 9 6 6 6-6"/>
-          </svg>
-        </div>
-        <div v-if="faq.isOpen" class="faq-answer">
-          {{ faq.answer }}
+      <div class="legal-section">
+        <h3>Legal Documents</h3>
+        <p class="section-desc">Review our policies to understand your rights and responsibilities on the Alfietz platform, protected by REBi Group.</p>
+        
+        <div class="legal-links">
+          <button class="legal-link-btn" @click="navigateTo('terms')">
+            <span>Terms & Conditions</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+          <button class="legal-link-btn" @click="navigateTo('privacy')">
+            <span>Privacy Policy</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+          <button class="legal-link-btn" @click="navigateTo('returns')">
+            <span>Return & Refund Policy</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+          <button class="legal-link-btn" @click="navigateTo('guidelines')">
+            <span>Community Guidelines</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+          <button class="legal-link-btn" @click="navigateTo('ip-policy')">
+            <span>Intellectual Property</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+          <button class="legal-link-btn" @click="navigateTo('about')">
+            <span>About REBi Group</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
         </div>
       </div>
+
+      <div class="faq-section">
+        <h3>Frequently Asked Questions</h3>
+        
+        <div class="faq-item">
+          <h4>How do I contact a Tailor?</h4>
+          <p>You can contact tailors directly by clicking the "Connect via WhatsApp" button on any product detail page.</p>
+        </div>
+        
+        <div class="faq-item">
+          <h4>Are custom measurements private?</h4>
+          <p>Yes. Measurements are securely stored and only shared with the specific tailor you select for an order.</p>
+        </div>
+        
+        <div class="faq-item">
+          <h4>How do I report a problem?</h4>
+          <p>If you encounter issues with an order or a user, please use the Feedback section or email support@rebigroup.com.</p>
+        </div>
+      </div>
+
     </div>
   </div>
 </template>
 
 <style scoped>
-.help-page { background-color: var(--wood-deep); min-height: 100vh; padding: 24px 20px; }
-.header-row { display: flex; align-items: center; gap: 16px; margin-bottom: 32px; }
+.help-page { background-color: var(--wood-deep); min-height: 100vh; padding: 24px 20px; display: flex; flex-direction: column; }
+.header-row { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; flex-shrink: 0; }
 .title { font-size: 22px; font-weight: 600; color: var(--text-primary); margin: 0; }
 
-.contact-card { display: flex; align-items: center; background: var(--wood-walnut); border: 1px solid var(--glass-border); border-radius: 16px; padding: 16px; margin-bottom: 32px; }
-.contact-icon { width: 48px; height: 48px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 16px; flex-shrink: 0; }
-.contact-info { flex: 1; }
-.contact-info h3 { margin: 0 0 4px 0; font-size: 15px; color: var(--text-primary); }
-.contact-info p { margin: 0; font-size: 12px; color: var(--text-muted); }
-.chat-btn { background: var(--accent-amber); color: white; border: none; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 13px; cursor: pointer; }
+.content-scroll { flex: 1; overflow-y: auto; padding-bottom: 40px; }
 
-.section-title { font-size: 18px; font-weight: 600; color: var(--text-primary); margin: 0 0 16px 0; }
-.faq-list { display: flex; flex-direction: column; gap: 12px; }
-.faq-item { display: flex; justify-content: space-between; align-items: center; background: var(--wood-walnut); padding: 16px 20px; border-radius: 12px; cursor: pointer; transition: background 0.2s; }
-.faq-item:hover { background: var(--wood-polished); }
-.faq-item.active { border-bottom-left-radius: 0; border-bottom-right-radius: 0; background: var(--wood-polished); }
-.faq-question { margin: 0; font-size: 14px; font-weight: 500; color: var(--text-primary); }
-.faq-answer { background: var(--wood-walnut); padding: 0 20px 16px 20px; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; font-size: 13px; color: var(--text-muted); line-height: 1.5; border-top: none; }
-.chevron { transition: transform 0.3s ease; }
-.chevron.rotated { transform: rotate(180deg); }
+.legal-section { margin-bottom: 40px; }
+h3 { font-size: 18px; font-weight: 600; color: var(--text-amber); margin: 0 0 8px 0; }
+.section-desc { font-size: 14px; color: var(--text-muted); margin: 0 0 16px 0; line-height: 1.5; }
+
+.legal-links { display: flex; flex-direction: column; gap: 12px; }
+.legal-link-btn { 
+  display: flex; justify-content: space-between; align-items: center; 
+  background: var(--wood-walnut); border: 1px solid var(--border-color); 
+  padding: 16px; border-radius: 12px; color: var(--text-primary); 
+  font-size: 15px; font-weight: 500; cursor: pointer; transition: all 0.2s;
+}
+.legal-link-btn:hover { background: var(--wood-medium); border-color: var(--text-amber); }
+.legal-link-btn svg { color: var(--text-amber); }
+
+.faq-section { margin-bottom: 24px; }
+.faq-item { background: var(--wood-walnut); padding: 16px; border-radius: 12px; margin-bottom: 12px; border: 1px solid var(--border-color); }
+.faq-item h4 { font-size: 15px; font-weight: 600; color: var(--text-primary); margin: 0 0 8px 0; }
+.faq-item p { font-size: 14px; color: var(--text-secondary); margin: 0; line-height: 1.5; }
+
+.back-btn {
+  background-color: var(--wood-walnut) !important;
+  border: 1px solid var(--glass-border) !important;
+  color: var(--text-primary) !important;
+  transition: all 0.2s ease !important;
+}
+
+.back-btn:hover {
+  background-color: var(--wood-polished) !important;
+  border-color: var(--accent-amber) !important;
+}
+
+.back-btn {
+  background-color: var(--wood-walnut) !important;
+  border: 1px solid var(--glass-border) !important;
+  color: var(--text-primary) !important;
+  transition: all 0.2s ease !important;
+}
+
+.back-btn:hover {
+  background-color: var(--wood-polished) !important;
+  border-color: var(--accent-amber) !important;
+}
 </style>

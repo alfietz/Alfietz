@@ -41,13 +41,20 @@ watch(searchQuery, (newVal) => {
     <!-- Search Bar (Ancestral Tech Style) -->
     <div class="search-container">
       <div class="search-wrapper group">
-        <span class="search-icon" @click="handleSearch">🔍</span>
+        <button 
+          class="search-icon-btn" 
+          @click="handleSearch"
+          aria-label="Search"
+        >
+          🔍
+        </button>
         <input 
           type="text" 
           v-model="searchQuery" 
           placeholder="Search for cultural trends, fabrics, or artifacts..." 
           class="search-input" 
           @keyup.enter="handleSearch"
+          aria-label="Search input"
         />
         <!-- Futuristic scanner line effect on focus -->
         <div class="scanner-line-effect"></div>
@@ -105,6 +112,19 @@ watch(searchQuery, (newVal) => {
             <p class="module-subtitle">Bold prints engineered for the city.</p>
           </div>
         </div>
+      </div>
+    </section>
+
+    <!-- Heritage Stories Preview Banner -->
+    <section class="stories-banner" @click="$emit('go-stories')">
+      <div class="banner-content">
+        <span class="banner-tag">New Story</span>
+        <h3>The Silent Language of Kente</h3>
+        <p>Discover how every thread weaves a tale of royalty...</p>
+        <span class="read-link">Read Heritage Stories →</span>
+      </div>
+      <div class="banner-image">
+        <img src="https://images.unsplash.com/photo-1582738411706-bfc8e691d1c2?q=80&w=400" alt="Kente Story" />
       </div>
     </section>
 
@@ -192,7 +212,7 @@ watch(searchQuery, (newVal) => {
 
 <style scoped>
 .home-container {
-  padding: 24px 24px 120px 24px;
+  padding: 24px 24px 40px 24px;
 }
 
 /* Search Bar (Ancestral Tech) */
@@ -217,10 +237,22 @@ watch(searchQuery, (newVal) => {
   box-shadow: 0 0 15px var(--accent-glow);
 }
 
-.search-icon {
+.search-icon-btn {
   margin-right: 14px;
-  opacity: 0.5;
+  background: none;
+  border: none;
   font-size: 18px;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+  transition: opacity 0.3s ease;
+}
+
+.search-icon-btn:hover {
+  opacity: 1;
 }
 
 .search-input {
@@ -564,30 +596,73 @@ watch(searchQuery, (newVal) => {
 }
 
 /* Scrolling & Grids */
+
+/* Scrolling & Grids */
 .scroll-container {
   display: flex;
   gap: 16px;
   overflow-x: auto;
-  padding: 4px 4px 16px 4px; /* Added padding to prevent shadow clipping */
+  padding: 4px 4px 24px 4px; /* Added padding to prevent shadow clipping */
   margin: -4px -4px 0 -4px;
-  scrollbar-width: none;
   -webkit-overflow-scrolling: touch; /* Momentum scrolling on iOS */
   scroll-snap-type: x proximity; /* Subtle snapping for better feel */
+  
+  /* Desktop scrollbar styling */
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-amber) var(--wood-deep);
 }
 
 .scroll-container::-webkit-scrollbar {
-  display: none;
+  height: 8px;
 }
 
+.scroll-container::-webkit-scrollbar-track {
+  background: var(--wood-deep);
+  border-radius: 4px;
+}
+
+.scroll-container::-webkit-scrollbar-thumb {
+  background-color: var(--accent-amber);
+  border-radius: 4px;
+  border: 2px solid var(--wood-deep);
+}
+
+
 .scroll-container :deep(.product-card) {
-  width: 280px;
+  width: 200px;
   flex-shrink: 0;
   scroll-snap-align: start;
+  flex-direction: column !important;
+  height: auto !important;
+  border-radius: 24px !important;
+}
+
+.scroll-container :deep(.image-wrapper) {
+  width: 100% !important;
+  height: 200px !important;
+  border-radius: 24px 24px 0 0 !important;
+}
+
+.scroll-container :deep(.product-details) {
+  padding: 16px !important;
+  gap: 12px !important;
+}
+
+.scroll-container :deep(.product-name) {
+  font-size: 13px !important;
+  -webkit-line-clamp: 1 !important;
+}
+
+.scroll-container :deep(.price-row) {
+  margin-top: 0 !important;
 }
 
 @media (min-width: 768px) {
   .scroll-container :deep(.product-card) {
-    width: 340px;
+    width: 260px;
+  }
+  .scroll-container :deep(.image-wrapper) {
+    height: 260px !important;
   }
 }
 
@@ -635,19 +710,112 @@ watch(searchQuery, (newVal) => {
 
 .explore-grid {
   display: grid;
-  grid-template-columns: repeat(1, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 16px;
+}
+
+.explore-grid :deep(.product-card) {
+  flex-direction: column !important;
+  height: auto !important;
+  border-radius: 24px !important;
+}
+
+.explore-grid :deep(.image-wrapper) {
+  width: 100% !important;
+  height: 180px !important;
+  border-radius: 24px 24px 0 0 !important;
+}
+
+.explore-grid :deep(.product-details) {
+  padding: 12px !important;
+  gap: 8px !important;
+}
+
+.explore-grid :deep(.product-name) {
+  font-size: 13px !important;
+  -webkit-line-clamp: 1 !important;
+}
+
+.explore-grid :deep(.price-row) {
+  margin-top: 0 !important;
+}
+
+.explore-grid :deep(.add-btn) {
+  display: none !important;
 }
 
 @media (min-width: 768px) {
   .explore-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
 @media (min-width: 1280px) {
   .explore-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
   }
+}
+
+.stories-banner {
+  margin: 0 20px 40px 20px;
+  background: linear-gradient(135deg, var(--wood-polished), var(--wood-deep));
+  border-radius: 24px;
+  border: 1px solid var(--glass-border);
+  display: flex;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.stories-banner:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent-amber);
+}
+
+.banner-content {
+  flex: 1;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.banner-tag {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--accent-amber);
+  margin-bottom: 8px;
+}
+
+.banner-content h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.banner-content p {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  line-height: 1.4;
+}
+
+.read-link {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-amber);
+}
+
+.banner-image {
+  width: 35%;
+  overflow: hidden;
+}
+
+.banner-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 </style>

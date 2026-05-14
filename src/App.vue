@@ -73,6 +73,8 @@ const userProductCount = ref(0)
 const selectedSeller = ref(getStored('selected_seller', null))
 const selectedCategory = ref(getStored('selected_category', 'Explore more'))
 const selectedProduct = ref(getStored('selected_product', null))
+const selectedEditProduct = ref(null)
+const resetEmail = ref('')
 
 const filteredExploreItems = computed(() => {
   if (selectedCategory.value === 'Explore more' || selectedCategory.value === 'Trending Trends') {
@@ -188,32 +190,25 @@ watch(selectedCategory, (val) => setStored('selected_category', val))
 const navigateTo = async (screenName, extraState = {}) => {
   if (extraState.selectedProduct) {
     selectedProduct.value = extraState.selectedProduct
-    try {
-      const res = await db.execute({
-        sql: `
-          SELECT r.*, u.first_name, u.last_name, u.avatar 
-          FROM reviews r 
-          JOIN users u ON r.user_id = u.id 
-          WHERE r.product_id = ?
-          ORDER BY r.created_at DESC
-        `,
-        args: [extraState.selectedProduct.id]
-      })
-      productReviews.value = res.rows.map(r => ({
-        id: r.id,
-        author: `${r.first_name} ${r.last_name}`,
-        rating: r.rating,
-        text: r.text,
-        time: 'Recently',
-        avatar: r.avatar
-      }))
-    } catch (e) {
-      console.error("Fetch reviews error:", e)
-      productReviews.value = []
-    }
+    router.push({ name: 'product-details', params: { id: extraState.selectedProduct.id } })
+    return
   }
-  if (extraState.selectedSeller) selectedSeller.value = extraState.selectedSeller
-  if (extraState.selectedCategory) selectedCategory.value = extraState.selectedCategory
+  if (extraState.selectedSeller) {
+    selectedSeller.value = extraState.selectedSeller
+    router.push({ name: 'tailor-details', params: { id: extraState.selectedSeller.id } })
+    return
+  }
+  if (extraState.selectedCategory) {
+    selectedCategory.value = extraState.selectedCategory
+    router.push({ name: 'explore', params: { category: extraState.selectedCategory } })
+    return
+  }
+
+  if (screenName === 'upload-work') {
+    selectedEditProduct.value = extraState.product || null
+  } else {
+    selectedEditProduct.value = null
+  }
 
   router.push({ name: screenName })
 }
@@ -251,8 +246,15 @@ const toggleLike = async (product) => {
 const currentScreen = computed(() => route.name || 'splash')
 
 const showNavBar = computed(() => {
-  return ['home', 'favorites', 'profile', 'category-list'].includes(currentScreen.value)
+  return ['home', 'favorites', 'profile', 'category-list', 'chats', 'notifications', 'search', 'explore'].includes(currentScreen.value)
 })
+
+
+const toast = ref({ show: false, message: '', type: 'success' })
+const showToast = (message, type = 'success') => {
+  toast.value = { show: true, message, type }
+  setTimeout(() => { toast.value.show = false }, 3000)
+}
 
 // ==========================================
 // 3. ACTION HANDLERS
@@ -267,24 +269,28 @@ const handleLogin = async (data) => {
     });
     if (res.rows.length > 0) {
       const u = res.rows[0];
-      userData.value = {
-        id: u.id,
-        username: u.username,
-        firstName: u.first_name,
-        lastName: u.last_name,
-        email: u.email,
-        whatsapp: u.whatsapp,
-        avatar: u.avatar,
-        userType: u.user_type,
-        needs: u.needs || '',
-        gives: u.gives || '',
-        theme: u.theme || 'light'
-      };
-      theme.value = u.theme || 'light';
-      await fetchInitialData();
-      navigateTo('home');
+      if (u.password === data.password) {
+        userData.value = {
+          id: u.id,
+          username: u.username,
+          firstName: u.first_name,
+          lastName: u.last_name,
+          email: u.email,
+          whatsapp: u.whatsapp,
+          avatar: u.avatar,
+          userType: u.user_type,
+          needs: u.needs || '',
+          gives: u.gives || '',
+          theme: u.theme || 'light'
+        };
+        theme.value = u.theme || 'light';
+        await fetchInitialData();
+        navigateTo('home');
+      } else {
+        showToast('Invalid password. Please try again.', 'error')
+      }
     } else {
-      window.alert('User not found. Please sign up.');
+      showToast('User not found. Please sign up.', 'error')
     }
   } catch (e) {
     console.error('Login error:', e);
@@ -300,15 +306,15 @@ const handleSignUp = async (data) => {
   const signupData = { ...data, id: newId };
   try {
     await db.execute({
-      sql: 'INSERT INTO users (id, username, first_name, last_name, email, whatsapp, avatar, user_type, needs, gives, theme) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      args: [signupData.id, signupData.username, signupData.firstName, signupData.lastName, signupData.email, signupData.whatsapp, signupData.avatar, signupData.userType, signupData.needs, signupData.gives, 'light']
+      sql: 'INSERT INTO users (id, username, first_name, last_name, email, password, whatsapp, avatar, user_type, needs, gives, theme) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      args: [signupData.id, signupData.username, signupData.firstName, signupData.lastName, signupData.email, signupData.password, signupData.whatsapp, signupData.avatar, signupData.userType, signupData.needs, signupData.gives, 'light']
     });
     userData.value = signupData;
     await fetchInitialData();
     navigateTo('home');
   } catch (e) {
     console.error('Signup DB error:', e);
-    window.alert('Error signing up. Email or username might be taken.');
+    showToast('Error signing up. Email or username might be taken.', 'error')
   } finally {
     isGlobalLoading.value = false;
   }
@@ -316,13 +322,25 @@ const handleSignUp = async (data) => {
 
 const handleUploadWork = async (data) => {
   isGlobalLoading.value = true;
-  loadingMessage.value = 'Weaving your work into the heritage...';
+  loadingMessage.value = data.id ? 'Updating your heritage piece...' : 'Weaving your work into the heritage...';
   try {
-    await db.execute({
-      sql: 'INSERT INTO products (name, price, description, image, category_id, owner_id, status, variants_json, gallery_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      args: [data.name, data.price, data.description, data.image, data.category_id, userData.value.id, data.status, data.variants_json, data.gallery_json]
-    });
-    window.alert('Work published successfully!');
+    if (data.id) {
+      await db.execute({
+        sql: `
+          UPDATE products 
+          SET name = ?, price = ?, description = ?, image = ?, category_id = ?, status = ?, variants_json = ?, gallery_json = ? 
+          WHERE id = ? AND owner_id = ?
+        `,
+        args: [data.name, data.price, data.description, data.image, data.category_id, data.status, data.variants_json, data.gallery_json, data.id, userData.value.id]
+      });
+      showToast('Work updated successfully!', 'success')
+    } else {
+      await db.execute({
+        sql: 'INSERT INTO products (name, price, description, image, category_id, owner_id, status, variants_json, gallery_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        args: [data.name, data.price, data.description, data.image, data.category_id, userData.value.id, data.status, data.variants_json, data.gallery_json]
+      });
+      showToast('Work published successfully!', 'success')
+    }
     await fetchInitialData();
     navigateTo('profile');
   } catch (e) {
@@ -340,12 +358,31 @@ const handleFeedback = async (msg) => {
       sql: 'INSERT INTO feedback (user_id, message) VALUES (?, ?)',
       args: [userData.value.id, msg]
     });
-    window.alert('Heritage feedback received! Thank you.');
+    showToast('Heritage feedback received! Thank you.', 'success')
     navigateTo('settings');
   } catch (e) {
     console.error('Feedback error:', e);
   } finally {
     isGlobalLoading.value = false;
+  }
+}
+
+const handleWriteReview = async (data) => {
+  if (selectedProduct.value?.id === undefined) return
+  isGlobalLoading.value = true
+  loadingMessage.value = 'Publishing your heritage review...'
+  try {
+    await db.execute({
+      sql: 'INSERT INTO reviews (product_id, user_id, rating, text) VALUES (?, ?, ?, ?)',
+      args: [selectedProduct.value.id, userData.value.id, data.rating, data.text]
+    })
+    showToast('Review shared with the Tribe!', 'success')
+    navigateTo('product-details', { selectedProduct: selectedProduct.value })
+  } catch (e) {
+    console.error('Review error:', e)
+    showToast('Error sharing review. Please try again.', 'error')
+  } finally {
+    isGlobalLoading.value = false
   }
 }
 
@@ -361,12 +398,12 @@ const handleProductDelete = async (productId) => {
       sql: "DELETE FROM products WHERE id = ? AND owner_id = ?",
       args: [productId, userData.value.id]
     })
-    window.alert('Item removed successfully.')
+    showToast('Item removed successfully.', 'success')
     await fetchInitialData()
     navigateTo('home')
   } catch (e) {
     console.error('Delete product error:', e)
-    window.alert('Error deleting item. Please try again.')
+    showToast('Error deleting item. Please try again.', 'error')
   } finally {
     isGlobalLoading.value = false;
   }
@@ -382,10 +419,10 @@ const handleUpdateRole = async (newRole) => {
       args: [newRole, userData.value.id]
     })
     userData.value.userType = newRole
-    window.alert(`Role successfully switched to ${newRole === 'supplier' ? 'Tailor' : 'Buyer'}!`)
+    showToast(`Role successfully switched to ${newRole === 'supplier' ? 'Tailor' : 'Buyer'}!`, 'success')
   } catch (e) {
     console.error('Role update error:', e)
-    window.alert('Error switching roles. Please try again.')
+    showToast('Error switching roles. Please try again.', 'error')
   } finally {
     isGlobalLoading.value = false
   }
@@ -449,12 +486,12 @@ const handleUpdateProfile = async (val) => {
       args: [val.username, val.firstName, val.lastName, val.whatsapp, val.avatar, val.userType, val.needs, val.gives, val.id]
     });
     userData.value = { ...val };
-    window.alert('Profile updated successfully!');
+    showToast('Profile updated successfully!', 'success')
     await fetchInitialData();
     navigateTo('profile');
   } catch (e) {
     console.error('Update profile error:', e);
-    window.alert('Failed to update profile. Username might be taken.');
+    showToast('Failed to update profile. Username might be taken.', 'error')
   } finally {
     isGlobalLoading.value = false;
   }
@@ -462,6 +499,9 @@ const handleUpdateProfile = async (val) => {
 
 // Router Event Handlers Mapping
 const handleGoBack = () => router.back()
+const handleGoChat = (userId) => {
+  router.push({ name: 'chat-detail', params: { userId } })
+}
 </script>
 
 <template>
@@ -476,10 +516,11 @@ const handleGoBack = () => router.back()
       @toggle-theme="() => theme = (theme === 'light' ? 'dark' : 'light')"
     />
 
-    <router-view v-slot="{ Component }">
-      <keep-alive include="Home">
-        <component :is="Component" 
-          :language="currentLanguage"
+    <main id="main-content" :class="{ 'with-nav': showNavBar }">
+      <router-view v-slot="{ Component }">
+        <keep-alive include="Home">
+          <component :is="Component" 
+            :language="currentLanguage"
           :t="t"
           :theme="theme"
           :user-data="userData"
@@ -495,6 +536,7 @@ const handleGoBack = () => router.back()
           :seller="selectedSeller"
           :results="searchResults"
           :notifications="userNotifications"
+          :editing-product="selectedEditProduct"
           
           @select-language="(lang) => currentLanguage = lang"
           @loaded="userData.id !== 'guest' ? navigateTo('home') : navigateTo('login')"
@@ -503,13 +545,31 @@ const handleGoBack = () => router.back()
           @go-forgot="navigateTo('forgot-password')"
           @go-back="handleGoBack"
           @login="handleLogin"
-          @signup="handleSignUp"
-          @submit="(msg) => {
-             if(currentScreen === 'forgot-password') navigateTo('verify-code');
+          @go-write-review="navigateTo('write-review')"
+          @go-edit="(product) => navigateTo('upload-work', { product })"
+          @submit="async (data) => {
+             if(currentScreen === 'forgot-password') {
+               resetEmail.value = data;
+               navigateTo('verify-code');
+             }
              else if(currentScreen === 'verify-code') navigateTo('reset-password');
-             else if(currentScreen === 'reset-password') navigateTo('login');
-             else if(currentScreen === 'feedback') handleFeedback(msg);
+             else if(currentScreen === 'reset-password') {
+               try {
+                 await db.execute({
+                   sql: 'UPDATE users SET password = ? WHERE email = ?',
+                   args: [data, resetEmail.value]
+                 });
+                 showToast('Password reset successfully!', 'success');
+                 navigateTo('login');
+               } catch (e) {
+                 console.error('Reset password error:', e);
+                 showToast('Error resetting password.', 'error');
+               }
+             }
+             else if(currentScreen === 'feedback') handleFeedback(data);
+             else if(currentScreen === 'write-review') handleWriteReview(data);
           }"
+
           @go-details="(p) => navigateTo('product-details', { selectedProduct: p })"
           @go-notifications="navigateTo('notifications')"
           @go-search="navigateTo('search')"
@@ -527,10 +587,11 @@ const handleGoBack = () => router.back()
           @logout="handleLogout"
           @go-reviews="navigateTo('reviews')"
           @go-feedback="navigateTo('feedback')"
+          @go-chats="navigateTo('chats')"
+          @go-chat="handleGoChat"
           @toggle-favorite="(p) => toggleLike(p)"
           @delete="handleProductDelete"
           @select-category="(name) => navigateTo('explore', { selectedCategory: name })"
-          @go-write-review="navigateTo('write-review')"
           @update:user-data="handleUpdateProfile"
           @update:theme="(val) => theme = val"
           @update:language="(val) => currentLanguage = val"
@@ -539,10 +600,17 @@ const handleGoBack = () => router.back()
           @go-privacy="navigateTo('privacy')"
           @go-terms="navigateTo('terms')"
           @go-about="navigateTo('about')"
+          @go-returns="navigateTo('returns')"
+          @go-guidelines="navigateTo('guidelines')"
+          @go-safety="navigateTo('safety')"
+          @go-measurements="navigateTo('measurements')"
+          @go-ip-policy="navigateTo('ip-policy')"
+          @go-stories="navigateTo('stories')"
           @upload="handleUploadWork"
         />
       </keep-alive>
     </router-view>
+    </main>
 
     <NavigationBar 
       v-if="showNavBar" 
@@ -551,11 +619,52 @@ const handleGoBack = () => router.back()
       @navigate="navigateTo"
     />
 
+    
     <LoadingSpinner v-if="isGlobalLoading" :message="loadingMessage" />
+
+    <!-- Modern Toast Notification -->
+    <div v-if="toast.show" class="toast-notification animate-fade-up" :class="toast.type">
+      <div class="toast-icon">
+        <svg v-if="toast.type === 'success'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </div>
+      <span class="toast-message">{{ toast.message }}</span>
+    </div>
   </div>
 </template>
 
+
 <style>
+/* Toast Notification */
+.toast-notification {
+  position: fixed;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  border-radius: 100px;
+  background: var(--wood-deep);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  z-index: 9999;
+  min-width: 280px;
+  max-width: 90vw;
+}
+.toast-notification.success { border-color: #10B981; }
+.toast-notification.error { border-color: #EF4444; }
+.toast-notification.success .toast-icon { color: #10B981; }
+.toast-notification.error .toast-icon { color: #EF4444; }
+.toast-message { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translate(-50%, 20px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+.animate-fade-up { animation: fadeUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
 .app-wrapper {
   width: 100%;
   max-width: 1440px;
@@ -565,5 +674,17 @@ const handleGoBack = () => router.back()
   background-color: transparent;
   box-shadow: var(--shadow-md);
   overflow-x: hidden;
+}
+
+.with-nav {
+  padding-top: 60px;
+  padding-bottom: 100px;
+}
+
+@media (min-width: 768px) {
+  .with-nav {
+    padding-top: 80px;
+    padding-bottom: 0;
+  }
 }
 </style>

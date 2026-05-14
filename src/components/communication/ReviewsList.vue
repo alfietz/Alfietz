@@ -1,23 +1,55 @@
 <!-------- (ReviewsList.vue) ./src/components/ReviewsList.vue ------------>
 <script setup>
-import { REVIEWS_LIST } from '../../constants'
+import { ref, onMounted, computed } from 'vue'
+import { db } from '../../db/client'
 
 const props = defineProps({
-  reviews: {
-    type: Array,
-    default: () => REVIEWS_LIST
-  },
-  averageRating: {
-    type: Number,
-    default: 4.0
-  },
-  totalReviews: {
-    type: Number,
-    default: 23
+  productId: {
+    type: [String, Number],
+    required: true
   }
 })
 
 defineEmits(['go-back', 'write-review'])
+
+const reviews = ref([])
+const loading = ref(true)
+
+const averageRating = computed(() => {
+  if (reviews.value.length === 0) return 0
+  const sum = reviews.value.reduce((acc, r) => acc + r.rating, 0)
+  return sum / reviews.value.length
+})
+
+const totalReviews = computed(() => reviews.value.length)
+
+onMounted(async () => {
+  try {
+    loading.value = true
+    const res = await db.execute({
+      sql: `
+        SELECT r.*, u.first_name, u.last_name, u.avatar 
+        FROM reviews r 
+        JOIN users u ON r.user_id = u.id 
+        WHERE r.product_id = ?
+        ORDER BY r.created_at DESC
+      `,
+      args: [props.productId]
+    })
+    reviews.value = res.rows.map(r => ({
+      id: r.id,
+      author: `${r.first_name} ${r.last_name}`,
+      rating: r.rating,
+      text: r.text,
+      time: 'Recently',
+      avatar: r.avatar
+    }))
+  } catch (e) {
+    console.error('Error fetching reviews:', e)
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 
 <template>
@@ -29,31 +61,40 @@ defineEmits(['go-back', 'write-review'])
       <h1 class="title">Reviews</h1>
     </div>
 
-    <!-- Overall Rating Section -->
-    <div class="overall-rating">
-      <h2 class="rating-score">{{ averageRating.toFixed(1) }}</h2>
-      <div class="star-rating large-stars">
-        <span v-for="n in 5" :key="n" class="star" :class="n <= Math.round(averageRating) ? 'filled' : 'empty'">★</span>
-      </div>
-      <p class="rating-count">Based on {{ totalReviews }} reviews</p>
+    <div v-if="loading" class="loading-reviews">
+      <p>Fetching heritage reviews...</p>
     </div>
 
-    <!-- Reviews List -->
-    <div class="reviews-list">
-      <div v-for="review in reviews" :key="review.id" class="review-card">
-        <div class="review-header">
-          <img :src="review.avatar" alt="Reviewer" class="avatar" />
-          <div class="reviewer-info">
-            <h4 class="reviewer-name">{{ review.author }}</h4>
-            <span class="review-time">{{ review.time }}</span>
-          </div>
-          <div class="star-rating small-stars">
-            <span v-for="n in 5" :key="n" class="star" :class="n <= review.rating ? 'filled' : 'empty'">★</span>
-          </div>
+    <template v-else>
+      <!-- Overall Rating Section -->
+      <div class="overall-rating">
+        <h2 class="rating-score">{{ averageRating.toFixed(1) }}</h2>
+        <div class="star-rating large-stars">
+          <span v-for="n in 5" :key="n" class="star" :class="n <= Math.round(averageRating) ? 'filled' : 'empty'">★</span>
         </div>
-        <p class="review-text">{{ review.text }}</p>
+        <p class="rating-count">Based on {{ totalReviews }} reviews</p>
       </div>
-    </div>
+
+      <!-- Reviews List -->
+      <div v-if="reviews.length > 0" class="reviews-list">
+        <div v-for="review in reviews" :key="review.id" class="review-card">
+          <div class="review-header">
+            <img :src="review.avatar" alt="Reviewer" class="avatar" />
+            <div class="reviewer-info">
+              <h4 class="reviewer-name">{{ review.author }}</h4>
+              <span class="review-time">{{ review.time }}</span>
+            </div>
+            <div class="star-rating small-stars">
+              <span v-for="n in 5" :key="n" class="star" :class="n <= review.rating ? 'filled' : 'empty'">★</span>
+            </div>
+          </div>
+          <p class="review-text">{{ review.text }}</p>
+        </div>
+      </div>
+      <div v-else class="no-reviews">
+        <p>No reviews yet for this heritage piece.</p>
+      </div>
+    </template>
 
     <!-- Bottom Action -->
     <div class="bottom-action">
@@ -67,12 +108,19 @@ defineEmits(['go-back', 'write-review'])
   background: var(--wood-deep);
   min-height: 100vh;
   font-family: 'Inter', -apple-system, sans-serif;
-  padding: 24px 20px;
+  padding: 24px 20px 120px;
   max-width: 1200px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
 }
+
+.loading-reviews, .no-reviews {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+}
+/* ... rest of existing styles ... */
 
 .header-row {
   display: flex;
@@ -201,5 +249,29 @@ defineEmits(['go-back', 'write-review'])
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
+}
+
+.back-btn {
+  background-color: var(--wood-walnut) !important;
+  border: 1px solid var(--glass-border) !important;
+  color: var(--text-primary) !important;
+  transition: all 0.2s ease !important;
+}
+
+.back-btn:hover {
+  background-color: var(--wood-polished) !important;
+  border-color: var(--accent-amber) !important;
+}
+
+.back-btn {
+  background-color: var(--wood-walnut) !important;
+  border: 1px solid var(--glass-border) !important;
+  color: var(--text-primary) !important;
+  transition: all 0.2s ease !important;
+}
+
+.back-btn:hover {
+  background-color: var(--wood-polished) !important;
+  border-color: var(--accent-amber) !important;
 }
 </style>

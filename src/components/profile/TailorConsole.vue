@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { db } from '../../db/client'
+import BaseDialog from '../layout/BaseDialog.vue'
 
 const props = defineProps({
   userData: {
@@ -13,7 +14,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['go-back', 'go-orders', 'go-negotiations'])
+const emit = defineEmits(['go-back', 'go-orders', 'go-negotiations', 'go-edit', 'go-upload', 'go-chat'])
 
 const stats = ref({
   revenue: 'TSh 0',
@@ -26,6 +27,23 @@ const activeOrders = ref([])
 const negotiations = ref([])
 const myProducts = ref([])
 const activeTab = ref('orders')
+
+// Dialog State
+const dialog = ref({
+  show: false,
+  title: '',
+  message: '',
+  type: 'info'
+})
+
+const showDialog = (options) => {
+  dialog.value = {
+    show: true,
+    title: options.title || '',
+    message: options.message || '',
+    type: options.type || 'info'
+  }
+}
 
 onMounted(async () => {
   await fetchData()
@@ -49,6 +67,7 @@ const fetchData = async () => {
       id: o.id,
       item: o.item_name,
       customer: `${o.first_name} ${o.last_name}`,
+      customer_id: o.customer_id,
       customerFirstName: o.first_name,
       customerPhone: o.customer_phone,
       date: new Date(o.created_at).toLocaleDateString(),
@@ -60,9 +79,10 @@ const fetchData = async () => {
     // 2. Fetch Negotiations
     const negsRes = await db.execute({
       sql: `
-        SELECT n.*, u.first_name, u.last_name, u.whatsapp as customer_phone
+        SELECT n.*, u.first_name, u.last_name, u.whatsapp as customer_phone, p.image
         FROM negotiations n 
         JOIN users u ON n.customer_id = u.id 
+        LEFT JOIN products p ON n.item_name = p.name
         WHERE n.tailor_id = ? 
         ORDER BY n.created_at DESC
       `,
@@ -72,11 +92,13 @@ const fetchData = async () => {
     negotiations.value = negsRes.rows.map(n => ({
       id: n.id,
       customer: `${n.first_name} ${n.last_name}`,
+      customer_id: n.customer_id,
       customerFirstName: n.first_name,
       customerPhone: n.customer_phone,
       item: n.item_name,
       offer: n.proposed_price,
-      status: n.status
+      status: n.status,
+      image: n.image
     }))
 
     // 3. Fetch My Products
@@ -124,7 +146,11 @@ const getStatusClass = (status) => {
 const openWhatsApp = (customerData, orderOrNeg, type = 'order') => {
   const phone = customerData.customerPhone
   if (!phone) {
-    alert("Customer contact info not available.");
+    showDialog({
+      title: 'Contact Error',
+      message: 'Customer contact info not available.',
+      type: 'error'
+    })
     return;
   }
   let normalized = phone.startsWith('0') ? '255' + phone.slice(1) : phone.replace('+', '')
@@ -208,12 +234,13 @@ const openWhatsApp = (customerData, orderOrNeg, type = 'order') => {
       <div v-if="activeTab === 'orders'" class="orders-section animate-fade">
         <div class="section-header">
           <h2 class="section-title">Active Orders</h2>
-          <button class="view-all">View All</button>
+          <button class="view-all" @click="$emit('go-orders')">View All</button>
         </div>
         <div class="table-container">
           <table class="orders-table">
             <thead>
               <tr>
+                <th>Item</th>
                 <th>Order Info</th>
                 <th>Customer</th>
                 <th>Status</th>
@@ -223,9 +250,14 @@ const openWhatsApp = (customerData, orderOrNeg, type = 'order') => {
             <tbody>
               <tr v-for="order in activeOrders" :key="order.id">
                 <td>
+                  <div class="table-img-box">
+                    <img :src="order.image" alt="Item" />
+                  </div>
+                </td>
+                <td>
                   <div class="order-info">
                     <span class="order-item">{{ order.item }}</span>
-                    <span class="order-meta">{{ order.id }} • Size: {{ order.size }}</span>
+                    <span class="order-meta">#{{ order.id }} • Size: {{ order.size }}</span>
                   </div>
                 </td>
                 <td>
@@ -241,10 +273,12 @@ const openWhatsApp = (customerData, orderOrNeg, type = 'order') => {
                 </td>
                 <td class="text-right">
                   <div class="action-group">
-                    <button class="action-btn" @click="openWhatsApp(order, order, 'order')">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-13.4 8.38 8.38 0 0 1 3.8.9L21 3z"/></svg>
+                    <button class="action-btn wa" @click="openWhatsApp(order, order, 'order')">
+                      WA
                     </button>
-                    <button class="action-btn">Update</button>
+                    <button class="action-btn" @click="$emit('go-chat', order.customer_id)">
+                      Chat
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -272,11 +306,17 @@ const openWhatsApp = (customerData, orderOrNeg, type = 'order') => {
               <p class="inv-price">{{ product.price }}</p>
               <div class="inv-actions">
                 <button 
+                  class="edit-btn"
+                  @click="$emit('go-edit', product)"
+                >
+                  Edit Design
+                </button>
+                <button 
                   class="stock-toggle-btn"
                   :class="{ 'to-oos': product.status === 'In Stock' }"
                   @click="toggleStock(product)"
                 >
-                  Mark as {{ product.status === 'In Stock' ? 'Out of Stock' : 'In Stock' }}
+                  {{ product.status === 'In Stock' ? 'Set Out of Stock' : 'Set In Stock' }}
                 </button>
               </div>
             </div>
@@ -293,6 +333,9 @@ const openWhatsApp = (customerData, orderOrNeg, type = 'order') => {
         <div class="negotiations-list">
           <div v-for="neg in negotiations" :key="neg.id" class="negotiation-card">
             <div class="neg-header">
+              <div class="neg-img-box">
+                <img :src="neg.image" alt="Item" />
+              </div>
               <div class="neg-info">
                 <span class="neg-customer">{{ neg.customer }}</span>
                 <span class="neg-item">{{ neg.item }}</span>
@@ -305,6 +348,9 @@ const openWhatsApp = (customerData, orderOrNeg, type = 'order') => {
             <div class="neg-actions">
               <button class="accept-btn">Accept</button>
               <button class="decline-btn">Decline</button>
+              <button class="chat-btn" @click="$emit('go-chat', neg.customer_id)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-13.4 8.38 8.38 0 0 1 3.8.9L21 3z"/></svg>
+              </button>
               <button class="chat-btn" @click="openWhatsApp(neg, neg, 'negotiation')">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.79 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
               </button>
@@ -313,6 +359,16 @@ const openWhatsApp = (customerData, orderOrNeg, type = 'order') => {
         </div>
       </div>
     </div>
+
+    <!-- Custom Dialog -->
+    <BaseDialog 
+      :show="dialog.show"
+      :title="dialog.title"
+      :message="dialog.message"
+      :type="dialog.type"
+      @close="dialog.show = false"
+      @confirm="dialog.show = false"
+    />
   </div>
 </template>
 
@@ -496,6 +552,27 @@ const openWhatsApp = (customerData, orderOrNeg, type = 'order') => {
 
 .inv-actions {
   margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.edit-btn {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  background: var(--wood-walnut);
+  color: var(--text-amber);
+  border: 1px solid var(--accent-amber);
+  transition: all 0.3s;
+}
+
+.edit-btn:hover {
+  background: var(--wood-polished);
+  box-shadow: 0 0 10px var(--accent-glow);
 }
 
 .stock-toggle-btn {
@@ -611,6 +688,21 @@ const openWhatsApp = (customerData, orderOrNeg, type = 'order') => {
   color: var(--text-muted);
 }
 
+.table-img-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+  background: var(--wood-deep);
+}
+
+.table-img-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .status-badge {
   display: inline-block;
   padding: 4px 12px;
@@ -642,11 +734,24 @@ const openWhatsApp = (customerData, orderOrNeg, type = 'order') => {
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
+  transition: all 0.3s;
 }
 
 .action-btn:hover {
   border-color: var(--accent-amber);
   color: var(--accent-amber);
+  background: var(--wood-polished);
+}
+
+.action-btn.wa {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10B981;
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.action-btn.wa:hover {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #10B981;
 }
 
 .action-group {
@@ -680,8 +785,25 @@ const openWhatsApp = (customerData, orderOrNeg, type = 'order') => {
 
 .neg-header {
   display: flex;
-  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
   margin-bottom: 16px;
+}
+
+.neg-img-box {
+  width: 50px;
+  height: 50px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+  background: var(--wood-deep);
+  flex-shrink: 0;
+}
+
+.neg-img-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .neg-info {
@@ -764,4 +886,16 @@ const openWhatsApp = (customerData, orderOrNeg, type = 'order') => {
 }
 
 .text-right { text-align: right; }
+
+.back-btn {
+  background-color: var(--wood-walnut) !important;
+  border: 1px solid var(--glass-border) !important;
+  color: var(--text-primary) !important;
+  transition: all 0.2s ease !important;
+}
+
+.back-btn:hover {
+  background-color: var(--wood-polished) !important;
+  border-color: var(--accent-amber) !important;
+}
 </style>

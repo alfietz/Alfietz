@@ -234,13 +234,23 @@ input {
 
 /* Utility Classes (Shared UI Elements) */
 
+/* Native-like Active State (Haptic Feel) */
+.tap-active:active {
+  transform: scale(0.96);
+  opacity: 0.9;
+  transition: transform 0.1s ease;
+}
+
+/* Safe Area Insets for Modern Mobile Screens */
+.safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
+
 /* Buttons */
 .primary-btn {
   background: linear-gradient(135deg, var(--accent-amber) 0%, #B45309 100%);
   color: white;
   border-radius: var(--radius-md);
   padding: 16px;
-  min-height: 56px; /* Optimized touch target */
+  min-height: 45px; /* User requested 45px */
   font-size: 16px;
   font-weight: 700;
   width: 100%;
@@ -250,50 +260,18 @@ input {
   text-align: center;
   box-shadow: 0 0 15px rgba(217, 119, 6, 0.3);
   letter-spacing: 1px;
-  -webkit-tap-highlight-color: transparent;
 }
 
-.icon-btn {
+.icon-btn, .back-btn {
   background-color: var(--wood-walnut);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-full);
-  width: 44px; /* Optimized touch target */
-  height: 44px; /* Optimized touch target */
+  width: 45px; /* User requested 45px */
+  height: 45px; /* User requested 45px */
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  -webkit-tap-highlight-color: transparent;
-}
-
-.icon-btn:hover {
-  background-color: var(--wood-polished);
-  border-color: var(--accent-amber);
-  box-shadow: 0 0 15px var(--accent-glow);
-}
-
-.back-btn {
-  background-color: var(--wood-walnut);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-full);
-  width: 44px; /* Optimized touch target */
-  height: 44px; /* Optimized touch target */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-muted);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: pointer;
-  z-index: 10;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.back-btn:hover {
-  background-color: var(--wood-polished);
-  border-color: var(--accent-amber);
-  color: var(--text-amber);
-  box-shadow: 0 0 15px var(--accent-glow);
-  transform: translateX(-2px);
+  transition: all 0.2s ease;
 }
 
 /* Forms (Ancestral Tech Style) */

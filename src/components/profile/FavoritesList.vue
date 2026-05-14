@@ -49,19 +49,7 @@ defineEmits(['go-back', 'go-details', 'toggle-like'])
 
 .favorites-grid {
   display: grid;
-  grid-template-columns: repeat(1, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 16px;
-}
-
-@media (min-width: 768px) {
-  .favorites-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (min-width: 1024px) {
-  .favorites-grid {
-    grid-template-columns: repeat(5, 1fr);
-  }
 }
 </style>
