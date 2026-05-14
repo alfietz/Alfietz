@@ -130,7 +130,7 @@ const fetchInitialData = async () => {
       sql: "SELECT COUNT(*) as total FROM products WHERE owner_id = ?",
       args: [userData.value.id]
     })
-    userProductCount.value = statsRes.rows[0].total
+    userProductCount.value = statsRes.rows[0]?.total || 0
 
     const cats = await db.execute("SELECT * FROM categories")
     categories.value = cats.rows
