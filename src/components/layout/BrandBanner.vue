@@ -61,7 +61,7 @@ defineProps({
   position: relative;
   width: 100%;
   min-height: 340px;
-  background: linear-gradient(135deg, #1A110A 0%, #0D0805 100%);
+  background: linear-gradient(135deg, var(--wood-walnut) 0%, var(--wood-deep) 100%);
   border-radius: 32px;
   overflow: hidden;
   border: 1px solid var(--glass-border);
@@ -134,13 +134,13 @@ defineProps({
   position: relative;
   width: 100px;
   height: 100px;
-  background: white;
+  background: var(--wood-deep);
   border-radius: 50%;
   padding: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 30px rgba(255,255,255,0.1), 0 0 60px var(--accent-glow);
+  box-shadow: 0 0 30px rgba(0,0,0,0.1), 0 0 60px var(--accent-glow);
   border: 4px solid var(--accent-amber);
   z-index: 5;
   overflow: hidden;
@@ -223,7 +223,7 @@ defineProps({
 .title-top {
   font-size: 42px;
   font-weight: 900;
-  color: white;
+  color: var(--text-primary);
   letter-spacing: 4px;
   line-height: 1;
 }

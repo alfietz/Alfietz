@@ -13,7 +13,7 @@ defineProps({
       <div class="thread-container">
         <!-- Waving Thread (SVG Path with Animation) -->
         <svg viewBox="0 0 100 20" class="waving-thread">
-          <path d="M0 10 Q 12.5 0, 25 10 T 50 10 T 75 10 T 100 10" stroke="#795548" stroke-width="3" fill="none" stroke-linecap="round" />
+          <path d="M0 10 Q 12.5 0, 25 10 T 50 10 T 75 10 T 100 10" stroke="var(--accent-amber)" stroke-width="3" fill="none" stroke-linecap="round" />
         </svg>
       </div>
       <p v-if="message" class="loading-text">{{ message }}</p>
@@ -28,7 +28,7 @@ defineProps({
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(249, 243, 238, 0.85); /* Matches --bg-white with opacity */
+  background-color: var(--glass-bg);
   display: flex;
   align-items: center;
   justify-content: center;

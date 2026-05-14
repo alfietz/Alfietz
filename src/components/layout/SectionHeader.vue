@@ -80,6 +80,6 @@ defineEmits(['view-all'])
 
 /* Dark theme specific adjustments if needed */
 .dark-theme .view-all-btn:hover {
-  background-color: rgba(129, 199, 132, 0.1);
+  background-color: var(--wood-polished);
 }
 </style>

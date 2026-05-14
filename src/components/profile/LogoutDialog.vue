@@ -24,13 +24,14 @@ defineEmits(['cancel', 'confirm'])
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(28, 35, 37, 0.85);
+  background-color: var(--glass-bg);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 2000;
   padding: 20px;
   font-family: 'Inter', -apple-system, sans-serif;
+  backdrop-filter: blur(8px);
 }
 
 .dialog-card {
@@ -81,7 +82,7 @@ defineEmits(['cancel', 'confirm'])
 
 .btn-confirm {
   background: var(--accent-amber);
-  border: 1px solid #5D8374;
+  border: 1px solid var(--accent-amber);
   color: white;
 }
 

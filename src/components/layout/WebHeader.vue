@@ -112,8 +112,8 @@ onUnmounted(() => {
   width: calc(100% - 24px);
   max-width: 1400px;
   border-radius: 24px;
-  background-color: rgba(42, 24, 16, 0.75); /* Glassy brown */
-  border: 1px solid rgba(251, 191, 36, 0.2);
+  background-color: var(--glass-bg);
+  border: 1px solid var(--glass-border);
   box-shadow: 0 10px 30px rgba(0,0,0,0.4);
   top: 12px;
 }
@@ -192,7 +192,7 @@ onUnmounted(() => {
   font-size: 18px; /* Smaller for mobile */
   font-weight: 800;
   letter-spacing: 0.5px;
-  background: linear-gradient(to right, #FFFBEB, var(--accent-amber));
+  background: linear-gradient(to right, var(--text-primary), var(--accent-amber));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }

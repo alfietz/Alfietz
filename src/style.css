@@ -47,6 +47,10 @@
   /* Pattern Color */
   --pattern-color: #D97706;
   --pattern-opacity: 0.05;
+
+  /* Teaser & Wood Accents */
+  --wood-gradient: linear-gradient(135deg, #2A1810 0%, #1A110A 100%);
+  --accent-gold: #FBBF24;
 }
 
 /* Light Theme Overrides - Birch/Warm Sand */
@@ -83,6 +87,10 @@
   --price-border: rgba(22, 101, 52, 0.2);
 
   --pattern-opacity: 0.08;
+
+  /* Teaser & Wood Accents - Light */
+  --wood-gradient: linear-gradient(135deg, #EADECF 0%, #F4EBE1 100%);
+  --accent-gold: #D97706;
 }
 
 /* African Traditional Marks Pattern */

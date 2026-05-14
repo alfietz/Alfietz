@@ -1,6 +1,7 @@
 <!-------- (FavoritesList.vue) ./src/components/FavoritesList.vue ------------>
 <script setup>
 import ProductCard from '../shop/ProductCard.vue'
+import EmptyFavorites from './EmptyFavorites.vue'
 
 defineProps({
   favoriteItems: {
@@ -14,7 +15,7 @@ defineEmits(['go-back', 'go-details', 'toggle-like'])
 
 <template>
   <div class="favorites-page">
-    <div class="favorites-grid">
+    <div v-if="favoriteItems.length > 0" class="favorites-grid">
       <ProductCard 
         v-for="item in favoriteItems" 
         :key="item.id" 
@@ -23,6 +24,7 @@ defineEmits(['go-back', 'go-details', 'toggle-like'])
         @toggle-like="(p) => $emit('toggle-like', p)"
       />
     </div>
+    <EmptyFavorites v-else />
   </div>
 </template>
 

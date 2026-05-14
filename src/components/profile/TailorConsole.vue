@@ -442,7 +442,7 @@ const openWhatsApp = (customerData, orderOrNeg, type = 'order') => {
 .stat-trend {
   font-size: 12px;
   font-weight: 700;
-  color: #10B981;
+  color: var(--price-text);
   margin-top: 12px;
 }
 
@@ -527,7 +527,7 @@ const openWhatsApp = (customerData, orderOrNeg, type = 'order') => {
   text-transform: uppercase;
 }
 
-.stock-overlay.in-stock { background: #10B981; color: white; }
+.stock-overlay.in-stock { background: var(--price-text); color: white; }
 .stock-overlay.out-of-stock { background: #EF4444; color: white; }
 
 .inventory-details {
@@ -582,9 +582,9 @@ const openWhatsApp = (customerData, orderOrNeg, type = 'order') => {
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
-  background: rgba(16, 185, 129, 0.1);
-  color: #10B981;
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  background: var(--price-bg);
+  color: var(--price-text);
+  border: 1px solid var(--price-border);
   transition: all 0.3s;
 }
 
@@ -843,7 +843,7 @@ const openWhatsApp = (customerData, orderOrNeg, type = 'order') => {
 .offer-value {
   font-size: 18px;
   font-weight: 800;
-  color: #10B981;
+  color: var(--price-text);
 }
 
 .neg-actions {
@@ -861,7 +861,7 @@ const openWhatsApp = (customerData, orderOrNeg, type = 'order') => {
 }
 
 .accept-btn {
-  background: #10B981;
+  background: var(--price-text);
   color: white;
   border: none;
 }

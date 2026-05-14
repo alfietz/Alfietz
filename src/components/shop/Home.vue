@@ -99,7 +99,7 @@ watch(searchQuery, (newVal) => {
         <span class="read-link">Read Heritage Stories →</span>
       </div>
       <div class="banner-image">
-        <img src="https://images.unsplash.com/photo-1582738411706-bfc8e691d1c2?q=80&w=400" alt="Kente Story" />
+        <img src="https://images.unsplash.com/photo-1660695828374-4ff51ac9df5d?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8a2VudGV8ZW58MHx8MHx8fDA%3D" alt="Kente Story" />
       </div>
     </section>
 
@@ -262,7 +262,7 @@ watch(searchQuery, (newVal) => {
 /* HERO SECTION (Ancestral Tech) */
 .hero-section {
   position: relative;
-  background: linear-gradient(135deg, #1A110A 0%, #2A1810 100%);
+  background: linear-gradient(135deg, var(--wood-walnut) 0%, var(--wood-polished) 100%);
   border: 1px solid var(--glass-border);
   border-radius: 32px;
   padding: 40px;
@@ -305,7 +305,7 @@ watch(searchQuery, (newVal) => {
   line-height: 1.1;
   font-weight: 800;
   margin-bottom: 20px;
-  background: linear-gradient(to right, #FFFBEB, var(--accent-amber));
+  background: linear-gradient(to right, var(--text-primary), var(--accent-amber));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -424,6 +424,15 @@ watch(searchQuery, (newVal) => {
   border: 1px solid rgba(255,255,255,0.05);
   cursor: pointer;
   transition: all 0.3s ease;
+  background-color: var(--wood-deep);
+}
+
+.collection-module::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%);
+  z-index: 1;
 }
 
 .collection-module:hover {
@@ -431,11 +440,13 @@ watch(searchQuery, (newVal) => {
 }
 
 .collection-module.kente {
-  background: linear-gradient(135deg, #8B5A2B 0%, #3E2723 100%);
+  background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.2)), url("https://images.unsplash.com/photo-1660695828374-4ff51ac9df5d?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8a2VudGV8ZW58MHx8MHx8fDA%3D");
+  background-size: cover;
+  background-position: center;
 }
 
 .collection-module.ankara {
-  background: linear-gradient(135deg, #4A3021 0%, #1A110A 100%);
+  background: linear-gradient(135deg, var(--wood-polished) 0%, var(--wood-walnut) 100%);
 }
 
 .module-tech-overlay {
@@ -446,6 +457,7 @@ watch(searchQuery, (newVal) => {
     linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
   background-size: 20px 20px;
   opacity: 0.2;
+  z-index: 1;
 }
 
 .module-content {
@@ -465,24 +477,24 @@ watch(searchQuery, (newVal) => {
   font-weight: 800;
   letter-spacing: 1px;
   padding: 4px 10px;
-  background: rgba(0,0,0,0.4);
+  background: rgba(0,0,0,0.6);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 6px;
   margin-bottom: 12px;
-  color: var(--text-amber);
+  color: #FBBF24; /* Hardcoded amber for consistency on dark overlay */
 }
 
 .module-title {
   font-size: 22px;
   font-weight: 800;
-  color: white;
+  color: white; /* Forced white for readability on dark gradient */
   margin-bottom: 4px;
 }
 
 .module-subtitle {
   font-size: 13px;
-  color: rgba(255,255,255,0.6);
+  color: rgba(255,255,255,0.8); /* Slightly brighter white for better contrast */
   opacity: 0;
   transition: opacity 0.3s ease 0.1s;
 }
@@ -503,7 +515,7 @@ watch(searchQuery, (newVal) => {
   position: relative;
   overflow: hidden;
   box-shadow: var(--shadow-lg);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--glass-border);
 }
 
 /* Add a subtle wood grain overlay via CSS */
@@ -523,13 +535,13 @@ watch(searchQuery, (newVal) => {
   position: relative;
   z-index: 2;
   text-align: center;
-  color: white;
+  color: var(--text-primary);
 }
 
 .teaser-label {
   display: inline-block;
   background: var(--accent-gold);
-  color: var(--text-primary);
+  color: var(--wood-deep);
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 11px;
@@ -559,7 +571,7 @@ watch(searchQuery, (newVal) => {
   font-size: 13px;
   font-weight: 600;
   color: var(--accent-gold);
-  border: 1px border rgba(251, 192, 45, 0.3);
+  border: 1px solid var(--accent-glow);
   padding: 8px 16px;
   border-radius: 8px;
   display: inline-block;
