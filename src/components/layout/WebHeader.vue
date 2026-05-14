@@ -65,7 +65,11 @@ onUnmounted(() => {
       <!-- Actions -->
       <div class="header-actions">
         <!-- Theme Toggle (Visible on PC/Tablet only) -->
-        <button class="action-btn theme-toggle pc-only" @click="$emit('toggle-theme')">
+        <button 
+          class="action-btn theme-toggle pc-only" 
+          @click="$emit('toggle-theme')"
+          :aria-label="theme === 'light' ? 'Switch to dark theme' : 'Switch to light theme'"
+        >
           <svg v-if="theme === 'light'" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
           </svg>
@@ -74,13 +78,13 @@ onUnmounted(() => {
           </svg>
         </button>
 
-        <button class="action-btn group mobile-hide">
+        <button class="action-btn group mobile-hide" aria-label="Cart">
           <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>
           </svg>
           <span class="badge"></span>
         </button>
-        <button class="action-btn group" @click="$emit('go-notifications')">
+        <button class="action-btn group" @click="$emit('go-notifications')" aria-label="Notifications">
           <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
           </svg>
@@ -92,8 +96,9 @@ onUnmounted(() => {
 
 <style scoped>
 .web-header {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
   z-index: 1000;
   width: 100%;
   background-color: var(--glass-bg);

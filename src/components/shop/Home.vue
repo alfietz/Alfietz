@@ -41,13 +41,20 @@ watch(searchQuery, (newVal) => {
     <!-- Search Bar (Ancestral Tech Style) -->
     <div class="search-container">
       <div class="search-wrapper group">
-        <span class="search-icon" @click="handleSearch">🔍</span>
+        <button 
+          class="search-icon-btn" 
+          @click="handleSearch"
+          aria-label="Search"
+        >
+          🔍
+        </button>
         <input 
           type="text" 
           v-model="searchQuery" 
           placeholder="Search for cultural trends, fabrics, or artifacts..." 
           class="search-input" 
           @keyup.enter="handleSearch"
+          aria-label="Search input"
         />
         <!-- Futuristic scanner line effect on focus -->
         <div class="scanner-line-effect"></div>
@@ -205,7 +212,7 @@ watch(searchQuery, (newVal) => {
 
 <style scoped>
 .home-container {
-  padding: 24px 24px 120px 24px;
+  padding: 24px 24px 40px 24px;
 }
 
 /* Search Bar (Ancestral Tech) */
@@ -230,10 +237,22 @@ watch(searchQuery, (newVal) => {
   box-shadow: 0 0 15px var(--accent-glow);
 }
 
-.search-icon {
+.search-icon-btn {
   margin-right: 14px;
-  opacity: 0.5;
+  background: none;
+  border: none;
   font-size: 18px;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+  transition: opacity 0.3s ease;
+}
+
+.search-icon-btn:hover {
+  opacity: 1;
 }
 
 .search-input {
@@ -610,14 +629,40 @@ watch(searchQuery, (newVal) => {
 
 
 .scroll-container :deep(.product-card) {
-  width: 280px;
+  width: 200px;
   flex-shrink: 0;
   scroll-snap-align: start;
+  flex-direction: column !important;
+  height: auto !important;
+  border-radius: 24px !important;
+}
+
+.scroll-container :deep(.image-wrapper) {
+  width: 100% !important;
+  height: 200px !important;
+  border-radius: 24px 24px 0 0 !important;
+}
+
+.scroll-container :deep(.product-details) {
+  padding: 16px !important;
+  gap: 12px !important;
+}
+
+.scroll-container :deep(.product-name) {
+  font-size: 13px !important;
+  -webkit-line-clamp: 1 !important;
+}
+
+.scroll-container :deep(.price-row) {
+  margin-top: 0 !important;
 }
 
 @media (min-width: 768px) {
   .scroll-container :deep(.product-card) {
-    width: 340px;
+    width: 260px;
+  }
+  .scroll-container :deep(.image-wrapper) {
+    height: 260px !important;
   }
 }
 
@@ -665,19 +710,49 @@ watch(searchQuery, (newVal) => {
 
 .explore-grid {
   display: grid;
-  grid-template-columns: repeat(1, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 16px;
+}
+
+.explore-grid :deep(.product-card) {
+  flex-direction: column !important;
+  height: auto !important;
+  border-radius: 24px !important;
+}
+
+.explore-grid :deep(.image-wrapper) {
+  width: 100% !important;
+  height: 180px !important;
+  border-radius: 24px 24px 0 0 !important;
+}
+
+.explore-grid :deep(.product-details) {
+  padding: 12px !important;
+  gap: 8px !important;
+}
+
+.explore-grid :deep(.product-name) {
+  font-size: 13px !important;
+  -webkit-line-clamp: 1 !important;
+}
+
+.explore-grid :deep(.price-row) {
+  margin-top: 0 !important;
+}
+
+.explore-grid :deep(.add-btn) {
+  display: none !important;
 }
 
 @media (min-width: 768px) {
   .explore-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
 @media (min-width: 1280px) {
   .explore-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
   }
 }
 

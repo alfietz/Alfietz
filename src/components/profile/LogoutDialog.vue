@@ -28,7 +28,7 @@ defineEmits(['cancel', 'confirm'])
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 999;
+  z-index: 2000;
   padding: 20px;
   font-family: 'Inter', -apple-system, sans-serif;
 }

@@ -89,7 +89,14 @@ $ cat errors.json | jq '.faults[] | select(.severity=="high")'
 - **DB**: Client-side Turso libSQL (no backend)
 - **Limits**: No real-time sync, offline fragile
 
-**Production Roadmap**: Supabase/Firebase + real auth + PWA.
+## 🔒 Security
+- **Authentication**: Basic email/password authentication is implemented.
+- **Password Security**: Passwords are currently stored in plain text in the database (SQLite/Turso). 
+  - *Note*: For production, passwords should be hashed using a library like `bcrypt`.
+- **Validation**: SignUp includes password confirmation and length validation (min 6 characters).
+- **Reset Flow**: A complete password reset flow (Forgot -> Verify -> Reset) is implemented and connected to the database.
+
+**Production Roadmap**: Supabase/Firebase + real auth (hashed passwords) + PWA.
 
 ---
 
