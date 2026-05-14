@@ -2,6 +2,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { db } from './db/client'
 import { useRouter, useRoute } from 'vue-router'
+import bcrypt from 'bcryptjs'
 
 // ==========================================
 // 1. IMPORT GLOBAL COMPONENTS
@@ -270,7 +271,15 @@ const handleLogin = async (data) => {
     });
     if (res.rows.length > 0) {
       const u = res.rows[0];
-      if (u.password === data.password) {
+      // Try bcrypt compare, fallback to plain text for legacy users (first migration)
+      let isMatch = false;
+      try {
+        isMatch = await bcrypt.compare(data.password, u.password);
+      } catch (e) {
+        isMatch = u.password === data.password;
+      }
+
+      if (isMatch) {
         userData.value = {
           id: u.id,
           username: u.username,
@@ -304,8 +313,11 @@ const handleSignUp = async (data) => {
   isGlobalLoading.value = true;
   loadingMessage.value = 'Joining the heritage...';
   const newId = 'u' + Date.now();
-  const signupData = { ...data, id: newId };
+  
   try {
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+    const signupData = { ...data, id: newId, password: hashedPassword };
+    
     await db.execute({
       sql: 'INSERT INTO users (id, username, first_name, last_name, email, password, whatsapp, avatar, user_type, needs, gives, theme) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       args: [signupData.id, signupData.username, signupData.firstName, signupData.lastName, signupData.email, signupData.password, signupData.whatsapp, signupData.avatar, signupData.userType, signupData.needs, signupData.gives, 'light']
