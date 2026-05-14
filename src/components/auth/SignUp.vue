@@ -83,8 +83,8 @@ const handleSignUp = () => {
     </div>
 
     <div class="welcome-text">
-      <h1 class="tribe-title">{{ t('join') }}</h1>
-      <h2 class="tribe-highlight">{{ t('theTribe') }}</h2>
+      <h1 class="tribe-title">Join The</h1>
+      <h2 class="tribe-highlight">Heritage</h2>
     </div>
 
     <div class="form-container">

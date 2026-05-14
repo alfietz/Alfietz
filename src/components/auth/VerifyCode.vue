@@ -1,18 +1,6 @@
 <!-------- (VerifyCode.vue) ./src/components/VerifyCode.vue ------------>
 <script setup>
 import { ref, onMounted } from 'vue'
-
-const props = defineProps({
-  t: {
-    type: Function,
-    required: true
-  },
-  resetEmail: {
-    type: String,
-    default: 'user@example.com'
-  }
-})
-
 const pins = ref(['', '', '', ''])
 const errorMessage = ref('')
 
@@ -82,18 +70,18 @@ onMounted(() => {
     </div>
 
     <div class="welcome-text">
-      <h1 class="tribe-title">{{ t('verify') }}</h1>
-      <h2 class="tribe-highlight">{{ t('code') }}</h2>
+      <h1 class="tribe-title">Verify</h1>
+      <h2 class="tribe-highlight">Code</h2>
     </div>
     
     <p class="subtitle">
-      {{ t('confirmationCodeSent') }}<br>
-      <span class="email-highlight">{{ resetEmail }}</span>
+      The confirmation code was sent via email<br>
+      <span class="email-highlight">johnabram@gmail.com</span>
     </p>
     
     <div class="form-container">
       <div class="pin-group-wrapper">
-        <label class="pin-group-label">{{ t('pinCode') }}</label>
+        <label class="pin-group-label">PinCode</label>
         <div class="pin-inputs" @paste="onPaste">
           <input 
             v-for="(pin, index) in pins" 
@@ -113,11 +101,11 @@ onMounted(() => {
       <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
 
       <div class="resend-text">
-        <span>{{ t('dontGetCode') }} </span>
-        <a href="#" class="link">{{ t('resendCode') }}</a>
+        <span>Don't get the code? </span>
+        <a href="#" class="link">Resend code</a>
       </div>
 
-      <button class="primary-btn" @click="handleSubmit">{{ t('verifyNow') }}</button>
+      <button class="primary-btn" @click="handleSubmit">Verify now</button>
     </div>
   </div>
 </template>
