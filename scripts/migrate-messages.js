@@ -2,8 +2,8 @@ import { createClient } from "@libsql/client"
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-const url = process.env.VITE_TURSO_URL
-const authToken = process.env.VITE_TURSO_AUTH_TOKEN
+const url = process.env.TURSO_URL || process.env.VITE_TURSO_URL
+const authToken = process.env.TURSO_AUTH_TOKEN || process.env.VITE_TURSO_AUTH_TOKEN
 
 const client = createClient({
   url: url,

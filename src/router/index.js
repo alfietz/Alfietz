@@ -1,7 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
-  { path: '/', name: 'splash', component: () => import('../components/layout/Splash.vue') },
+  { path: '/', redirect: '/home' },
+  { path: '/splash', name: 'splash', component: () => import('../components/layout/Splash.vue') },
   { path: '/login', name: 'login', component: () => import('../components/auth/Login.vue') },
   { path: '/signup', name: 'signup', component: () => import('../components/auth/SignUp.vue') },
   { path: '/forgot-password', name: 'forgot-password', component: () => import('../components/auth/ForgotPassword.vue') },

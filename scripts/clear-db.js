@@ -3,8 +3,8 @@ import * as dotenv from 'dotenv'
 dotenv.config()
 
 const client = createClient({
-  url: process.env.VITE_TURSO_URL,
-  authToken: process.env.VITE_TURSO_AUTH_TOKEN,
+  url: process.env.TURSO_URL || process.env.VITE_TURSO_URL,
+  authToken: process.env.TURSO_AUTH_TOKEN || process.env.VITE_TURSO_AUTH_TOKEN,
 })
 
 async function clear() {

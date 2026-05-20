@@ -2,8 +2,8 @@ import { createClient } from "@libsql/client"
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-const url = process.env.VITE_TURSO_URL
-const authToken = process.env.VITE_TURSO_AUTH_TOKEN
+const url = process.env.TURSO_URL || process.env.VITE_TURSO_URL
+const authToken = process.env.TURSO_AUTH_TOKEN || process.env.VITE_TURSO_AUTH_TOKEN
 
 export const db = createClient({
   url: url,
@@ -28,6 +28,8 @@ async function migrate() {
         price TEXT,
         status TEXT DEFAULT 'Pending',
         size TEXT,
+        color TEXT,
+        notes TEXT,
         image TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
@@ -42,6 +44,10 @@ async function migrate() {
         tailor_id TEXT,
         proposed_price TEXT,
         status TEXT DEFAULT 'Awaiting Reply',
+        size TEXT,
+        color TEXT,
+        notes TEXT,
+        image TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `)

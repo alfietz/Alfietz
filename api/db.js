@@ -1,4 +1,14 @@
 import { createClient } from "@libsql/client";
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load .env.local (from Vercel) and .env
+dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 export default async function handler(req, res) {
   // Only allow POST requests
@@ -11,15 +21,9 @@ export default async function handler(req, res) {
   const authToken = process.env.TURSO_AUTH_TOKEN || process.env.VITE_TURSO_AUTH_TOKEN;
 
   if (!url || !authToken) {
-    console.error('Environment variables missing. Expected TURSO_URL and TURSO_AUTH_TOKEN.');
+    console.error('Database configuration missing on server');
     return res.status(500).json({ 
       error: 'Database configuration missing on server',
-      debug: {
-        hasUrl: !!process.env.TURSO_URL,
-        hasViteUrl: !!process.env.VITE_TURSO_URL,
-        hasToken: !!process.env.TURSO_AUTH_TOKEN,
-        hasViteToken: !!process.env.VITE_TURSO_AUTH_TOKEN
-      }
     });
   }
 

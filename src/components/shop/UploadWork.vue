@@ -49,19 +49,19 @@ const populateForm = (p) => {
   const rawPrice = p.price ? p.price.replace(/[^0-9]/g, '') : ''
 
   // Parse description
-  let material = ''
+  let material = p.material || ''
   let description = p.description || ''
 
-  const matMatch = description.match(/Material:\s*(.*)/)
-  if (matMatch) {
-    material = matMatch[1]
-    description = description.replace(/Material:.*\n?/, '')
+  if (!material) {
+    const matMatch = description.match(/Material:\s*(.*)/)
+    if (matMatch) {
+      material = matMatch[1]
+    }
   }
-
-  // Remove Colors: line
+  
+  // Cleanup description from legacy markers
+  description = description.replace(/Material:.*\n?/, '')
   description = description.replace(/Colors:.*\n?/, '')
-
-  // Remove "The Story:" line
   description = description.replace(/The Story:\n?/, '').trim()
 
   // Parse Variants

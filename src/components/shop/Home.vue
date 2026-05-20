@@ -12,7 +12,8 @@ const props = defineProps({
   categories: { type: Array, default: () => [] },
   trendingProducts: { type: Array, default: () => [] },
   trendingSellers: { type: Array, default: () => [] },
-  exploreItems: { type: Array, default: () => [] }
+  exploreItems: { type: Array, default: () => [] },
+  isLoading: { type: Boolean, default: false }
 })
 
 const searchQuery = ref('')
@@ -127,7 +128,15 @@ watch(searchQuery, (newVal) => {
     <section class="section">
       <SectionHeader title="Trending products" @view-all="$emit('go-trending')" />
       <div class="scroll-container">
+        <!-- Skeletons -->
+        <template v-if="isLoading && !trendingProducts.length">
+          <div v-for="n in 4" :key="n" class="skeleton-card">
+            <div class="skeleton-img shimmer"></div>
+            <div class="skeleton-text shimmer"></div>
+          </div>
+        </template>
         <ProductCard 
+          v-else
           v-for="product in trendingProducts" 
           :key="product.id" 
           :product="product" 
@@ -142,7 +151,15 @@ watch(searchQuery, (newVal) => {
     <section class="section">
       <SectionHeader title="Trending Sellers" :show-view-all="false" />
       <div class="scroll-container">
+        <!-- Skeletons -->
+        <template v-if="isLoading && !trendingSellers.length">
+          <div v-for="n in 3" :key="n" class="skeleton-seller">
+            <div class="skeleton-avatar shimmer"></div>
+            <div class="skeleton-line shimmer"></div>
+          </div>
+        </template>
         <SellerCard 
+          v-else
           v-for="seller in trendingSellers" 
           :key="seller.id" 
           :seller="seller" 
@@ -186,6 +203,66 @@ watch(searchQuery, (newVal) => {
 </template>
 
 <style scoped>
+/* Skeletons */
+.skeleton-card {
+  width: 200px;
+  flex-shrink: 0;
+  margin-right: 16px;
+}
+.skeleton-img {
+  width: 100%;
+  height: 240px;
+  border-radius: 20px;
+  background: var(--wood-walnut);
+}
+.skeleton-text {
+  width: 60%;
+  height: 12px;
+  margin-top: 12px;
+  border-radius: 4px;
+  background: var(--wood-walnut);
+}
+
+.skeleton-seller {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 24px;
+}
+.skeleton-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--wood-walnut);
+}
+.skeleton-line {
+  width: 40px;
+  height: 8px;
+  margin-top: 8px;
+  border-radius: 4px;
+  background: var(--wood-walnut);
+}
+
+.shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.05), transparent);
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
 .home-container {
   padding: 24px 24px 40px 24px;
 }

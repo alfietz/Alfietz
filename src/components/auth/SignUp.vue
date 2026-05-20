@@ -218,15 +218,16 @@ const handleSignUp = () => {
 }
 
 .tribe-title {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 4px;
+  margin-bottom: 8px;
 }
 
 .tribe-highlight {
-  font-size: 40px;
+  font-size: 48px;
   font-weight: 800;
   background: linear-gradient(to right, var(--text-primary), var(--accent-amber));
   -webkit-background-clip: text;

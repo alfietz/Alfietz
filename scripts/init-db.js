@@ -4,8 +4,8 @@ import bcrypt from 'bcryptjs'
 dotenv.config()
 
 const client = createClient({
-  url: process.env.VITE_TURSO_URL,
-  authToken: process.env.VITE_TURSO_AUTH_TOKEN,
+  url: process.env.TURSO_URL || process.env.VITE_TURSO_URL,
+  authToken: process.env.TURSO_AUTH_TOKEN || process.env.VITE_TURSO_AUTH_TOKEN,
 })
 
 async function init() {
@@ -36,7 +36,8 @@ async function init() {
         user_type TEXT DEFAULT 'buyer',
         needs TEXT,
         gives TEXT,
-        theme TEXT DEFAULT 'light'
+        theme TEXT DEFAULT 'light',
+        profile_views INTEGER DEFAULT 0
       )
     `)
 
@@ -54,10 +55,14 @@ async function init() {
         name TEXT,
         price TEXT,
         description TEXT,
+        material TEXT,
         image TEXT,
         category_id INTEGER,
         likes_count INTEGER DEFAULT 0,
         owner_id TEXT,
+        status TEXT DEFAULT 'In Stock',
+        variants_json TEXT,
+        gallery_json TEXT,
         FOREIGN KEY(category_id) REFERENCES categories(id),
         FOREIGN KEY(owner_id) REFERENCES users(id)
       )

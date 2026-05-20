@@ -21,10 +21,9 @@ export default async function middleware(req) {
         const tursoToken = process.env.VITE_TURSO_AUTH_TOKEN;
 
         if (tursoUrl && tursoToken) {
-          const sql = type === 'product' 
+          const sql = type === 'product'
             ? `SELECT name, description, image FROM products WHERE id = '${id}'`
-            : `SELECT name, bio as description, avatar as image FROM sellers WHERE id = '${id}'`;
-
+            : `SELECT first_name || ' ' || last_name as name, gives as description, avatar as image FROM users WHERE id = '${id}'`;
           const response = await fetch(`${tursoUrl}/v1/execute`, {
             method: 'POST',
             headers: {

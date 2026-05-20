@@ -60,18 +60,22 @@ const userData = ref(getStored('user_data', {
   userType: 'buyer',
   needs: '',
   gives: '',
-  theme: 'light'
+  theme: 'light',
+  profileViews: 0
 }))
 
-const categories = ref([])
-const trendingProducts = ref([])
-const trendingSellers = ref([])
-const allProducts = ref([])
-const exploreItems = ref([])
+const categories = ref(getStored('categories_cache', []))
+const trendingProducts = ref(getStored('trending_products_cache', []))
+const trendingSellers = ref(getStored('trending_sellers_cache', []))
+const allProducts = ref(getStored('all_products_cache', []))
+const exploreItems = ref(getStored('explore_items_cache', []))
 const productReviews = ref([])
 const searchResults = ref([])
+const searchHistory = ref(getStored('search_history', []))
 const userNotifications = ref([])
 const userProductCount = ref(0)
+
+const isDeepLoading = ref(false)
 
 const selectedSeller = ref(getStored('selected_seller', null))
 const selectedCategory = ref(getStored('selected_category', 'Explore more'))
@@ -89,17 +93,25 @@ const filteredExploreItems = computed(() => {
   })
 })
 
+const userPreferences = ref(getStored('user_preferences', {}))
+
+const updatePreference = (categoryId, weight = 1) => {
+  if (!categoryId) return
+  const current = userPreferences.value[categoryId] || 0
+  userPreferences.value[categoryId] = current + weight
+  setStored('user_preferences', userPreferences.value)
+}
+
 const fetchInitialData = async () => {
-  console.log('[Data] Fetching initial data...');
+  console.log('[SpeedDemon] Phase 1: Fetching Core Data...');
   try {
+    // 1. User & Session Core
     if (userData.value.id !== 'guest') {
-      console.log('[Data] Fetching user details for:', userData.value.id);
       const userRes = await db.execute({
         sql: "SELECT * FROM users WHERE id = ?",
         args: [userData.value.id]
       })
-      console.log('[Data] User fetch result rows:', userRes.rows?.length);
-      if (userRes.rows && userRes.rows.length > 0) {
+      if (userRes.rows?.length > 0) {
         const u = userRes.rows[0]
         userData.value = {
           id: u.id,
@@ -112,59 +124,94 @@ const fetchInitialData = async () => {
           userType: u.user_type,
           needs: u.needs || '',
           gives: u.gives || '',
-          theme: u.theme || 'light'
+          theme: u.theme || 'light',
+          profileViews: u.profile_views || 0
         }
         theme.value = u.theme || 'light'
+      } else {
+        console.warn('[Data] Session user not found in DB. Logging out.');
+        handleLogout();
       }
     }
 
-    const notifRes = await db.execute({
-      sql: "SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC",
-      args: [userData.value.id]
-    })
-    userNotifications.value = (notifRes.rows || []).map(n => ({ id: n.id, name: n.message, time: 'Just now', unread: !!n.is_unread }))
+    // 2. Critical Home Data (Top 4 Products + Categories)
+    const [catRes, prodRes] = await Promise.all([
+      db.execute("SELECT * FROM categories"),
+      db.execute("SELECT * FROM products ORDER BY likes_count DESC LIMIT 4")
+    ])
+    
+    categories.value = catRes.rows || []
+    trendingProducts.value = prodRes.rows || []
+    
+    // Cache immediately for next visit
+    setStored('categories_cache', categories.value)
+    setStored('trending_products_cache', trendingProducts.value)
 
-    const favRes = await db.execute({
+    // BOOT COMPLETE - Clear spinner early
+    isGlobalLoading.value = false
+    console.log('[SpeedDemon] Phase 1 Complete. User can now peruse.');
+
+    // Phase 2: Deep Loading in Background
+    fetchDeepData()
+  } catch (e) {
+    console.error("[SpeedDemon] Phase 1 Error:", e)
+    isGlobalLoading.value = false
+  }
+}
+
+const fetchDeepData = async () => {
+  console.log('[SpeedDemon] Phase 2: Streaming deep data...');
+  isDeepLoading.value = true
+  try {
+    // 1. Full Product Catalog
+    const productsRes = await db.execute("SELECT * FROM products ORDER BY id DESC")
+    const favoriteIds = (await db.execute({
       sql: "SELECT product_id FROM favorites WHERE user_id = ?",
       args: [userData.value.id]
-    })
-    const favoriteIds = (favRes.rows || []).map(f => f.product_id)
+    })).rows.map(f => f.product_id)
 
-    const statsRes = await db.execute({
-      sql: "SELECT COUNT(*) as total FROM products WHERE owner_id = ?",
-      args: [userData.value.id]
-    })
+    allProducts.value = (productsRes.rows || []).map(p => ({ ...p, liked: favoriteIds.includes(p.id) }))
+    favoriteItems.value = allProducts.value.filter(p => p.liked)
+    setStored('all_products_cache', allProducts.value)
+
+    // 2. Full Artisans
+    const sellersRes = await db.execute(`
+      SELECT u.*, 
+             (SELECT COUNT(*) FROM products WHERE owner_id = u.id) as posts_count,
+             (SELECT COUNT(*) FROM orders WHERE tailor_id = u.id) as clients_count,
+             (SELECT SUM(likes_count) FROM products WHERE owner_id = u.id) as likes_count,
+             (SELECT AVG(rating) FROM reviews WHERE product_id IN (SELECT id FROM products WHERE owner_id = u.id)) as avg_rating
+      FROM users u 
+      WHERE u.user_type = 'supplier'
+      ORDER BY clients_count DESC, likes_count DESC
+    `)
+    trendingSellers.value = (sellersRes.rows || []).map(s => ({ 
+      id: s.id,
+      name: `${s.first_name} ${s.last_name}`,
+      username: s.username,
+      avatar: s.avatar,
+      bio: s.gives,
+      whatsapp: s.whatsapp,
+      isVerified: s.clients_count > 5,
+      likesCount: s.likes_count || 0,
+      clientsCount: s.clients_count || 0,
+      rating: s.avg_rating ? parseFloat(s.avg_rating).toFixed(1) : '0.0'
+    }))
+    setStored('trending_sellers_cache', trendingSellers.value)
+
+    // 3. Notifications & Stats
+    const [notifRes, statsRes] = await Promise.all([
+      db.execute({ sql: "SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC", args: [userData.value.id] }),
+      db.execute({ sql: "SELECT COUNT(*) as total FROM products WHERE owner_id = ?", args: [userData.value.id] })
+    ])
+    userNotifications.value = (notifRes.rows || []).map(n => ({ id: n.id, name: n.message, time: 'Just now', unread: !!n.is_unread }))
     userProductCount.value = statsRes.rows?.[0]?.total || 0
 
-    console.log('[Data] Fetching categories...');
-    const cats = await db.execute("SELECT * FROM categories")
-    console.log('[Data] Raw categories sample:', cats.rows?.[0]);
-    categories.value = cats.rows || []
-
-    console.log('[Data] Fetching products...');
-    const products = await db.execute("SELECT * FROM products ORDER BY likes_count DESC")
-    console.log('[Data] Raw products sample:', products.rows?.[0]);
-    
-    allProducts.value = (products.rows || []).map(p => ({ ...p, liked: favoriteIds.includes(p.id) }))
-    favoriteItems.value = allProducts.value.filter(p => p.liked)
-    
-    trendingProducts.value = allProducts.value.slice(0, 4)
-    exploreItems.value = [...allProducts.value].sort(() => 0.5 - Math.random()).slice(0, 6)
-
-    console.log('[Data] Fetching sellers...');
-    const sellers = await db.execute("SELECT * FROM sellers ORDER BY rating DESC, likes_count DESC, clients_count DESC")
-    console.log('[Data] Raw sellers sample:', sellers.rows?.[0]);
-    
-    trendingSellers.value = (sellers.rows || []).map(s => ({ 
-      ...s, 
-      isVerified: !!s.is_verified,
-      likesCount: s.likes_count,
-      clientsCount: s.clients_count
-    }))
-    
-    console.log('[Data] Data load complete. Products found:', allProducts.value.length);
+    console.log('[SpeedDemon] Phase 2 Complete. Background data synced.');
   } catch (e) {
-    console.error("[Data] Database fetch error:", e)
+    console.error("[SpeedDemon] Phase 2 Error:", e)
+  } finally {
+    isDeepLoading.value = false
   }
 }
 
@@ -216,6 +263,7 @@ const navigateTo = async (screenName, extraState = {}) => {
       return;
     }
     selectedProduct.value = extraState.selectedProduct
+    updatePreference(extraState.selectedProduct.category_id, 1) // Weight for views
     const id = extraState.selectedProduct.id.toString();
     console.log(`[NavigateTo] Going to product: ${id}`);
     router.push({ name: 'product-details', params: { id } })
@@ -226,6 +274,17 @@ const navigateTo = async (screenName, extraState = {}) => {
       console.error('NavigateTo ERROR: Seller object is missing id property', extraState.selectedSeller);
       return;
     }
+    
+    // Increment profile views
+    try {
+      db.execute({
+        sql: "UPDATE users SET profile_views = profile_views + 1 WHERE id = ?",
+        args: [extraState.selectedSeller.owner_id || extraState.selectedSeller.id]
+      });
+    } catch (e) {
+      console.error('Failed to increment profile views:', e);
+    }
+
     selectedSeller.value = extraState.selectedSeller
     const id = extraState.selectedSeller.id.toString();
     console.log(`[NavigateTo] Going to tailor: ${id}`);
@@ -265,6 +324,10 @@ const toggleLike = async (product) => {
   }
   updateProduct(allProducts.value)
   updateProduct(trendingProducts.value)
+  
+  if (product.liked) {
+    updatePreference(product.category_id, 2) // High weight for likes
+  }
 
   try {
     if (product.liked) {
@@ -339,7 +402,8 @@ const handleLogin = async (data) => {
           userType: u.user_type,
           needs: u.needs || '',
           gives: u.gives || '',
-          theme: u.theme || 'light'
+          theme: u.theme || 'light',
+          profileViews: u.profile_views || 0
         };
         theme.value = u.theme || 'light';
         console.log('[Auth] Login success, fetching initial data');
@@ -360,42 +424,48 @@ const handleLogin = async (data) => {
 }
 
 const handleSignUp = async (data) => {
-  console.log('[Auth] SignUp attempt:', data);
+  console.log('[Auth] SignUp attempt:', data.email);
   isGlobalLoading.value = true;
   loadingMessage.value = 'Joining the heritage...';
-  const newId = 'u' + Date.now();
   
   try {
+    // 1. Check if user already exists
+    const checkRes = await db.execute({
+      sql: 'SELECT id FROM users WHERE email = ? OR username = ?',
+      args: [data.email, data.username]
+    });
+
+    if (checkRes.rows && checkRes.rows.length > 0) {
+      showToast('Email or username already registered.', 'error');
+      return;
+    }
+
+    // 2. Hash password
     console.log('[Auth] Hashing password...');
     const hashedPassword = await bcrypt.hash(data.password, 10);
-    console.log('[Auth] Password hashed successfully');
-
+    
+    // 3. Create user
+    const newId = 'u' + Date.now();
     const signupData = { ...data, id: newId, password: hashedPassword };
     
     console.log('[Auth] Executing DB insert...');
-    const res = await db.execute({
+    await db.execute({
       sql: 'INSERT INTO users (id, username, first_name, last_name, email, password, whatsapp, avatar, user_type, needs, gives, theme) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       args: [signupData.id, signupData.username, signupData.firstName, signupData.lastName, signupData.email, signupData.password, signupData.whatsapp, signupData.avatar, signupData.userType, signupData.needs, signupData.gives, 'light']
     });
     
-    // Check if we have rows or result to confirm success even if serializing BigInt failed later
-    console.log('[Auth] DB insert response received');
-
-    userData.value = signupData;
-    console.log('[Auth] User data set locally, fetching initial data');
+    console.log('[Auth] Signup successful');
+    
+    // 4. Update state (cleanly, without the password)
+    const { password, ...userWithoutPassword } = signupData;
+    userData.value = { ...userWithoutPassword, theme: 'light' };
+    
     await fetchInitialData();
     navigateTo('home');
     showToast('Welcome to the heritage!', 'success');
   } catch (e) {
-    console.error('[Auth] Signup DB error:', e);
-    // If the error is JUST the BigInt serialization but the user was likely created
-    if (e.message.includes('BigInt')) {
-       userData.value = signupData;
-       await fetchInitialData();
-       navigateTo('home');
-       return;
-    }
-    showToast('Error signing up. Email or username might be taken.', 'error')
+    console.error('[Auth] Signup error:', e);
+    showToast('Error signing up. Please check your connection.', 'error');
   } finally {
     isGlobalLoading.value = false;
   }
@@ -409,16 +479,16 @@ const handleUploadWork = async (data) => {
       await db.execute({
         sql: `
           UPDATE products 
-          SET name = ?, price = ?, description = ?, image = ?, category_id = ?, status = ?, variants_json = ?, gallery_json = ? 
+          SET name = ?, price = ?, description = ?, material = ?, image = ?, category_id = ?, status = ?, variants_json = ?, gallery_json = ? 
           WHERE id = ? AND owner_id = ?
         `,
-        args: [data.name, data.price, data.description, data.image, data.category_id, data.status, data.variants_json, data.gallery_json, data.id, userData.value.id]
+        args: [data.name, data.price, data.description, data.material, data.image, data.category_id, data.status, data.variants_json, data.gallery_json, data.id, userData.value.id]
       });
       showToast('Work updated successfully!', 'success')
     } else {
       await db.execute({
-        sql: 'INSERT INTO products (name, price, description, image, category_id, owner_id, status, variants_json, gallery_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        args: [data.name, data.price, data.description, data.image, data.category_id, userData.value.id, data.status, data.variants_json, data.gallery_json]
+        sql: 'INSERT INTO products (name, price, description, material, image, category_id, owner_id, status, variants_json, gallery_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        args: [data.name, data.price, data.description, data.material, data.image, data.category_id, userData.value.id, data.status, data.variants_json, data.gallery_json]
       });
       showToast('Work published successfully!', 'success')
     }
@@ -428,6 +498,102 @@ const handleUploadWork = async (data) => {
     console.error('Upload error:', e);
   } finally {
     isGlobalLoading.value = false;
+  }
+}
+
+const handleNewOrder = async (data) => {
+  console.log('[Data] Saving new order:', data);
+  try {
+    const orderId = 'ORD-' + Math.floor(1000 + Math.random() * 9000);
+    await db.execute({
+      sql: `
+        INSERT INTO orders (id, item_name, customer_id, tailor_id, price, status, size, color, notes, image)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+      args: [
+        orderId, 
+        data.itemName, 
+        userData.value.id, 
+        data.tailorId, 
+        data.price, 
+        'Pending', 
+        data.size, 
+        data.color, 
+        data.notes, 
+        data.image
+      ]
+    });
+    console.log('[Data] Order saved successfully');
+    
+    // Notify the user
+    await createNotification(userData.value.id === data.tailorId ? data.customerId : data.tailorId, 
+      `New order created for "${data.itemName}"! 📦✨`);
+  } catch (e) {
+    console.error('[Data] Failed to save order:', e);
+  }
+}
+
+const handleNewNegotiation = async (data) => {
+  console.log('[Data] Saving new negotiation:', data);
+  try {
+    const negId = 'NEG-' + Math.floor(100 + Math.random() * 900);
+    await db.execute({
+      sql: `
+        INSERT INTO negotiations (id, item_name, customer_id, tailor_id, proposed_price, status, size, color, notes, image)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+      args: [
+        negId, 
+        data.itemName, 
+        userData.value.id, 
+        data.tailorId, 
+        data.offer, 
+        'Awaiting Reply', 
+        data.size, 
+        data.color, 
+        data.notes, 
+        data.image
+      ]
+    });
+    console.log('[Data] Negotiation saved successfully');
+  } catch (e) {
+    console.error('[Data] Failed to save negotiation:', e);
+  }
+}
+
+const createNotification = async (userId, message) => {
+  try {
+    await db.execute({
+      sql: "INSERT INTO notifications (user_id, message, is_unread) VALUES (?, ?, 1)",
+      args: [userId, message]
+    })
+    console.log(`[Notification] Created for ${userId}: ${message}`)
+  } catch (e) {
+    console.error('[Notification] Failed to create:', e)
+  }
+}
+
+const handleUpdateOrderStatus = async (data) => {
+  console.log('[Data] Updating order status:', data);
+  try {
+    await db.execute({
+      sql: "UPDATE orders SET status = ? WHERE id = ?",
+      args: [data.status, data.orderId]
+    })
+    
+    showToast(`Order status updated to ${data.status}`, 'success')
+    
+    // Notify the customer
+    let msg = `Your order for "${data.itemName}" has been updated to: ${data.status}!`
+    if (data.status === 'Stitching') msg = `Great news! Your "${data.itemName}" is now being stitched. 🧵✨`
+    if (data.status === 'Shipped') msg = `Your "${data.itemName}" has been shipped and is on its way! 🚚💨`
+    if (data.status === 'Delivered') msg = `Your heritage piece "${data.itemName}" has been delivered. Enjoy! 📦🎊`
+    
+    await createNotification(data.customerId, msg)
+    await fetchInitialData()
+  } catch (e) {
+    console.error('[Data] Failed to update order status:', e)
+    showToast('Failed to update status', 'error')
   }
 }
 
@@ -476,6 +642,10 @@ const handleProductDelete = async (productId) => {
       args: [productId]
     })
     await db.execute({
+      sql: "DELETE FROM reviews WHERE product_id = ?",
+      args: [productId]
+    })
+    await db.execute({
       sql: "DELETE FROM products WHERE id = ? AND owner_id = ?",
       args: [productId, userData.value.id]
     })
@@ -511,29 +681,67 @@ const handleUpdateRole = async (newRole) => {
 
 const handleLogout = () => {
   userData.value = { 
-    id: 'guest', username: 'johnabram', firstName: 'John', lastName: 'Abram', email: 'johnabram@gmail.com', whatsapp: '+255700000000', avatar: 'https://i.pravatar.cc/150?u=johnabram', userType: 'buyer', needs: '', gives: '', theme: 'light' 
+    id: 'guest', username: 'johnabram', firstName: 'John', lastName: 'Abram', email: 'johnabram@gmail.com', whatsapp: '+255700000000', avatar: 'https://i.pravatar.cc/150?u=johnabram', userType: 'buyer', needs: '', gives: '', theme: 'light', profileViews: 0 
   };
   setStored('user_data', userData.value);
   setStored('favorites', []);
   navigateTo('login');
 }
 
-const handleSearch = async (query) => {
-  isGlobalLoading.value = true;
-  loadingMessage.value = 'Searching the heritage...';
+const handleSearch = async (query, navigate = true) => {
+  if (!query.trim()) {
+    searchResults.value = { query: '', products: [], tailors: [] }
+    return
+  }
+  
+  if (navigate) {
+    const history = [query, ...searchHistory.value.filter(h => h !== query)].slice(0, 5)
+    searchHistory.value = history
+    setStored('search_history', history)
+    isGlobalLoading.value = true;
+    loadingMessage.value = 'Searching the heritage...';
+  }
+
   try {
-    const q = `%${query.toLowerCase()}%`;
-    const res = await db.execute({
+    // Fuzzy logic: match parts of words and prioritize start-of-word matches
+    const exact = `${query.toLowerCase()}%`;
+    const fuzzy = `%${query.toLowerCase()}%`;
+    
+    // 1. Search Products (Enhanced Relevance)
+    const prodRes = await db.execute({
       sql: `
         SELECT p.*, u.username as owner_username, c.name as category_name
         FROM products p
         LEFT JOIN categories c ON p.category_id = c.id
         LEFT JOIN users u ON p.owner_id = u.id
-        WHERE p.name LIKE ? OR p.description LIKE ? OR c.name LIKE ? OR u.username LIKE ?
-        ORDER BY p.likes_count DESC
+        WHERE p.name LIKE ? OR p.description LIKE ? OR c.name LIKE ? OR p.material LIKE ?
+           OR p.name LIKE ? OR c.name LIKE ?
+        ORDER BY 
+          CASE 
+            WHEN p.name LIKE ? THEN 1 -- Exact start match
+            WHEN c.name LIKE ? THEN 2 -- Category start match
+            WHEN p.name LIKE ? THEN 3 -- Fuzzy match
+            ELSE 4
+          END ASC,
+          p.likes_count DESC
+        LIMIT ${navigate ? 50 : 8}
       `,
-      args: [q, q, q, q]
+      args: [exact, fuzzy, exact, fuzzy, fuzzy, fuzzy, exact, exact, fuzzy]
     });
+
+    // 2. Search Tailors (Fuzzy)
+    const tailorRes = await db.execute({
+      sql: `
+        SELECT id, username, first_name, last_name, avatar, gives as bio
+        FROM users
+        WHERE user_type = 'supplier' AND (username LIKE ? OR first_name LIKE ? OR last_name LIKE ? OR gives LIKE ?)
+        ORDER BY 
+          CASE WHEN username LIKE ? THEN 1 ELSE 2 END ASC
+        LIMIT ${navigate ? 20 : 4}
+      `,
+      args: [fuzzy, fuzzy, fuzzy, fuzzy, exact]
+    })
+
     let favoriteIds = [];
     if (userData.value.id !== 'guest') {
       const favRes = await db.execute({
@@ -542,15 +750,24 @@ const handleSearch = async (query) => {
       });
       favoriteIds = favRes.rows.map(f => f.product_id);
     }
-    searchResults.value = res.rows.map(p => ({
-      ...p,
-      liked: favoriteIds.includes(p.id)
-    }));
-    navigateTo('search-results');
+
+    searchResults.value = {
+      query,
+      products: prodRes.rows.map(p => ({ ...p, liked: favoriteIds.includes(p.id) })),
+      tailors: tailorRes.rows.map(t => ({
+        ...t,
+        name: `${t.first_name} ${t.last_name}`,
+        isVerified: true 
+      }))
+    }
+    
+    if (navigate) {
+      navigateTo('search-results');
+    }
   } catch (e) {
     console.error('Search error:', e);
   } finally {
-    isGlobalLoading.value = false;
+    if (navigate) isGlobalLoading.value = false;
   }
 }
 
@@ -623,6 +840,8 @@ const handleGoChat = (userId) => {
           :results="searchResults"
           :notifications="userNotifications"
           :editing-product="selectedEditProduct"
+          :search-history="searchHistory"
+          :is-loading="isDeepLoading"
           
           @select-language="(lang) => currentLanguage = lang"
           @loaded="userData.id !== 'guest' ? navigateTo('home') : navigateTo('login')"
@@ -631,6 +850,7 @@ const handleGoChat = (userId) => {
           @go-forgot="navigateTo('forgot-password')"
           @go-back="handleGoBack"
           @login="handleLogin"
+          @signup="handleSignUp"
           @go-write-review="navigateTo('write-review')"
           @go-edit="(product) => navigateTo('upload-work', { product })"
           @submit="async (data) => {
@@ -665,6 +885,9 @@ const handleGoChat = (userId) => {
           @go-trending="() => navigateTo('explore', { selectedCategory: 'Trending Trends' })"
           @go-tailor="(seller) => navigateTo('tailor-details', { selectedSeller: seller })"
           @toggle-like="toggleLike"
+          @go-search-tailor="(tailor) => navigateTo('tailor-details', { selectedSeller: tailor })"
+          @toggle-search-favorite="(p) => toggleLike(p)"
+          @go-search-details="(p) => navigateTo('product-details', { selectedProduct: p })"
           @go-edit-profile="navigateTo('edit-profile')"
           @go-settings="navigateTo('settings')"
           @go-console="navigateTo('tailor-console')"
@@ -693,6 +916,9 @@ const handleGoChat = (userId) => {
           @go-ip-policy="navigateTo('ip-policy')"
           @go-stories="navigateTo('stories')"
           @upload="handleUploadWork"
+          @order="handleNewOrder"
+          @negotiate="handleNewNegotiation"
+          @update-status="handleUpdateOrderStatus"
         />
       </keep-alive>
     </router-view>

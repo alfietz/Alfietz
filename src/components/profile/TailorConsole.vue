@@ -14,19 +14,39 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['go-back', 'go-orders', 'go-negotiations', 'go-edit', 'go-upload', 'go-chat'])
+const emit = defineEmits(['go-back', 'go-orders', 'go-negotiations', 'go-edit', 'go-upload', 'go-chat', 'update-status'])
 
 const stats = ref({
   revenue: 'TSh 0',
+  growth: '0%',
   activeOrders: 0,
-  conversionRate: '4.2%',
-  profileViews: '1.2k'
+  conversionRate: '0.0%',
+  profileViews: '0',
+  totalLikes: 0,
+  totalReviews: 0
 })
 
 const activeOrders = ref([])
 const negotiations = ref([])
 const myProducts = ref([])
-const activeTab = ref('orders')
+const activeTab = ref('dashboard')
+const recentActivity = ref([])
+
+// ... (fetchData logic update)
+    // 5. Activity Feed
+    const events = []
+    
+    // Recent orders
+    activeOrders.value.slice(0, 3).forEach(o => {
+      events.push({ id: `o-${o.id}`, type: 'order', title: 'New Order', desc: `Ordered ${o.item}`, time: o.date, icon: '📦' })
+    })
+    
+    // Recent negotiations
+    negotiations.value.filter(n => n.status === 'Awaiting Reply').slice(0, 2).forEach(n => {
+      events.push({ id: `n-${n.id}`, type: 'neg', title: 'New Offer', desc: `${n.customer} offered ${n.offer}`, time: 'Just now', icon: '💰' })
+    })
+    
+    recentActivity.value = events.sort(() => 0.5 - Math.random())
 
 // Dialog State
 const dialog = ref({
@@ -73,17 +93,21 @@ const fetchData = async () => {
       date: new Date(o.created_at).toLocaleDateString(),
       price: o.price,
       status: o.status,
-      size: o.size
+      size: o.size,
+      color: o.color,
+      notes: o.notes,
+      image: o.image
     }))
 
     // 2. Fetch Negotiations
     const negsRes = await db.execute({
       sql: `
-        SELECT n.*, u.first_name, u.last_name, u.whatsapp as customer_phone, p.image
+        SELECT n.*, u.first_name, u.last_name, u.whatsapp as customer_phone, MAX(p.image) as product_image
         FROM negotiations n 
         JOIN users u ON n.customer_id = u.id 
-        LEFT JOIN products p ON n.item_name = p.name
+        LEFT JOIN products p ON n.item_name = p.name AND p.owner_id = n.tailor_id
         WHERE n.tailor_id = ? 
+        GROUP BY n.id
         ORDER BY n.created_at DESC
       `,
       args: [props.userData.id]
@@ -98,7 +122,10 @@ const fetchData = async () => {
       item: n.item_name,
       offer: n.proposed_price,
       status: n.status,
-      image: n.image
+      size: n.size,
+      color: n.color,
+      notes: n.notes,
+      image: n.image || n.product_image || 'https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?q=80&w=400'
     }))
 
     // 3. Fetch My Products
@@ -109,15 +136,62 @@ const fetchData = async () => {
     myProducts.value = productsRes.rows
 
     // 4. Calculate Stats
-    const totalRevenue = activeOrders.value
-      .filter(o => o.status !== 'Pending')
-      .reduce((sum, o) => {
-        const val = parseInt(o.price.replace(/[^0-9]/g, ''))
-        return sum + (isNaN(val) ? 0 : val)
-      }, 0)
+    const now = new Date()
+    const currentMonth = now.getMonth()
+    const currentYear = now.getFullYear()
+    
+    const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1
+    const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear
+
+    let currentMonthRev = 0
+    let lastMonthRev = 0
+    let totalRevenue = 0
+
+    ordersRes.rows.forEach(o => {
+      if (o.status === 'Pending' || o.status === 'Cancelled') return
+      
+      const priceVal = parseInt(o.price.replace(/[^0-9]/g, '')) || 0
+      totalRevenue += priceVal
+      
+      const orderDate = new Date(o.created_at)
+      const oMonth = orderDate.getMonth()
+      const oYear = orderDate.getFullYear()
+      
+      if (oMonth === currentMonth && oYear === currentYear) {
+        currentMonthRev += priceVal
+      } else if (oMonth === lastMonth && oYear === lastMonthYear) {
+        lastMonthRev += priceVal
+      }
+    })
     
     stats.value.revenue = `TSh ${totalRevenue.toLocaleString()}`
-    stats.value.activeOrders = activeOrders.value.length
+    
+    // Calculate Growth
+    if (lastMonthRev === 0) {
+      stats.value.growth = currentMonthRev > 0 ? '+100%' : '0%'
+    } else {
+      const diff = ((currentMonthRev - lastMonthRev) / lastMonthRev) * 100
+      stats.value.growth = `${diff > 0 ? '+' : ''}${diff.toFixed(1)}%`
+    }
+
+    stats.value.activeOrders = activeOrders.value.filter(o => o.status !== 'Completed' && o.status !== 'Cancelled' && o.status !== 'Delivered').length
+    
+    // Total Likes and Reviews for the empire
+    stats.value.totalLikes = myProducts.value.reduce((sum, p) => sum + (p.likes_count || 0), 0)
+    
+    const reviewRes = await db.execute({
+      sql: "SELECT COUNT(*) as count FROM reviews WHERE product_id IN (SELECT id FROM products WHERE owner_id = ?)",
+      args: [props.userData.id]
+    })
+    stats.value.totalReviews = reviewRes.rows[0]?.count || 0
+    
+    // Use real profile views from userData
+    const views = props.userData.profileViews || 0
+    stats.value.profileViews = views > 1000 ? `${(views / 1000).toFixed(1)}k` : views.toString()
+    
+    // Slightly more realistic conversion rate
+    const totalOrders = activeOrders.value.length
+    stats.value.conversionRate = views > 0 ? `${((totalOrders / views) * 100).toFixed(1)}%` : '0.0%'
     
   } catch (e) {
     console.error("Error fetching console data:", e)
@@ -137,9 +211,21 @@ const toggleStock = async (product) => {
   }
 }
 
+const handleStatusChange = (order, newStatus) => {
+  emit('update-status', {
+    orderId: order.id,
+    status: newStatus,
+    customerId: order.customer_id,
+    itemName: order.item
+  })
+}
+
 const getStatusClass = (status) => {
   if (status === 'Pending') return 'status-pending'
   if (status === 'Stitching') return 'status-active'
+  if (status === 'Shipped') return 'status-shipped'
+  if (status === 'Delivered') return 'status-delivered'
+  if (status === 'Cancelled') return 'status-cancelled'
   return ''
 }
 
@@ -171,6 +257,62 @@ const openWhatsApp = (customerData, orderOrNeg, type = 'order') => {
   const url = `https://wa.me/${normalized}?text=${encodeURIComponent(message)}`
   window.open(url, '_blank')
 }
+
+const handleAcceptNegotiation = async (neg) => {
+  try {
+    await db.execute({
+      sql: `UPDATE negotiations SET status = 'Accepted' WHERE id = ?`,
+      args: [neg.id]
+    })
+    
+    // Automatically create an order from this negotiation
+    emit('order', {
+      itemName: neg.item,
+      tailorId: props.userData.id,
+      price: neg.offer,
+      size: neg.size || 'M',
+      color: neg.color || 'Default',
+      notes: `Negotiated Offer accepted: ${neg.notes || ''}`,
+      image: neg.image
+    })
+
+    neg.status = 'Accepted'
+    showDialog({
+      title: 'Offer Accepted',
+      message: `You have accepted the offer for "${neg.item}". A new order has been created, and the customer has been notified.`,
+      type: 'success'
+    })
+  } catch (e) {
+    console.error("Error accepting negotiation:", e)
+    showDialog({
+      title: 'Error',
+      message: 'Failed to accept negotiation.',
+      type: 'error'
+    })
+  }
+}
+
+const handleDeclineNegotiation = async (neg) => {
+  try {
+    await db.execute({
+      sql: `UPDATE negotiations SET status = 'Declined' WHERE id = ?`,
+      args: [neg.id]
+    })
+    neg.status = 'Declined'
+    showDialog({
+      title: 'Negotiation Declined',
+      message: `You have declined the offer for "${neg.item}".`,
+      type: 'info'
+    })
+  } catch (e) {
+    console.error("Error declining negotiation:", e)
+    showDialog({
+      title: 'Error',
+      message: 'Failed to decline negotiation. Please try again.',
+      type: 'error'
+    })
+  }
+}
 </script>
 
 <template>
@@ -188,19 +330,34 @@ const openWhatsApp = (customerData, orderOrNeg, type = 'order') => {
     <!-- Stats Grid -->
     <div class="stats-grid">
       <div class="stat-card revenue">
-        <span class="stat-label">This Month's Revenue</span>
+        <span class="stat-label">Total Revenue</span>
         <span class="stat-value">{{ stats.revenue }}</span>
-        <span class="stat-trend">+12% from last month</span>
+        <div class="stat-mini-row">
+          <span class="stat-trend">{{ stats.growth }}</span>
+          <span class="stat-meta">growth this month</span>
+        </div>
       </div>
       <div class="stat-card">
         <span class="stat-label">Active Orders</span>
         <span class="stat-value">{{ stats.activeOrders }}</span>
-        <span class="stat-hint">3 require attention</span>
+        <span class="stat-hint">Managed Lifecycle</span>
       </div>
       <div class="stat-card">
-        <span class="stat-label">Inventory Items</span>
-        <span class="stat-value">{{ myProducts.length }}</span>
-        <span class="stat-hint">Managed Designs</span>
+        <span class="stat-label">Empire Reach</span>
+        <div class="reach-row">
+          <div class="reach-item">
+            <span class="reach-value">{{ stats.profileViews }}</span>
+            <span class="reach-label">Views</span>
+          </div>
+          <div class="reach-item">
+            <span class="reach-value">{{ stats.totalLikes }}</span>
+            <span class="reach-label">Likes</span>
+          </div>
+          <div class="reach-item">
+            <span class="reach-value">{{ stats.totalReviews }}</span>
+            <span class="reach-label">Reviews</span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -208,10 +365,10 @@ const openWhatsApp = (customerData, orderOrNeg, type = 'order') => {
     <div class="tab-nav">
       <button 
         class="tab-btn" 
-        :class="{ active: activeTab === 'orders' }"
-        @click="activeTab = 'orders'"
+        :class="{ active: activeTab === 'dashboard' }"
+        @click="activeTab = 'dashboard'"
       >
-        Active Orders
+        Dashboard
       </button>
       <button 
         class="tab-btn" 
@@ -220,18 +377,26 @@ const openWhatsApp = (customerData, orderOrNeg, type = 'order') => {
       >
         My Inventory
       </button>
-      <button 
-        class="tab-btn" 
-        :class="{ active: activeTab === 'negotiations' }"
-        @click="activeTab = 'negotiations'"
-      >
-        Negotiations
-      </button>
     </div>
 
     <div class="console-layout">
+      <!-- Activity Sidebar -->
+      <aside v-show="activeTab === 'dashboard'" class="activity-sidebar animate-fade">
+        <h3 class="sidebar-title">Empire Activity</h3>
+        <div class="activity-feed">
+          <div v-for="event in recentActivity" :key="event.id" class="activity-item">
+            <div class="activity-icon">{{ event.icon }}</div>
+            <div class="activity-content">
+              <span class="activity-title">{{ event.title }}</span>
+              <span class="activity-desc">{{ event.desc }}</span>
+              <span class="activity-time">{{ event.time }}</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
       <!-- Orders Table -->
-      <div v-if="activeTab === 'orders'" class="orders-section animate-fade">
+      <div v-show="activeTab === 'dashboard'" class="orders-section animate-fade">
         <div class="section-header">
           <h2 class="section-title">Active Orders</h2>
           <button class="view-all" @click="$emit('go-orders')">View All</button>
@@ -243,6 +408,7 @@ const openWhatsApp = (customerData, orderOrNeg, type = 'order') => {
                 <th>Item</th>
                 <th>Order Info</th>
                 <th>Customer</th>
+                <th>Price</th>
                 <th>Status</th>
                 <th class="text-right">Action</th>
               </tr>
@@ -258,6 +424,7 @@ const openWhatsApp = (customerData, orderOrNeg, type = 'order') => {
                   <div class="order-info">
                     <span class="order-item">{{ order.item }}</span>
                     <span class="order-meta">#{{ order.id }} • Size: {{ order.size }}</span>
+                    <span v-if="order.color" class="order-meta">Color: {{ order.color }}</span>
                   </div>
                 </td>
                 <td>
@@ -267,9 +434,25 @@ const openWhatsApp = (customerData, orderOrNeg, type = 'order') => {
                   </div>
                 </td>
                 <td>
-                  <span class="status-badge" :class="getStatusClass(order.status)">
-                    {{ order.status }}
-                  </span>
+                  <span class="order-price">{{ order.price }}</span>
+                </td>
+                <td>
+                  <div class="status-manage">
+                    <span class="status-badge" :class="getStatusClass(order.status)">
+                      {{ order.status }}
+                    </span>
+                    <select 
+                      class="status-select" 
+                      :value="order.status"
+                      @change="(e) => handleStatusChange(order, e.target.value)"
+                    >
+                      <option value="Pending">Pending</option>
+                      <option value="Stitching">Stitching</option>
+                      <option value="Shipped">Shipped</option>
+                      <option value="Delivered">Delivered</option>
+                      <option value="Cancelled">Cancelled</option>
+                    </select>
+                  </div>
                 </td>
                 <td class="text-right">
                   <div class="action-group">
@@ -288,7 +471,7 @@ const openWhatsApp = (customerData, orderOrNeg, type = 'order') => {
       </div>
 
       <!-- Inventory Section -->
-      <div v-if="activeTab === 'inventory'" class="inventory-section animate-fade">
+      <div v-show="activeTab === 'inventory'" class="inventory-section animate-fade">
         <div class="section-header">
           <h2 class="section-title">Design Inventory</h2>
           <button class="primary-btn-small" @click="$emit('go-upload')">+ New Design</button>
@@ -304,6 +487,7 @@ const openWhatsApp = (customerData, orderOrNeg, type = 'order') => {
             <div class="inventory-details">
               <h3 class="inv-name">{{ product.name }}</h3>
               <p class="inv-price">{{ product.price }}</p>
+              <div v-if="product.material" class="inv-meta">Material: {{ product.material }}</div>
               <div class="inv-actions">
                 <button 
                   class="edit-btn"
@@ -325,7 +509,7 @@ const openWhatsApp = (customerData, orderOrNeg, type = 'order') => {
       </div>
 
       <!-- Negotiations Section -->
-      <div v-if="activeTab === 'negotiations'" class="negotiations-section animate-fade">
+      <div v-show="activeTab === 'dashboard'" class="negotiations-section animate-fade">
         <div class="section-header">
           <h2 class="section-title">Active Negotiations</h2>
           <span class="badge-new">{{ negotiations.length }} Total</span>
@@ -339,15 +523,21 @@ const openWhatsApp = (customerData, orderOrNeg, type = 'order') => {
               <div class="neg-info">
                 <span class="neg-customer">{{ neg.customer }}</span>
                 <span class="neg-item">{{ neg.item }}</span>
+                <span class="neg-meta">Size: {{ neg.size }} • Color: {{ neg.color }}</span>
               </div>
             </div>
+            <div v-if="neg.notes" class="neg-notes">
+              <strong>Customer Notes:</strong> {{ neg.notes }}
+            </div>
             <div class="offer-box">
-              <span class="offer-label">Proposed Offer</span>
+              <span class="offer-label">Proposed Offer • {{ neg.status }}</span>
               <span class="offer-value">{{ neg.offer }}</span>
             </div>
             <div class="neg-actions">
-              <button class="accept-btn">Accept</button>
-              <button class="decline-btn">Decline</button>
+              <template v-if="neg.status === 'Awaiting Reply'">
+                <button class="accept-btn" @click="handleAcceptNegotiation(neg)">Accept</button>
+                <button class="decline-btn" @click="handleDeclineNegotiation(neg)">Decline</button>
+              </template>
               <button class="chat-btn" @click="$emit('go-chat', neg.customer_id)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-13.4 8.38 8.38 0 0 1 3.8.9L21 3z"/></svg>
               </button>
@@ -616,8 +806,70 @@ const openWhatsApp = (customerData, orderOrNeg, type = 'order') => {
     flex-direction: row;
     align-items: flex-start;
   }
+  .activity-sidebar { width: 260px; flex-shrink: 0; }
   .orders-section { flex: 2; }
-  .negotiations-section { flex: 1; }
+  .negotiations-section { flex: 1.2; }
+}
+
+.activity-sidebar {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  padding: 20px;
+}
+
+.sidebar-title {
+  font-size: 14px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--text-amber);
+  margin-bottom: 20px;
+}
+
+.activity-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.activity-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.activity-icon {
+  width: 32px;
+  height: 32px;
+  background: var(--wood-walnut);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.activity-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.activity-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.activity-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.activity-time {
+  font-size: 10px;
+  color: var(--accent-amber);
+  font-weight: 700;
 }
 
 .section-header {
@@ -703,6 +955,80 @@ const openWhatsApp = (customerData, orderOrNeg, type = 'order') => {
   object-fit: cover;
 }
 
+.order-price {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800;
+  color: var(--price-text);
+  font-size: 14px;
+}
+
+.inv-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.neg-meta {
+  font-size: 11px;
+  color: var(--accent-amber);
+  font-weight: 600;
+}
+
+.neg-notes {
+  background: rgba(0,0,0,0.2);
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  border-left: 3px solid var(--accent-amber);
+}
+
+.reach-row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+
+.reach-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.reach-value {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.reach-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.status-manage {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.status-select {
+  background: var(--wood-walnut);
+  border: 1px solid var(--glass-border);
+  color: var(--text-muted);
+  font-size: 10px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+}
+
+.status-select:focus {
+  border-color: var(--accent-amber);
+}
+
 .status-badge {
   display: inline-block;
   padding: 4px 12px;
@@ -711,18 +1037,25 @@ const openWhatsApp = (customerData, orderOrNeg, type = 'order') => {
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  width: fit-content;
 }
 
-.status-pending {
-  background: rgba(245, 158, 11, 0.1);
-  color: #F59E0B;
-  border: 1px solid rgba(245, 158, 11, 0.2);
+.status-pending { background: rgba(245, 158, 11, 0.1); color: #F59E0B; border: 1px solid rgba(245, 158, 11, 0.2); }
+.status-active { background: rgba(59, 130, 246, 0.1); color: #3B82F6; border: 1px solid rgba(59, 130, 246, 0.2); }
+.status-shipped { background: rgba(16, 185, 129, 0.1); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.2); }
+.status-delivered { background: rgba(16, 185, 129, 0.3); color: #10B981; border: 1px solid #10B981; }
+.status-cancelled { background: rgba(239, 68, 68, 0.1); color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.2); }
+
+.stat-mini-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
 }
 
-.status-active {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3B82F6;
-  border: 1px solid rgba(59, 130, 246, 0.2);
+.stat-meta {
+  font-size: 11px;
+  color: var(--text-muted);
 }
 
 .action-btn {
