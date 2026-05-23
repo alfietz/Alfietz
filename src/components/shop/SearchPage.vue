@@ -27,10 +27,6 @@ const isFocused = ref(false)
 const isSearching = ref(false)
 const emit = defineEmits(['go-back', 'search', 'select-category', 'go-tailor', 'go-product'])
 
-<<<<<<< Updated upstream
-=======
-
->>>>>>> Stashed changes
 const recommendedKeywords = computed(() => {
   if (!searchQuery.value.trim()) return ['Kente', 'Wedding', 'Ankara', 'Suits', 'Silk']
   
