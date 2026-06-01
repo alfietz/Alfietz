@@ -25,7 +25,7 @@ defineEmits(['go-back'])
       <p>Users are strictly prohibited from copying, reproducing, or commercially exploiting the designs found on Alfietz without the express written consent of the original creator. We take design "scraping" seriously and will ban users found to be stealing artisan IP.</p>
 
       <h2>4. Reporting Infringement</h2>
-      <p>If you believe your intellectual property has been infringed upon by another user on our platform, please send a detailed "Notice of Infringement" to support@alfie.shop including:</p>
+      <p>If you believe your intellectual property has been infringed upon by another user on our platform, please send a detailed "Notice of Infringement" to support@alfietz.shop including:</p>
       <ul>
         <li>A description of the copyrighted work you claim has been infringed.</li>
         <li>The link to the infringing listing on Alfietz.</li>

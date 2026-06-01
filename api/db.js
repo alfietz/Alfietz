@@ -123,6 +123,10 @@ export default async function handler(req, res) {
     await client.execute("CREATE TABLE IF NOT EXISTS verification_codes (email TEXT PRIMARY KEY, code TEXT, expires_at INTEGER)");
     await client.execute("CREATE TABLE IF NOT EXISTS session_tokens (token TEXT PRIMARY KEY, user_id TEXT, expires_at INTEGER)");
 
+    // Add missing columns if they don't exist
+    await client.execute("ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT 0").catch(() => {});
+    await client.execute("ALTER TABLE reviews ADD COLUMN image TEXT").catch(() => {});
+
     // Token Validation for Protected Actions
     const publicActions = ['login', 'signup', 'request_password_reset', 'verify_reset_code', 'reset_password', 'get_initial_data', 'search', 'get_product_details', 'get_tailor_details', 'get_reviews', 'get_similar_products'];
     let currentUserId = 'guest';
@@ -184,7 +188,7 @@ export default async function handler(req, res) {
           client.execute("SELECT p.*, c.name as categoryName FROM products p LEFT JOIN categories c ON p.category_id = c.id ORDER BY p.id DESC LIMIT 50"),
           client.execute("SELECT r.*, u.first_name, u.last_name, u.avatar FROM app_reviews r JOIN users u ON r.user_id = u.id ORDER BY r.created_at DESC LIMIT 5"),
           client.execute(`
-            SELECT u.id, u.username, u.first_name, u.last_name, u.avatar, u.user_type, u.gives, u.profile_views,
+            SELECT u.id, u.username, u.first_name, u.last_name, u.avatar, u.user_type, u.gives, u.profile_views, u.is_verified,
                    (SELECT AVG(rating) FROM reviews WHERE product_id IN (SELECT id FROM products WHERE owner_id = u.id)) as avg_rating,
                    (SELECT SUM(likes_count) FROM products WHERE owner_id = u.id) as total_likes
             FROM users u 
@@ -239,15 +243,39 @@ export default async function handler(req, res) {
 
       case 'search':
         const q = `%${params.query.toLowerCase()}%`;
-        sql = `
-          SELECT p.*, u.username as owner_username, c.name as category_name
+        const catFilter = params.category ? params.category : null;
+
+        // Search Products
+        const prodSql = `
+          SELECT p.*, u.username as owner_username, u.is_verified as owner_verified, c.name as category_name
           FROM products p
           LEFT JOIN categories c ON p.category_id = c.id
           LEFT JOIN users u ON p.owner_id = u.id
-          WHERE p.name LIKE ? OR p.description LIKE ? OR c.name LIKE ? OR u.username LIKE ?
+          WHERE (p.name LIKE ? OR p.description LIKE ? OR c.name LIKE ? OR u.username LIKE ?)
+          AND (? IS NULL OR c.name = ?)
           ORDER BY p.likes_count DESC
         `;
-        args = [q, q, q, q];
+        
+        // Search Tailors
+        const tailorSql = `
+          SELECT u.id, u.username, u.first_name, u.last_name, u.avatar, u.gives as bio, u.is_verified,
+                 (SELECT AVG(rating) FROM reviews WHERE product_id IN (SELECT id FROM products WHERE owner_id = u.id)) as rating
+          FROM users u
+          WHERE u.user_type = 'supplier'
+          AND (u.username LIKE ? OR u.first_name LIKE ? OR u.last_name LIKE ? OR u.gives LIKE ?)
+          ORDER BY profile_views DESC
+        `;
+
+        const [sProds, sTailors] = await Promise.all([
+          client.execute({ sql: prodSql, args: [q, q, q, q, catFilter, catFilter] }),
+          client.execute({ sql: tailorSql, args: [q, q, q, q] })
+        ]);
+
+        customResponse = { 
+          query: params.query,
+          products: mapRows(sProds),
+          tailors: mapRows(sTailors)
+        };
         break;
 
       case 'get_product_details':
@@ -271,7 +299,7 @@ export default async function handler(req, res) {
       case 'get_tailor_details':
         const tailorRes = await client.execute({ 
           sql: `
-            SELECT u.id, u.username, u.first_name, u.last_name, u.avatar, u.gives, u.whatsapp, u.email, u.profile_views,
+            SELECT u.id, u.username, u.first_name, u.last_name, u.avatar, u.gives, u.whatsapp, u.email, u.profile_views, u.is_verified,
                    tp.quirk, tp.case_study_title, tp.case_study_quote, tp.case_study_challenge, tp.case_study_execution, tp.case_study_result, tp.case_study_image, tp.services_json, tp.contacts_json
             FROM users u 
             LEFT JOIN tailor_profiles tp ON u.id = tp.user_id
@@ -522,8 +550,8 @@ export default async function handler(req, res) {
         args = [params.productId, params.userId];
         break;
       case 'write_review':
-        sql = 'INSERT INTO reviews (product_id, user_id, rating, text) VALUES (?, ?, ?, ?)';
-        args = [params.productId, params.userId, params.rating, params.text];
+        sql = 'INSERT INTO reviews (product_id, user_id, rating, text, image) VALUES (?, ?, ?, ?, ?)';
+        args = [params.productId, params.userId, params.rating, params.text, params.image];
         break;
       case 'submit_app_review':
         sql = 'INSERT INTO app_reviews (user_id, rating, text, image) VALUES (?, ?, ?, ?)';
@@ -626,7 +654,7 @@ export default async function handler(req, res) {
         // Send Email via Resend
         if (resend) {
           const { data, error } = await resend.emails.send({
-            from: 'Alfietz <info@alfie.shop>',
+            from: 'Alfietz <info@alfietz.shop>',
             to: params.email,
             subject: 'Your Heritage Verification Code',
             template: { 
@@ -699,7 +727,7 @@ export default async function handler(req, res) {
           if (customerRes.rows.length > 0) {
             const customer = customerRes.rows[0];
             const { data, error } = await resend.emails.send({
-              from: 'Alfietz <info@alfie.shop>',
+              from: 'Alfietz <info@alfietz.shop>',
               to: sanitize(customer[0]),
               subject: 'Your Heritage Order is Confirmed!',
               template: { 

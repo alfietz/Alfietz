@@ -1,4 +1,4 @@
-<!-------- (WriteReview.vue) ./src/components/WriteReview.vue ------------>
+<!-------- (WriteReview.vue) ./src/components/communication/WriteReview.vue ------------>
 <script setup>
 import { ref, computed } from 'vue'
 
@@ -6,6 +6,8 @@ const reviewText = ref('')
 const rating = ref(5)
 const maxChars = 350
 const selectedTags = ref([])
+const reviewImage = ref(null)
+const isUploading = ref(false)
 
 const tags = [
   'Excellent Quality', 'Perfect Fit', 'Vibrant Colors', 
@@ -18,8 +20,6 @@ const remainingChars = computed(() => maxChars - reviewText.value.length)
 const toggleTag = (tag) => {
   if (selectedTags.value.includes(tag)) {
     selectedTags.value = selectedTags.value.filter(t => t !== tag)
-    // Remove tag text from textarea if it was added automatically? 
-    // Or just use tags as metadata. Let's use them as metadata/shortcuts.
     if (reviewText.value.includes(tag)) {
       reviewText.value = reviewText.value.replace(new RegExp(`\\s*#${tag.replace(/\s+/g, '')}`, 'g'), '').trim()
     }
@@ -32,21 +32,38 @@ const toggleTag = (tag) => {
   }
 }
 
+const handleImageUpload = (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+  
+  isUploading.value = true
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    reviewImage.value = e.target.result
+    isUploading.value = false
+  }
+  reader.readAsDataURL(file)
+}
+
+const removeImage = () => {
+  reviewImage.value = null
+}
+
 defineEmits(['go-back', 'submit'])
 </script>
 
 <template>
-  <div class="write-review-page">
+  <div class="write-review-page pattern-heritage animate-fade">
     <div class="header-row">
       <button class="back-btn tap-active" @click="$emit('go-back')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
       </button>
-      <h1 class="title">Share Your Experience</h1>
+      <h1 class="title">Share Your Journey</h1>
     </div>
 
     <div class="form-container">
       <div class="rating-selection">
-        <p class="rating-label">How would you rate this piece?</p>
+        <p class="rating-label">How was your heritage experience?</p>
         <div class="stars">
           <button 
             v-for="star in 5" 
@@ -61,8 +78,28 @@ defineEmits(['go-back', 'submit'])
           </button>
         </div>
         <p class="rating-text-feedback">
-          {{ ['Poor', 'Fair', 'Good', 'Very Good', 'Exceptional'][rating - 1] }}
+          {{ ['Could be better', 'Fair', 'Great Heritage', 'Amazing Quality', 'Pure Mastery'][rating - 1] }}
         </p>
+      </div>
+
+      <!-- Photo Upload Section -->
+      <div class="input-group">
+        <label class="group-label">Show the Tribe (Add Photos)</label>
+        <div class="photo-upload-area">
+          <div v-if="reviewImage" class="preview-container">
+            <img :src="reviewImage" class="image-preview" alt="Review preview" />
+            <button class="remove-photo-btn" @click="removeImage">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+          <label v-else class="upload-placeholder tap-active">
+            <input type="file" accept="image/*" class="hidden-input" @change="handleImageUpload" />
+            <div class="upload-icon-box">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            </div>
+            <span>Add a photo of you wearing the piece</span>
+          </label>
+        </div>
       </div>
 
       <div class="input-group">
@@ -81,12 +118,12 @@ defineEmits(['go-back', 'submit'])
       </div>
 
       <div class="input-group">
-        <label class="group-label">Your Review</label>
+        <label class="group-label">Your Story</label>
         <div class="textarea-wrapper">
           <textarea 
             v-model="reviewText" 
             :maxlength="maxChars"
-            placeholder="What did you love about this heritage piece? Mention the fit, material, or craftsmanship..." 
+            placeholder="Tell the tribe about the fit, the feel, and the craftsmanship..." 
             class="review-input"
           ></textarea>
           <div class="char-count" :class="{ 'warning': remainingChars < 50 }">
@@ -99,10 +136,10 @@ defineEmits(['go-back', 'submit'])
     <div class="bottom-action">
       <button 
         class="primary-btn" 
-        :disabled="!reviewText.trim() && rating === 0"
-        @click="$emit('submit', { rating, text: reviewText })"
+        :disabled="(!reviewText.trim() && rating === 0) || isUploading"
+        @click="$emit('submit', { rating, text: reviewText, image: reviewImage })"
       >
-        <span>Submit Review</span>
+        <span>Share with the Tribe</span>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
       </button>
     </div>
@@ -113,17 +150,15 @@ defineEmits(['go-back', 'submit'])
 .write-review-page {
   background-color: var(--wood-deep);
   min-height: 100vh;
-  padding: 24px 20px 120px;
+  padding: 40px 24px 140px;
   max-width: 800px;
   margin: 0 auto;
-  display: flex;
-  flex-direction: column;
 }
 
 .header-row {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 20px;
   margin-bottom: 40px;
 }
 
@@ -149,38 +184,36 @@ defineEmits(['go-back', 'submit'])
 .title {
   font-size: 24px;
   font-weight: 800;
-  color: var(--text-amber);
+  color: var(--text-primary);
   margin: 0;
-  letter-spacing: -0.5px;
 }
 
 .form-container {
-  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 40px;
 }
 
 .rating-selection {
   text-align: center;
   background: var(--wood-walnut);
-  padding: 32px;
-  border-radius: 24px;
+  padding: 40px 20px;
+  border-radius: 32px;
   border: 1px solid var(--glass-border);
 }
 
 .rating-label {
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .stars {
   display: flex;
   justify-content: center;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .star-btn {
@@ -191,44 +224,101 @@ defineEmits(['go-back', 'submit'])
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.star-btn:hover {
-  transform: scale(1.2);
-}
-
-.star-btn.active svg {
-  filter: drop-shadow(0 0 8px var(--accent-glow));
-}
-
-.star-btn.pulse {
-  animation: starPulse 0.5s ease;
-}
-
-@keyframes starPulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.3); }
-  100% { transform: scale(1); }
-}
+.star-btn:hover { transform: scale(1.2); }
+.star-btn.active svg { filter: drop-shadow(0 0 8px var(--accent-glow)); }
 
 .rating-text-feedback {
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--accent-amber);
   margin: 0;
-  min-height: 20px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .input-group {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .group-label {
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 800;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 1.5px;
+}
+
+.photo-upload-area {
+  width: 100%;
+}
+
+.upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  height: 120px;
+  background: var(--wood-walnut);
+  border: 2px dashed var(--glass-border);
+  border-radius: 20px;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.upload-placeholder:hover {
+  border-color: var(--accent-amber);
+  background: var(--wood-polished);
+  color: var(--text-primary);
+}
+
+.upload-icon-box {
+  width: 44px;
+  height: 44px;
+  background: var(--wood-deep);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-amber);
+}
+
+.hidden-input { display: none; }
+
+.preview-container {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 2px solid var(--accent-amber);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+}
+
+.image-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.remove-photo-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0,0,0,0.7);
+  border: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
 }
 
 .tags-cloud {
@@ -244,16 +334,12 @@ defineEmits(['go-back', 'submit'])
   padding: 8px 16px;
   border-radius: 12px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
 }
 
-.tag-pill:hover {
-  border-color: var(--accent-amber);
-  color: var(--text-primary);
-}
-
+.tag-pill:hover { border-color: var(--accent-amber); color: var(--text-primary); }
 .tag-pill.active {
   background: var(--accent-amber);
   color: white;
@@ -261,45 +347,36 @@ defineEmits(['go-back', 'submit'])
   box-shadow: 0 4px 12px var(--accent-glow);
 }
 
-.textarea-wrapper {
-  position: relative;
-}
+.textarea-wrapper { position: relative; }
 
 .review-input {
   width: 100%;
-  height: 200px;
-  border: 2px solid var(--glass-border);
-  border-radius: 20px;
-  padding: 20px;
+  height: 160px;
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  padding: 24px;
   font-size: 16px;
   color: var(--text-primary);
   outline: none;
   resize: none;
   font-family: inherit;
-  box-sizing: border-box;
   background-color: var(--wood-walnut);
   transition: all 0.3s;
 }
 
 .review-input:focus {
   border-color: var(--accent-amber);
-  box-shadow: 0 0 20px rgba(217, 164, 4, 0.1);
+  background: var(--wood-polished);
 }
 
 .char-count {
   position: absolute;
-  bottom: 16px;
-  right: 20px;
-  font-size: 12px;
-  font-weight: 700;
+  bottom: 20px;
+  right: 24px;
+  font-size: 11px;
+  font-weight: 800;
   color: var(--text-muted);
-  background: var(--wood-deep);
-  padding: 4px 8px;
-  border-radius: 8px;
-}
-
-.char-count.warning {
-  color: #EF4444;
+  opacity: 0.5;
 }
 
 .bottom-action {
@@ -333,18 +410,5 @@ defineEmits(['go-back', 'submit'])
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.primary-btn:hover:not(:disabled) {
-  transform: translateY(-4px);
-  box-shadow: 0 15px 30px var(--accent-glow);
-}
-
-.primary-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-.primary-btn:active:not(:disabled) {
-  transform: scale(0.95);
-}
+.primary-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 </style>

@@ -689,11 +689,18 @@ const shareProduct = async () => {
             Negotiate
           </button>
           <button 
+            class="add-cart-btn" 
+            :class="{ disabled: !currentVariant.inStock || product.status === 'Out of Stock' }"
+            @click="!(!currentVariant.inStock || product.status === 'Out of Stock') && $emit('add-to-cart', product, { size: selectedSize, color: currentVariant.name })"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+          </button>
+          <button 
             class="connect-btn" 
             :class="{ disabled: !currentVariant.inStock || product.status === 'Out of Stock' }"
             @click="connectToWhatsApp(false)"
           >
-            {{ !currentVariant.inStock || product.status === 'Out of Stock' ? 'Currently Unavailable' : 'Order via WhatsApp' }}
+            Order
             <svg v-if="currentVariant.inStock && product.status !== 'Out of Stock'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.79 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
           </button>
         </div>
@@ -1528,13 +1535,19 @@ const shareProduct = async () => {
 
 .action-grid {
   display: grid;
-  grid-template-columns: 0.8fr 1fr 1.5fr;
-  gap: 12px;
+  grid-template-columns: 0.8fr 1fr 0.8fr 1.5fr;
+  gap: 8px;
   width: 100%;
   max-width: 800px;
 }
 
-.chat-btn-action {
+@media (min-width: 768px) {
+  .action-grid {
+    gap: 12px;
+  }
+}
+
+.chat-btn-action, .add-cart-btn {
   background: var(--wood-walnut);
   border: 1px solid var(--glass-border);
   color: var(--text-primary);
@@ -1548,6 +1561,17 @@ const shareProduct = async () => {
   min-height: 56px;
   font-size: 14px;
   -webkit-tap-highlight-color: transparent;
+}
+
+.add-cart-btn {
+  color: var(--accent-amber);
+}
+
+.add-cart-btn.disabled {
+  background: #4B5563 !important; 
+  cursor: not-allowed; 
+  opacity: 0.7; 
+  color: var(--text-muted);
 }
 
 .negotiate-btn {

@@ -55,7 +55,7 @@ export default async function middleware(req) {
             
             const title = `Alfietz - ${item.name || 'Heritage Craft'}`;
             const description = item.description || 'Discover authentic African heritage craftsmanship.';
-            const image = item.image || 'https://alfie.shop/og-image.png';
+            const image = item.image || 'https://alfietz.shop/og-image.png';
 
             return new Response(
               `<!DOCTYPE html>

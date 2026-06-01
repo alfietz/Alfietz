@@ -7,13 +7,17 @@ const props = defineProps({
     type: String,
     default: 'home'
   },
+  cartCount: {
+    type: Number,
+    default: 0
+  },
   t: {
     type: Function,
     required: true
   }
 })
 
-const emit = defineEmits(['navigate', 'go-notifications'])
+const emit = defineEmits(['navigate', 'go-notifications', 'go-cart'])
 
 const isScrolled = ref(false)
 
@@ -60,11 +64,11 @@ onUnmounted(() => {
 
       <!-- Actions -->
       <div class="header-actions">
-        <button class="action-btn group mobile-hide" aria-label="Cart">
+        <button class="action-btn group" aria-label="Cart" @click="$emit('go-cart')">
           <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>
           </svg>
-          <span class="badge"></span>
+          <span v-if="cartCount > 0" class="badge flex items-center justify-center text-[10px] font-bold text-white w-4 h-4 -top-1 -right-1 absolute">{{ cartCount }}</span>
         </button>
         <button class="action-btn group" @click="$emit('go-notifications')" aria-label="Notifications">
           <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

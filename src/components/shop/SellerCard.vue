@@ -18,12 +18,15 @@ defineEmits(['select'])
   <div class="seller-card" @click="$emit('select', seller)">
     <div class="avatar-wrapper">
       <img :src="seller.avatar" :alt="seller.name" class="seller-avatar" :loading="loading" />
-      <div v-if="seller.isVerified" class="verify-badge">
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+      <div v-if="seller.isVerified" class="verify-badge" title="Physical Shop Verified">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
       </div>
     </div>
     <div class="seller-info">
-      <h4 class="seller-name">{{ seller.name }}</h4>
+      <div class="name-badge-row">
+        <h4 class="seller-name">{{ seller.name }}</h4>
+      </div>
+      <div v-if="seller.isVerified" class="shop-verified-tag">Physical Shop</div>
       <div class="seller-rating">
         <span class="star">★</span>
         <span class="rating-value">{{ seller.rating || '0.0' }}</span>
@@ -88,7 +91,17 @@ defineEmits(['select'])
   font-size: 15px;
   font-weight: 700;
   color: var(--text-primary);
-  margin: 0 0 4px 0;
+  margin: 0;
+}
+
+.shop-verified-tag {
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--accent-amber);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+  opacity: 0.8;
 }
 
 .seller-rating {

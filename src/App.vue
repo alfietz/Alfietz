@@ -13,6 +13,7 @@ import NavigationBar from './components/layout/NavigationBar.vue'
 import WebHeader from './components/layout/WebHeader.vue'
 import LoadingSpinner from './components/layout/LoadingSpinner.vue'
 import Splash from './components/layout/Splash.vue'
+import Cart from './components/shop/Cart.vue'
 import { SpeedInsights } from "@vercel/speed-insights/vue"
 import { Analytics } from "@vercel/analytics/vue"
 
@@ -61,6 +62,7 @@ const selectedReviewsTailorId = ref(null)
 const isAppReview = ref(false)
 const selectedEditProduct = ref(null)
 const searchHistory = ref(getStored('search_history', []))
+const cartItems = ref(getStored('cart_items', []))
 
 // ==========================================
 // DATA STATE
@@ -381,12 +383,12 @@ const fetchInitialData = async (force = false) => {
     
     const newTrendingSellers = data.trendingSellers.map(s => ({
       id: s.id,
-      name: `${s.first_name} ${s.last_name}`,
+      name: (s.first_name || s.last_name) ? `${s.first_name || ''} ${s.last_name || ''}`.trim() : s.username,
       username: s.username,
       avatar: s.avatar,
       rating: s.avg_rating ? parseFloat(s.avg_rating).toFixed(1) : '0.0',
       likesCount: s.total_likes || 0,
-      isVerified: true
+      isVerified: s.is_verified === 1 || s.is_verified === true
     }));
     if (JSON.stringify(newTrendingSellers) !== JSON.stringify(trendingSellers.value)) {
       trendingSellers.value = newTrendingSellers;
@@ -575,7 +577,8 @@ const handleWriteReview = async (data) => {
       productId: selectedProduct.value.id,
       userId: userData.value.id,
       rating: data.rating,
-      text: data.text
+      text: data.text,
+      image: data.image || null
     });
     showToast('Review shared with the Tribe!', 'success')
     navigateTo('product-details', { selectedProduct: selectedProduct.value })
@@ -659,8 +662,15 @@ const handleGoChat = (userId) => {
   navigateTo('chat-detail', { userId })
 }
 
-const handleSearch = async (query) => {
-  isGlobalLoading.value = true;
+const handleSearch = async (query, navigate = true) => {
+  // If query is empty, just navigate to search page
+  if (!query && navigate) {
+    navigateTo('search');
+    return;
+  }
+  if (!query) return;
+
+  isGlobalLoading.value = navigate;
   loadingMessage.value = 'Searching the heritage...';
   try {
     const res = await db.runAction('search', { query, userId: userData.value.id });
@@ -668,12 +678,23 @@ const handleSearch = async (query) => {
     // Fetch favorites state
     const favoriteIds = favoriteItems.value.map(f => f.id);
 
-    searchResults.value = res.rows.map(p => ({
-      ...p,
-      liked: favoriteIds.includes(p.id)
-    }));
+    searchResults.value = {
+      query: res.query || query,
+      products: (res.products || []).map(p => ({
+        ...p,
+        liked: favoriteIds.includes(p.id)
+      })),
+      tailors: (res.tailors || []).map(t => ({
+        ...t,
+        name: (t.first_name || t.last_name) ? `${t.first_name || ''} ${t.last_name || ''}`.trim() : t.username,
+        rating: t.rating ? parseFloat(t.rating).toFixed(1) : '0.0',
+        isVerified: t.is_verified === 1 || t.is_verified === true
+      }))
+    };
 
-    navigateTo('search-results');
+    if (navigate) {
+      navigateTo('search-results');
+    }
   } catch (e) {
     console.error('Search error:', e);
   } finally {
@@ -698,6 +719,56 @@ watch([allProducts, userData], () => {
     userProductCount.value = 0;
   }
 }, { immediate: true })
+
+const handleCartCheckout = (group) => {
+  const buyerName = userData.value.firstName || userData.value.username;
+  const sellerName = group.tailorName;
+  const sparkles = "✨";
+  const diamond = "🔹";
+  
+  let message = `Habari ${sellerName}! ${sparkles}\n\n`;
+  message += `My name is ${buyerName}, and I'd like to place a combined order for the following items:\n\n`;
+  
+  group.items.forEach(item => {
+    message += `${diamond} *${item.name}* (${item.price})\n`;
+    if (item.selectedSize) message += `   Size: ${item.selectedSize}\n`;
+    if (item.selectedColor) message += `   Color: ${item.selectedColor}\n`;
+  });
+  
+  message += `\n*Estimated Total: TSh ${group.total.toLocaleString()}*\n\n`;
+  message += `Could you please let me know how we can proceed with the payment and delivery? 🚚\n\n`;
+  message += `Best regards,\n${buyerName} ✍️`;
+  
+  // Normalize Tanzania numbers
+  let phoneNumber = group.tailorPhone || '';
+  let normalized = phoneNumber.startsWith('0') ? '255' + phoneNumber.slice(1) : phoneNumber.replace('+', '');
+  
+  const url = `https://wa.me/${normalized}?text=${encodeURIComponent(message)}`;
+  window.open(url, '_blank');
+}
+
+const handleAddToCart = (product, options = {}) => {
+  if (userData.value.id === 'guest') {
+    navigateTo('login');
+    return;
+  }
+  const cartId = 'CART-' + Math.floor(1000 + Math.random() * 9000);
+  const cartItem = {
+    ...product,
+    cartId: cartId,
+    selectedSize: options.size || '',
+    selectedColor: options.color || ''
+  };
+  cartItems.value.push(cartItem);
+  setStored('cart_items', cartItems.value);
+  showToast(`${product.name} added to cart!`, 'success');
+}
+
+const handleRemoveFromCart = (cartId) => {
+  cartItems.value = cartItems.value.filter(item => item.cartId !== cartId);
+  setStored('cart_items', cartItems.value);
+  showToast('Item removed from cart.', 'info');
+}
 
 // Lifecycle
 let syncInterval = null;
@@ -728,8 +799,10 @@ const showNavBar = computed(() => {
       v-if="showNavBar" 
       :active-tab="route.name"
       :t="t"
+      :cart-count="cartItems.length"
       @navigate="navigateTo"
       @go-notifications="navigateTo('notifications')"
+      @go-cart="navigateTo('cart')"
     />
 
     <main :class="{ 'with-nav': showNavBar }">
@@ -756,6 +829,7 @@ const showNavBar = computed(() => {
           :seller="selectedSeller"
           :results="searchResults"
           :search-history="searchHistory"
+          :cart-items="cartItems"
           :notifications="userNotifications"
           :app-reviews="appReviews"
           :is-loading="isGlobalLoading"
@@ -764,6 +838,9 @@ const showNavBar = computed(() => {
           @go-back="handleGoBack"
           @login="handleLogin"
           @signup="handleSignUp"
+          @add-to-cart="handleAddToCart"
+          @remove-item="handleRemoveFromCart"
+          @checkout="handleCartCheckout"
           @submit="(val) => {
             if (route.name === 'forgot-password') handlePasswordReset(val)
             else if (route.name === 'verify-code') handleVerifyCode(val)

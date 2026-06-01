@@ -13,6 +13,7 @@ const routes = [
   { path: '/profile', name: 'profile', component: () => import('../components/profile/Profile.vue') },
   { path: '/product/:id', name: 'product-details', component: () => import('../components/shop/ProductDetails.vue') },
   { path: '/explore/:category?', name: 'explore', component: () => import('../components/shop/ExploreMore.vue') },
+  { path: '/cart', name: 'cart', component: () => import('../components/shop/Cart.vue') },
   { path: '/category-list', name: 'category-list', component: () => import('../components/shop/CategoryList.vue') },
   { path: '/@:username', name: 'tailor-details', component: () => import('../components/shop/TailorDetails.vue') },
   { path: '/upload-work', name: 'upload-work', component: () => import('../components/shop/UploadWork.vue') },

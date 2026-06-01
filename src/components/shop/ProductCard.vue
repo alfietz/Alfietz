@@ -55,7 +55,7 @@ defineEmits(['toggle-like', 'select'])
       <h3 class="product-name">{{ product.name }}</h3>
       <div class="price-row">
         <span class="product-price">{{ product.price }}</span>
-        <button class="add-btn">ADD</button>
+        <button class="add-btn" @click.stop="$emit('add-to-cart', product)">ADD</button>
       </div>
     </div>
   </div>

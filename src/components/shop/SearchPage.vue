@@ -91,14 +91,27 @@ watch(searchQuery, (newVal) => {
     </div>
 
     <div class="search-content">
+      <!-- Category Quick Filters -->
+      <div class="category-filters-row">
+        <button 
+          v-for="cat in categories.slice(0, 6)" 
+          :key="cat.id" 
+          class="cat-filter-btn"
+          @click="$emit('select-category', cat.name)"
+        >
+          {{ cat.name }}
+        </button>
+      </div>
+
       <!-- Smart Keyword Recommendations -->
       <div class="keyword-recommendations animate-fade">
         <button 
           v-for="word in recommendedKeywords" 
           :key="word" 
           class="keyword-chip"
-          @click="searchQuery = word; handleSearch(word, false)"
+          @click="searchQuery = word; handleSearch(word, true)"
         >
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="opacity-50"><path d="m21 21-4.3-4.3"/><circle cx="11" cy="11" r="8"/></svg>
           {{ word }}
         </button>
       </div>
@@ -499,11 +512,42 @@ watch(searchQuery, (newVal) => {
   padding: 24px 16px;
 }
 
+.category-filters-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  scrollbar-width: none;
+}
+
+.category-filters-row::-webkit-scrollbar { display: none; }
+
+.cat-filter-btn {
+  padding: 8px 16px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.cat-filter-btn:hover {
+  background: var(--wood-polished);
+  border-color: var(--accent-amber);
+}
+
 .keyword-recommendations {
   display: flex;
   gap: 8px;
   overflow-x: auto;
-  padding-bottom: 20px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--glass-border);
+  margin-bottom: 24px;
   scrollbar-width: none;
 }
 
@@ -520,6 +564,9 @@ watch(searchQuery, (newVal) => {
   white-space: nowrap;
   transition: all 0.2s;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .keyword-chip:hover {

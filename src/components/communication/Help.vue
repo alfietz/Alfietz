@@ -101,7 +101,7 @@ const navigateTo = (routeName) => {
         
         <div class="faq-item">
           <h4>How do I report a problem?</h4>
-          <p>If you encounter issues with an order or a user, please use the Feedback section or email support@alfie.shop.</p>
+          <p>If you encounter issues with an order or a user, please use the Feedback section or email support@alfietz.shop.</p>
         </div>
       </div>
 

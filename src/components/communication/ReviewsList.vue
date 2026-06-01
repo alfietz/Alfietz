@@ -211,7 +211,7 @@ function formatDate(dateStr) {
           <div class="review-content">
             <p class="review-text">{{ review.text }}</p>
             <div v-if="review.image" class="review-media-box">
-              <img :src="review.image" alt="Review media" class="review-img" />
+              <img :src="review.image" alt="Customer Photo" class="review-img" @click="selectedZoomImage = review.image" />
             </div>
           </div>
           <div class="review-footer">

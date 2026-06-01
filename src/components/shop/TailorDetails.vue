@@ -502,8 +502,11 @@ const makeCall = () => {
           <div class="absolute inset-0 bg-gradient-to-b from-transparent to-alfie-dark"></div>
           
           <div class="relative z-10 max-w-3xl px-4">
-              <h1 class="font-serif text-5xl md:text-7xl text-white mb-4 leading-tight">
+              <h1 class="font-serif text-5xl md:text-7xl text-white mb-4 leading-tight flex items-center justify-center gap-4">
                 <EditableText v-model="draftData.name" :is-editable="isOwner" placeholder="Artisan Name" />
+                <div v-if="sellerData.is_verified" class="w-8 h-8 md:w-12 md:h-12 bg-alfie-accent rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(212,175,55,0.4)]" title="Physical Shop Verified">
+                    <svg class="w-1/2 h-1/2" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
               </h1>
               <p class="text-alfie-accent tracking-[0.2em] text-sm uppercase font-bold">Master Tailor • Heritage Artisan</p>
           </div>
