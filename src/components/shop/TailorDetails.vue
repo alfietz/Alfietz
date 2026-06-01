@@ -1,7 +1,9 @@
 <!-------- (TailorDetails.vue) ./src/components/shop/TailorDetails.vue ------------>
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, computed, watch, reactive } from 'vue'
 import SectionHeader from '../layout/SectionHeader.vue'
+import EditableText from '../layout/EditableText.vue'
+import EditableImage from '../layout/EditableImage.vue'
 import { db } from '../../db/client'
 import { useRoute } from 'vue-router'
 
@@ -35,31 +37,189 @@ const tailorStats = ref({
 })
 const sellerData = ref({ ...props.seller })
 
-// Lookbook Fallback Data
-const featuredCaseStudy = computed(() => ({
-  title: "The Urban CEO Silhouette",
-  quote: "I needed a suit that commands respect in a boardroom, but breathes in the Nairobi heat.",
-  challenge: "Designing a full three-piece suit that maintained a rigid, formal structure without using heavy traditional wool.",
-  execution: "We sourced organic, high-thread-count linen and used a deconstructed shoulder technique.",
-  result: "A perfectly tailored, 40% lighter suit that won 'Best Bespoke Piece'.",
-  image: products.value[0]?.image || "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=800&q=80"
+// EDITABLE STATE
+const isOwner = computed(() => {
+  return props.userData?.id === sellerData.value?.owner_id
+})
+
+const draftData = reactive({
+  name: '',
+  bio: '',
+  avatar: '',
+  quirk: '',
+  featuredCaseStudy: {
+    title: '',
+    quote: '',
+    challenge: '',
+    execution: '',
+    result: '',
+    image: ''
+  },
+  services: [],
+  contacts: []
+})
+
+const hasUnsavedChanges = computed(() => {
+  if (!isOwner.value) return false
+  
+  // Basic comparison (can be refined)
+  const isNameChanged = draftData.name !== sellerData.value.name
+  const isBioChanged = draftData.bio !== (sellerData.value.bio || '')
+  const isQuirkChanged = draftData.quirk !== quirkBase.value
+  const isAvatarChanged = draftData.avatar !== sellerData.value.avatar
+  
+  const originalCS = featuredCaseStudyBase.value
+  const isCSChanged = JSON.stringify(draftData.featuredCaseStudy) !== JSON.stringify(originalCS)
+  
+  const isServicesChanged = JSON.stringify(draftData.services) !== JSON.stringify(servicesBase.value)
+  const isContactsChanged = JSON.stringify(draftData.contacts) !== JSON.stringify(contactsBase.value)
+  
+  return isNameChanged || isBioChanged || isQuirkChanged || isAvatarChanged || isCSChanged || isServicesChanged || isContactsChanged
+})
+
+// Lookbook Base Data
+const featuredCaseStudyBase = computed(() => ({
+  title: sellerData.value.case_study_title || "The Urban CEO Silhouette",
+  quote: sellerData.value.case_study_quote || "I needed a suit that commands respect in a boardroom, but breathes in the Nairobi heat.",
+  challenge: sellerData.value.case_study_challenge || "Designing a full three-piece suit that maintained a rigid, formal structure without using heavy traditional wool.",
+  execution: sellerData.value.case_study_execution || "We sourced organic, high-thread-count linen and used a deconstructed shoulder technique.",
+  result: sellerData.value.case_study_result || "A perfectly tailored, 40% lighter suit that won 'Best Bespoke Piece'.",
+  image: sellerData.value.case_study_image || products.value[0]?.image || "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=800&q=80"
 }))
 
-const services = ref([
-  { id: 1, name: "Full Bespoke Suit", price: "From TSh 850k", desc: "A fully custom 3-piece suit mapped to your exact physical geometry." },
-  { id: 2, name: "Heritage Outerwear", price: "From TSh 400k", desc: "Custom Kente or Ankara coats with modern breathable linings." },
-  { id: 3, name: "Precision Fitting", price: "Hourly Rate", desc: "Hardware-level adjustments and tailoring to your existing wardrobe." }
-])
+const servicesBase = computed(() => {
+  if (sellerData.value.services_json) {
+    try {
+      return JSON.parse(sellerData.value.services_json)
+    } catch(e) {}
+  }
+  return [
+    { id: 1, name: "Full Bespoke Suit", price: "From TSh 850k", desc: "A fully custom 3-piece suit mapped to your exact physical geometry." },
+    { id: 2, name: "Heritage Outerwear", price: "From TSh 400k", desc: "Custom Kente or Ankara coats with modern breathable linings." },
+    { id: 3, name: "Precision Fitting", price: "Hourly Rate", desc: "Hardware-level adjustments and tailoring to your existing wardrobe." }
+  ]
+})
+
+const contactsBase = computed(() => {
+  if (sellerData.value.contacts_json) {
+    try {
+      const parsed = JSON.parse(sellerData.value.contacts_json)
+      // Ensure defaults exist and pull from user profile if not set in contacts_json
+      const defaults = ['whatsapp', 'email', 'phone']
+      defaults.forEach(type => {
+        const existing = parsed.find(c => c.type === type)
+        if (!existing) {
+          let defaultValue = ''
+          if (type === 'whatsapp' || type === 'phone') defaultValue = sellerData.value.whatsapp || ''
+          if (type === 'email') defaultValue = sellerData.value.email || ''
+          
+          parsed.unshift({ id: Date.now() + Math.random(), type, label: type.charAt(0).toUpperCase() + type.slice(1), value: defaultValue, isDefault: true })
+        } else if (!existing.value) {
+          // If it exists but is empty, try to fill it from profile
+          if (type === 'whatsapp' || type === 'phone') existing.value = sellerData.value.whatsapp || ''
+          if (type === 'email') existing.value = sellerData.value.email || ''
+        }
+      })
+      return parsed
+    } catch(e) {}
+  }
+  
+  return [
+    { id: 1, type: 'whatsapp', label: 'WhatsApp', value: sellerData.value.whatsapp || '', isDefault: true },
+    { id: 2, type: 'email', label: 'Email', value: sellerData.value.email || '', isDefault: true },
+    { id: 3, type: 'phone', label: 'Phone', value: sellerData.value.whatsapp || '', isDefault: true } // Assuming whatsapp works as phone fallback
+  ]
+})
+
+const quirkBase = computed(() => {
+  if (sellerData.value.quirk) return sellerData.value.quirk
+  if (sellerData.value.username === 'francis') return "I refuse to use sewing machines built after 1985. The older gears handle Kente cloth better."
+  return "I find inspiration in the rhythmic patterns of traditional weaving songs."
+})
 
 const socials = ref([
   { platform: 'instagram', url: '#' },
   { platform: 'twitter', url: '#' }
 ])
 
-const quirk = computed(() => {
-  if (sellerData.value.username === 'francis') return "I refuse to use sewing machines built after 1985. The older gears handle Kente cloth better."
-  return "I find inspiration in the rhythmic patterns of traditional weaving songs."
-})
+const initializeDraft = () => {
+  draftData.name = sellerData.value.name || ''
+  draftData.bio = sellerData.value.bio || ''
+  draftData.avatar = sellerData.value.avatar || ''
+  draftData.quirk = quirkBase.value
+  draftData.featuredCaseStudy = { ...featuredCaseStudyBase.value }
+  draftData.services = JSON.parse(JSON.stringify(servicesBase.value))
+  draftData.contacts = JSON.parse(JSON.stringify(contactsBase.value))
+}
+
+const saveAllChanges = async () => {
+  try {
+    // Save core details to the database
+    await db.runAction('update_tailor_details', { 
+      id: sellerData.value.id, 
+      name: draftData.name,
+      bio: draftData.bio,
+      avatar: draftData.avatar,
+      quirk: draftData.quirk,
+      featuredCaseStudy: draftData.featuredCaseStudy,
+      services: draftData.services,
+      contacts: draftData.contacts
+    })
+    
+    // Update local state to reflect successful save
+    sellerData.value = { 
+      ...sellerData.value, 
+      name: draftData.name, 
+      bio: draftData.bio,
+      avatar: draftData.avatar,
+      quirk: draftData.quirk,
+      case_study_title: draftData.featuredCaseStudy.title,
+      case_study_quote: draftData.featuredCaseStudy.quote,
+      case_study_challenge: draftData.featuredCaseStudy.challenge,
+      case_study_execution: draftData.featuredCaseStudy.execution,
+      case_study_result: draftData.featuredCaseStudy.result,
+      case_study_image: draftData.featuredCaseStudy.image,
+      services_json: JSON.stringify(draftData.services),
+      contacts_json: JSON.stringify(draftData.contacts)
+    }
+    
+    alert("Changes saved successfully to your heritage archive!")
+  } catch (e) {
+    console.error("Failed to save changes:", e)
+    alert("Failed to save changes. Please try again.")
+  }
+}
+
+const cancelChanges = () => {
+  initializeDraft()
+}
+
+const addService = () => {
+  draftData.services.push({
+    id: Date.now(),
+    name: "New Service",
+    price: "TSh 0",
+    desc: "Describe your bespoke offering here."
+  })
+}
+
+const removeService = (id) => {
+  draftData.services = draftData.services.filter(s => s.id !== id)
+}
+
+const addContact = () => {
+  draftData.contacts.push({
+    id: Date.now(),
+    type: 'custom',
+    label: 'New Link',
+    value: '',
+    isDefault: false
+  })
+}
+
+const removeContact = (id) => {
+  draftData.contacts = draftData.contacts.filter(c => c.id !== id || c.isDefault)
+}
 
 const filteredProducts = computed(() => {
   if (activeFilter.value === 'process') {
@@ -111,7 +271,17 @@ const loadTailorData = async () => {
       avatar: s.avatar,
       bio: s.gives,
       whatsapp: s.whatsapp,
-      isVerified: true 
+      email: s.email,
+      isVerified: true,
+      quirk: s.quirk,
+      case_study_title: s.case_study_title,
+      case_study_quote: s.case_study_quote,
+      case_study_challenge: s.case_study_challenge,
+      case_study_execution: s.case_study_execution,
+      case_study_result: s.case_study_result,
+      case_study_image: s.case_study_image,
+      services_json: s.services_json,
+      contacts_json: s.contacts_json
     }
 
     products.value = data.products.map(p => ({
@@ -153,6 +323,7 @@ const loadTailorData = async () => {
     updateMeta('twitter:description', pageDesc);
     updateMeta('twitter:image', sellerData.value.avatar);
 
+    initializeDraft()
   } catch (e) {
     console.error("Error fetching tailor details:", e)
   } finally {
@@ -275,11 +446,19 @@ const makeCall = () => {
 
       <!-- HERO SECTION -->
       <div class="relative w-full h-80 rounded-2xl overflow-hidden mb-16 bg-alfie-card flex items-center justify-center text-center">
-          <img :src="sellerData.avatar" class="absolute inset-0 w-full h-full object-cover opacity-30 grayscale mix-blend-overlay">
+          <EditableImage 
+            :src="draftData.avatar" 
+            :is-editable="isOwner" 
+            aspect-ratio="auto"
+            class="absolute inset-0 w-full h-full object-cover opacity-30 grayscale mix-blend-overlay"
+            @change="(val) => draftData.avatar = val"
+          />
           <div class="absolute inset-0 bg-gradient-to-b from-transparent to-alfie-dark"></div>
           
           <div class="relative z-10 max-w-3xl px-4">
-              <h1 class="font-serif text-5xl md:text-7xl text-white mb-4 leading-tight">{{ sellerData.name }}</h1>
+              <h1 class="font-serif text-5xl md:text-7xl text-white mb-4 leading-tight">
+                <EditableText v-model="draftData.name" :is-editable="isOwner" placeholder="Artisan Name" />
+              </h1>
               <p class="text-alfie-accent tracking-[0.2em] text-sm uppercase font-bold">Master Tailor • Heritage Artisan</p>
           </div>
       </div>
@@ -292,27 +471,36 @@ const makeCall = () => {
           
           <div class="flex flex-col md:flex-row gap-10 items-center">
               <div class="md:w-1/2 w-full overflow-hidden rounded-xl shadow-2xl relative">
-                  <img :src="featuredCaseStudy.image" class="w-full h-auto object-cover hover:scale-105 transition duration-700">
+                  <EditableImage 
+                    :src="draftData.featuredCaseStudy.image" 
+                    :is-editable="isOwner" 
+                    aspect-ratio="4/3"
+                    @change="(val) => draftData.featuredCaseStudy.image = val"
+                  />
                   <div class="absolute top-4 left-4 bg-black/70 backdrop-blur-md px-3 py-1 rounded text-xs text-alfie-accent uppercase font-bold">Client Commission</div>
               </div>
               <div class="md:w-1/2 flex flex-col gap-6">
                   <div>
-                      <h3 class="text-2xl font-serif text-white mb-2">{{ featuredCaseStudy.title }}</h3>
-                      <p class="text-sm text-gray-400 italic">"{{ featuredCaseStudy.quote }}"</p>
+                      <h3 class="text-2xl font-serif text-white mb-2">
+                        <EditableText v-model="draftData.featuredCaseStudy.title" :is-editable="isOwner" placeholder="Case Study Title" />
+                      </h3>
+                      <p class="text-sm text-gray-400 italic">
+                        "<EditableText v-model="draftData.featuredCaseStudy.quote" :is-editable="isOwner" multiline placeholder="Client quote..." />"
+                      </p>
                   </div>
                   
                   <div class="space-y-4 text-sm text-gray-300">
                       <div>
                           <span class="text-alfie-accent font-bold uppercase text-xs block mb-1">The Challenge:</span>
-                          <p>{{ featuredCaseStudy.challenge }}</p>
+                          <p><EditableText v-model="draftData.featuredCaseStudy.challenge" :is-editable="isOwner" multiline placeholder="The challenge..." /></p>
                       </div>
                       <div>
                           <span class="text-alfie-accent font-bold uppercase text-xs block mb-1">The Execution:</span>
-                          <p>{{ featuredCaseStudy.execution }}</p>
+                          <p><EditableText v-model="draftData.featuredCaseStudy.execution" :is-editable="isOwner" multiline placeholder="The execution..." /></p>
                       </div>
                       <div>
                           <span class="text-alfie-accent font-bold uppercase text-xs block mb-1">The Result:</span>
-                          <p>{{ featuredCaseStudy.result }}</p>
+                          <p><EditableText v-model="draftData.featuredCaseStudy.result" :is-editable="isOwner" multiline placeholder="The result..." /></p>
                       </div>
                   </div>
               </div>
@@ -325,39 +513,88 @@ const makeCall = () => {
           <div class="lg:w-1/3 flex flex-col gap-10">
               <div>
                   <h3 class="font-serif text-2xl mb-4 text-white border-b border-white/10 pb-4">The Artisan</h3>
-                  <p class="text-gray-400 leading-relaxed text-sm mb-4">
-                      {{ sellerData.bio || 'Preserving African heritage through every stitch and pattern. Custom commissions available.' }}
-                  </p>
+                  <div class="text-gray-400 leading-relaxed text-sm mb-4">
+                      <EditableText v-model="draftData.bio" :is-editable="isOwner" multiline placeholder="Tell your heritage story..." />
+                  </div>
                   <div class="bg-white/5 p-4 rounded-lg border border-white/10">
-                      <p class="text-xs text-gray-300 flex items-start gap-3">
+                      <div class="text-xs text-gray-300 flex items-start gap-3">
                           <i class="fas fa-coffee text-alfie-accent mt-1"></i> 
-                          <span><strong class="text-white">Studio Quirk:</strong> {{ quirk }}</span>
-                      </p>
+                          <span>
+                            <strong class="text-white">Studio Quirk:</strong> 
+                            <EditableText v-model="draftData.quirk" :is-editable="isOwner" placeholder="Your studio quirk..." />
+                          </span>
+                      </div>
                   </div>
               </div>
 
               <!-- SERVICES -->
               <div id="services">
-                  <h3 class="font-serif text-2xl mb-4 text-white border-b border-white/10 pb-4">Offerings</h3>
+                  <div class="flex justify-between items-center border-b border-white/10 mb-4 pb-4">
+                    <h3 class="font-serif text-2xl text-white m-0">Offerings</h3>
+                    <button v-if="isOwner" @click="addService" class="text-alfie-accent hover:text-white text-xs font-bold uppercase tracking-wider transition">
+                      + Add New
+                    </button>
+                  </div>
                   <div class="flex flex-col gap-3">
-                      <div v-for="service in services" :key="service.id" class="p-4 bg-alfie-card hover:bg-white/5 transition rounded-sm border border-white/5">
+                      <div v-for="service in draftData.services" :key="service.id" class="p-4 bg-alfie-card hover:bg-white/5 transition rounded-sm border border-white/5 relative group/service">
+                          <button v-if="isOwner" @click="removeService(service.id)" class="absolute -top-2 -right-2 w-6 h-6 bg-red-500/80 hover:bg-red-500 text-white rounded-full flex items-center justify-center transition-colors z-10 shadow-lg">
+                            <i class="fas fa-times text-[10px]"></i>
+                          </button>
                           <div class="flex justify-between items-center mb-2">
-                              <span class="text-white font-semibold text-sm">{{ service.name }}</span>
-                              <span class="text-alfie-accent text-xs font-bold">{{ service.price }}</span>
+                              <span class="text-white font-semibold text-sm">
+                                <EditableText v-model="service.name" :is-editable="isOwner" placeholder="Service Name" />
+                              </span>
+                              <span class="text-alfie-accent text-xs font-bold">
+                                <EditableText v-model="service.price" :is-editable="isOwner" placeholder="Price" />
+                              </span>
                           </div>
-                          <p class="text-xs text-gray-400 leading-relaxed">{{ service.desc }}</p>
+                          <p class="text-xs text-gray-400 leading-relaxed">
+                            <EditableText v-model="service.desc" :is-editable="isOwner" multiline placeholder="Service description..." />
+                          </p>
                       </div>
                   </div>
               </div>
 
               <!-- CONTACT -->
               <div id="contact">
-                  <h3 class="font-serif text-2xl mb-4 text-white border-b border-white/10 pb-4">Start a Project</h3>
+                  <div class="flex justify-between items-center border-b border-white/10 mb-4 pb-4">
+                    <h3 class="font-serif text-2xl text-white m-0">Start a Project</h3>
+                    <button v-if="isOwner" @click="addContact" class="text-alfie-accent hover:text-white text-xs font-bold uppercase tracking-wider transition">
+                      + Add Link
+                    </button>
+                  </div>
                   <div class="flex flex-col gap-4">
-                      <a href="#" @click.prevent="connectToWhatsApp" class="group flex items-center justify-between p-4 bg-alfie-accent text-alfie-dark hover:bg-yellow-400 transition rounded-sm shadow-[0_0_15px_rgba(212,175,55,0.2)] hover:shadow-[0_0_25px_rgba(212,175,55,0.4)]">
+                      <!-- WhatsApp Inquiry (Legacy Fallback/Default style) -->
+                      <a v-if="!isOwner && (!draftData.contacts || draftData.contacts.length === 0)" href="#" @click.prevent="connectToWhatsApp" class="group flex items-center justify-between p-4 bg-alfie-accent text-alfie-dark hover:bg-yellow-400 transition rounded-sm shadow-[0_0_15px_rgba(212,175,55,0.2)] hover:shadow-[0_0_25px_rgba(212,175,55,0.4)]">
                           <span class="text-sm font-bold tracking-wide">WhatsApp Inquiry</span>
                           <i class="fab fa-whatsapp text-xl animate-pulse"></i>
                       </a>
+                      
+                      <!-- Dynamic Contacts -->
+                      <div v-for="contact in draftData.contacts" :key="contact.id" class="relative group/contact">
+                          <button v-if="isOwner && !contact.isDefault" @click="removeContact(contact.id)" class="absolute -top-2 -right-2 w-6 h-6 bg-red-500/80 hover:bg-red-500 text-white rounded-full flex items-center justify-center transition-colors z-10 shadow-lg">
+                            <i class="fas fa-times text-[10px]"></i>
+                          </button>
+                          
+                          <div :class="['flex items-center justify-between p-4 transition rounded-sm shadow-lg', contact.type === 'whatsapp' ? 'bg-alfie-accent text-alfie-dark hover:bg-yellow-400' : 'bg-alfie-card border border-white/5 hover:border-alfie-accent/50 text-white']">
+                              <div class="flex-1 flex items-center gap-3">
+                                  <i v-if="contact.type === 'whatsapp'" class="fab fa-whatsapp text-xl animate-pulse"></i>
+                                  <i v-else-if="contact.type === 'email'" class="fas fa-envelope text-xl text-alfie-accent"></i>
+                                  <i v-else-if="contact.type === 'phone'" class="fas fa-phone text-xl text-alfie-accent"></i>
+                                  <i v-else class="fas fa-link text-xl text-alfie-accent"></i>
+                                  
+                                  <div class="flex flex-col flex-1">
+                                    <span v-if="contact.type !== 'custom'" class="text-sm font-bold tracking-wide opacity-90">{{ contact.label }}</span>
+                                    <EditableText v-else v-model="contact.label" :is-editable="isOwner" placeholder="Link Label (e.g. Website)" class="text-sm font-bold tracking-wide mb-1" />
+                                    
+                                    <EditableText v-model="contact.value" :is-editable="isOwner" :placeholder="contact.type === 'email' ? 'your@email.com' : (contact.type === 'phone' || contact.type === 'whatsapp' ? '+255 700 000 000' : 'https://...')" class="text-xs font-medium" />
+                                  </div>
+                              </div>
+                              <a v-if="!isOwner && contact.value" :href="contact.type === 'email' ? 'mailto:'+contact.value : (contact.type === 'phone' ? 'tel:'+contact.value : (contact.type === 'whatsapp' ? 'https://wa.me/'+contact.value.replace(/[^0-9]/g, '') : contact.value))" target="_blank" class="w-8 h-8 flex items-center justify-center rounded-full bg-black/10 hover:bg-black/20 transition ml-4">
+                                <i class="fas fa-external-link-alt text-[10px]"></i>
+                              </a>
+                          </div>
+                      </div>
                   </div>
               </div>
           </div>
@@ -458,6 +695,26 @@ const makeCall = () => {
           <p class="text-xs text-gray-600">&copy; 2026 {{ sellerData.name }}. Powered by Alfietz.</p>
       </footer>
     </div>
+
+    <!-- FLOATING SAVE BAR -->
+    <transition name="slide-up">
+      <div v-if="hasUnsavedChanges" class="fixed bottom-0 left-0 w-full p-4 z-[200] flex justify-center">
+        <div class="bg-alfie-card/90 backdrop-blur-xl border border-alfie-accent/30 rounded-2xl shadow-2xl p-4 flex items-center gap-6 max-w-lg w-full">
+          <div class="flex-1">
+            <h4 class="text-white text-sm font-bold m-0">Unsaved Changes</h4>
+            <p class="text-gray-400 text-[10px] uppercase tracking-wider m-0">You have modified your artisan profile</p>
+          </div>
+          <div class="flex gap-3">
+            <button @click="cancelChanges" class="px-4 py-2 rounded-lg text-xs font-bold text-gray-400 hover:text-white transition uppercase">
+              Discard
+            </button>
+            <button @click="saveAllChanges" class="px-6 py-2 bg-alfie-accent text-alfie-dark rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-yellow-400 transition shadow-lg">
+              Save Changes
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -935,5 +1192,17 @@ const makeCall = () => {
   align-items: center;
   justify-content: center;
   color: var(--text-primary);
+}
+
+/* Slide Up Transition */
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.slide-up-enter-from,
+.slide-up-leave-to {
+  transform: translateY(100%);
+  opacity: 0;
 }
 </style>

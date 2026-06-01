@@ -623,7 +623,7 @@ const shareProduct = async () => {
             </button>
             <button class="icon-btn fav-btn" @click="$emit('toggle-favorite', product)">
               <svg v-if="product.liked" width="20" height="20" viewBox="0 0 24 24" fill="var(--accent-amber)" stroke="var(--accent-amber)" stroke-width="2" class="filled"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
-              <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+              <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-amber)" stroke-width="2.5" class="unfilled"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
             </button>
           </div>
         </div>
@@ -1479,33 +1479,32 @@ const shareProduct = async () => {
 .similar-card {
   width: 180px;
   flex-shrink: 0;
-  flex-direction: column !important;
-  height: auto !important;
-  border-radius: 24px !important;
+  height: auto;
+  border-radius: 24px;
 }
 
 .similar-card :deep(.image-wrapper) {
-  width: 100% !important;
-  height: 180px !important;
-  border-radius: 24px 24px 0 0 !important;
+  width: 100%;
+  height: 180px;
+  border-radius: 24px 24px 0 0;
 }
 
 .similar-card :deep(.product-details) {
-  padding: 16px !important;
-  gap: 12px !important;
+  padding: 16px;
+  gap: 12px;
 }
 
 .similar-card :deep(.product-name) {
-  font-size: 13px !important;
-  -webkit-line-clamp: 1 !important;
+  font-size: 13px;
+  -webkit-line-clamp: 1;
 }
 
 .similar-card :deep(.price-row) {
-  margin-top: 0 !important;
+  margin-top: 0;
 }
 
 .similar-card :deep(.add-btn) {
-  display: none !important; /* Simplify for similar items */
+  display: none; /* Simplify for similar items */
 }
 
 .bottom-spacer {
@@ -1702,6 +1701,10 @@ const shareProduct = async () => {
 .icon-btn.fav-btn:hover {
   background: rgba(13, 8, 5, 0.8) !important;
   border-color: var(--accent-amber) !important;
+}
+
+.fav-btn svg.unfilled {
+  filter: drop-shadow(0 0 4px var(--accent-glow));
 }
 
 .fav-btn svg.filled {

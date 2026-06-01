@@ -132,7 +132,13 @@ export default async function handler(req, res) {
 
       case 'get_tailor_details':
         const tailorRes = await client.execute({ 
-          sql: "SELECT id, username, first_name, last_name, avatar, gives, whatsapp, profile_views FROM users WHERE username = ?", 
+          sql: `
+            SELECT u.id, u.username, u.first_name, u.last_name, u.avatar, u.gives, u.whatsapp, u.email, u.profile_views,
+                   tp.quirk, tp.case_study_title, tp.case_study_quote, tp.case_study_challenge, tp.case_study_execution, tp.case_study_result, tp.case_study_image, tp.services_json, tp.contacts_json
+            FROM users u 
+            LEFT JOIN tailor_profiles tp ON u.id = tp.user_id
+            WHERE u.username = ?
+          `, 
           args: [params.username] 
         });
         if (tailorRes.rows.length === 0) return res.status(404).json({ error: 'Tailor not found' });
@@ -145,6 +151,42 @@ export default async function handler(req, res) {
           client.execute({ sql: "SELECT r.*, u.first_name, u.last_name, u.username, u.avatar as author_avatar FROM reviews r JOIN users u ON r.user_id = u.id WHERE r.product_id IN (SELECT id FROM products WHERE owner_id = ?) ORDER BY r.created_at DESC LIMIT 3", args: [tailorId] })
         ]);
         customResponse = { tailor: mapRows(tailorRes)[0], products: mapRows(tProds), stats: mapRows(tStats)[0], reviews: mapRows(tRevs) };
+        break;
+
+      case 'update_tailor_details':
+        // Updates the core profile fields.
+        await client.execute({
+          sql: 'UPDATE users SET first_name = ?, gives = ?, avatar = ? WHERE id = ?',
+          args: [params.name, params.bio, params.avatar, params.id]
+        });
+        
+        // Upsert into tailor_profiles
+        sql = `
+          INSERT INTO tailor_profiles (user_id, quirk, case_study_title, case_study_quote, case_study_challenge, case_study_execution, case_study_result, case_study_image, services_json, contacts_json)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(user_id) DO UPDATE SET
+            quirk = excluded.quirk,
+            case_study_title = excluded.case_study_title,
+            case_study_quote = excluded.case_study_quote,
+            case_study_challenge = excluded.case_study_challenge,
+            case_study_execution = excluded.case_study_execution,
+            case_study_result = excluded.case_study_result,
+            case_study_image = excluded.case_study_image,
+            services_json = excluded.services_json,
+            contacts_json = excluded.contacts_json
+        `;
+        args = [
+          params.id, 
+          params.quirk, 
+          params.featuredCaseStudy?.title, 
+          params.featuredCaseStudy?.quote, 
+          params.featuredCaseStudy?.challenge, 
+          params.featuredCaseStudy?.execution, 
+          params.featuredCaseStudy?.result, 
+          params.featuredCaseStudy?.image, 
+          JSON.stringify(params.services),
+          JSON.stringify(params.contacts)
+        ];
         break;
 
       case 'login':
