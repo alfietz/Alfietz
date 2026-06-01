@@ -9,6 +9,10 @@ defineProps({
   loading: {
     type: String,
     default: 'eager'
+  },
+  horizontal: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -16,7 +20,11 @@ defineEmits(['toggle-like', 'select'])
 </script>
 
 <template>
-  <div class="product-card group" @click="$emit('select', product)">
+  <div 
+    class="product-card group" 
+    :class="{ 'horizontal-card': horizontal }"
+    @click="$emit('select', product)"
+  >
     <!-- Image Box -->
     <div class="image-wrapper">
       <img :src="product.image" :alt="'Photo of ' + product.name" class="product-img" :loading="loading" />
@@ -33,7 +41,7 @@ defineEmits(['toggle-like', 'select'])
         @click.stop="$emit('toggle-like', product)"
         :aria-label="product.liked ? 'Remove from favorites' : 'Add to favorites'"
       >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" :stroke="product.liked ? 'var(--accent-amber)' : 'currentColor'" stroke-width="2.5" :class="{ 'filled': product.liked }">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-amber)" stroke-width="2.5" :class="{ 'filled': product.liked }">
           <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
         </svg>
       </button>
@@ -57,19 +65,26 @@ defineEmits(['toggle-like', 'select'])
 .product-card {
   background-color: var(--wood-walnut);
   border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
+  border-radius: 20px;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   display: flex;
-  flex-direction: row-reverse; /* Image Right, Details Left */
-  height: 110px; /* Consistent compact height for mobile */
+  flex-direction: column;
+  height: auto;
   align-items: stretch;
 }
 
+/* Horizontal variant */
+.horizontal-card {
+  flex-direction: row-reverse;
+  height: 110px;
+  border-radius: var(--radius-md);
+}
+
 @media (min-width: 768px) {
-  .product-card {
-    height: 160px; /* Constant height for PC/Tablet */
+  .horizontal-card {
+    height: 160px;
   }
 }
 
@@ -82,15 +97,22 @@ defineEmits(['toggle-like', 'select'])
 
 .image-wrapper {
   position: relative;
-  width: 110px; /* Square image base for mobile */
-  flex-shrink: 0;
+  width: 100%;
+  aspect-ratio: 1/1;
   background-color: var(--wood-deep);
   overflow: hidden;
 }
 
+.horizontal-card .image-wrapper {
+  width: 110px;
+  height: 100%;
+  aspect-ratio: auto;
+  flex-shrink: 0;
+}
+
 @media (min-width: 768px) {
-  .image-wrapper {
-    width: 160px; /* Square image base for PC/Tablet */
+  .horizontal-card .image-wrapper {
+    width: 160px;
   }
 }
 
@@ -98,7 +120,7 @@ defineEmits(['toggle-like', 'select'])
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0.9;
+  opacity: 1; /* Improved visibility */
   transition: all 0.5s ease;
 }
 
@@ -117,7 +139,6 @@ defineEmits(['toggle-like', 'select'])
 }
 
 .product-card:hover .product-img {
-  opacity: 1;
   transform: scale(1.05);
 }
 
@@ -125,7 +146,7 @@ defineEmits(['toggle-like', 'select'])
   position: absolute;
   top: 8px;
   right: 8px;
-  width: 32px; /* Smaller for mobile compact */
+  width: 32px;
   height: 32px; 
   background: rgba(13, 8, 5, 0.6);
   backdrop-filter: blur(8px);
@@ -164,6 +185,10 @@ defineEmits(['toggle-like', 'select'])
   border-color: var(--accent-amber);
 }
 
+.heart-btn svg {
+  filter: drop-shadow(0 0 4px var(--accent-glow));
+}
+
 .heart-btn.liked svg {
   fill: var(--accent-amber);
   filter: drop-shadow(0 0 8px var(--accent-glow));
@@ -187,16 +212,18 @@ defineEmits(['toggle-like', 'select'])
   padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
   flex: 1;
+}
+
+.horizontal-card .product-details {
   justify-content: center;
+  gap: 4px;
 }
 
 @media (min-width: 768px) {
   .product-details {
     padding: 16px;
-    gap: 8px;
-    justify-content: space-between;
   }
 }
 
@@ -213,13 +240,6 @@ defineEmits(['toggle-like', 'select'])
   line-height: 1.3;
 }
 
-@media (min-width: 768px) {
-  .product-name {
-    font-size: 14px;
-    line-height: 1.4;
-  }
-}
-
 .product-card:hover .product-name {
   color: var(--accent-amber);
 }
@@ -228,6 +248,10 @@ defineEmits(['toggle-like', 'select'])
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-top: auto;
+}
+
+.horizontal-card .price-row {
   margin-top: 4px;
 }
 

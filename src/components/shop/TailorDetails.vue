@@ -1,7 +1,9 @@
 <!-------- (TailorDetails.vue) ./src/components/shop/TailorDetails.vue ------------>
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, computed, watch, reactive } from 'vue'
 import SectionHeader from '../layout/SectionHeader.vue'
+import EditableText from '../layout/EditableText.vue'
+import EditableImage from '../layout/EditableImage.vue'
 import { db } from '../../db/client'
 import { useRoute } from 'vue-router'
 
@@ -34,6 +36,190 @@ const tailorStats = ref({
   clients: 0
 })
 const sellerData = ref({ ...props.seller })
+
+// EDITABLE STATE
+const isOwner = computed(() => {
+  return props.userData?.id === sellerData.value?.owner_id
+})
+
+const draftData = reactive({
+  name: '',
+  bio: '',
+  avatar: '',
+  quirk: '',
+  featuredCaseStudy: {
+    title: '',
+    quote: '',
+    challenge: '',
+    execution: '',
+    result: '',
+    image: ''
+  },
+  services: [],
+  contacts: []
+})
+
+const hasUnsavedChanges = computed(() => {
+  if (!isOwner.value) return false
+  
+  // Basic comparison (can be refined)
+  const isNameChanged = draftData.name !== sellerData.value.name
+  const isBioChanged = draftData.bio !== (sellerData.value.bio || '')
+  const isQuirkChanged = draftData.quirk !== quirkBase.value
+  const isAvatarChanged = draftData.avatar !== sellerData.value.avatar
+  
+  const originalCS = featuredCaseStudyBase.value
+  const isCSChanged = JSON.stringify(draftData.featuredCaseStudy) !== JSON.stringify(originalCS)
+  
+  const isServicesChanged = JSON.stringify(draftData.services) !== JSON.stringify(servicesBase.value)
+  const isContactsChanged = JSON.stringify(draftData.contacts) !== JSON.stringify(contactsBase.value)
+  
+  return isNameChanged || isBioChanged || isQuirkChanged || isAvatarChanged || isCSChanged || isServicesChanged || isContactsChanged
+})
+
+// Lookbook Base Data
+const featuredCaseStudyBase = computed(() => ({
+  title: sellerData.value.case_study_title || "The Urban CEO Silhouette",
+  quote: sellerData.value.case_study_quote || "I needed a suit that commands respect in a boardroom, but breathes in the Nairobi heat.",
+  challenge: sellerData.value.case_study_challenge || "Designing a full three-piece suit that maintained a rigid, formal structure without using heavy traditional wool.",
+  execution: sellerData.value.case_study_execution || "We sourced organic, high-thread-count linen and used a deconstructed shoulder technique.",
+  result: sellerData.value.case_study_result || "A perfectly tailored, 40% lighter suit that won 'Best Bespoke Piece'.",
+  image: sellerData.value.case_study_image || products.value[0]?.image || "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=800&q=80"
+}))
+
+const servicesBase = computed(() => {
+  if (sellerData.value.services_json) {
+    try {
+      return JSON.parse(sellerData.value.services_json)
+    } catch(e) {}
+  }
+  return [
+    { id: 1, name: "Full Bespoke Suit", price: "From TSh 850k", desc: "A fully custom 3-piece suit mapped to your exact physical geometry." },
+    { id: 2, name: "Heritage Outerwear", price: "From TSh 400k", desc: "Custom Kente or Ankara coats with modern breathable linings." },
+    { id: 3, name: "Precision Fitting", price: "Hourly Rate", desc: "Hardware-level adjustments and tailoring to your existing wardrobe." }
+  ]
+})
+
+const contactsBase = computed(() => {
+  if (sellerData.value.contacts_json) {
+    try {
+      const parsed = JSON.parse(sellerData.value.contacts_json)
+      // Ensure defaults exist and pull from user profile if not set in contacts_json
+      const defaults = ['whatsapp', 'email', 'phone']
+      defaults.forEach(type => {
+        const existing = parsed.find(c => c.type === type)
+        if (!existing) {
+          let defaultValue = ''
+          if (type === 'whatsapp' || type === 'phone') defaultValue = sellerData.value.whatsapp || ''
+          if (type === 'email') defaultValue = sellerData.value.email || ''
+          
+          parsed.unshift({ id: Date.now() + Math.random(), type, label: type.charAt(0).toUpperCase() + type.slice(1), value: defaultValue, isDefault: true })
+        } else if (!existing.value) {
+          // If it exists but is empty, try to fill it from profile
+          if (type === 'whatsapp' || type === 'phone') existing.value = sellerData.value.whatsapp || ''
+          if (type === 'email') existing.value = sellerData.value.email || ''
+        }
+      })
+      return parsed
+    } catch(e) {}
+  }
+  
+  return [
+    { id: 1, type: 'whatsapp', label: 'WhatsApp', value: sellerData.value.whatsapp || '', isDefault: true },
+    { id: 2, type: 'email', label: 'Email', value: sellerData.value.email || '', isDefault: true },
+    { id: 3, type: 'phone', label: 'Phone', value: sellerData.value.whatsapp || '', isDefault: true } // Assuming whatsapp works as phone fallback
+  ]
+})
+
+const quirkBase = computed(() => {
+  if (sellerData.value.quirk) return sellerData.value.quirk
+  if (sellerData.value.username === 'francis') return "I refuse to use sewing machines built after 1985. The older gears handle Kente cloth better."
+  return "I find inspiration in the rhythmic patterns of traditional weaving songs."
+})
+
+const socials = ref([
+  { platform: 'instagram', url: '#' },
+  { platform: 'twitter', url: '#' }
+])
+
+const initializeDraft = () => {
+  draftData.name = sellerData.value.name || ''
+  draftData.bio = sellerData.value.bio || ''
+  draftData.avatar = sellerData.value.avatar || ''
+  draftData.quirk = quirkBase.value
+  draftData.featuredCaseStudy = { ...featuredCaseStudyBase.value }
+  draftData.services = JSON.parse(JSON.stringify(servicesBase.value))
+  draftData.contacts = JSON.parse(JSON.stringify(contactsBase.value))
+}
+
+const saveAllChanges = async () => {
+  try {
+    // Save core details to the database
+    await db.runAction('update_tailor_details', { 
+      id: sellerData.value.id, 
+      name: draftData.name,
+      bio: draftData.bio,
+      avatar: draftData.avatar,
+      quirk: draftData.quirk,
+      featuredCaseStudy: draftData.featuredCaseStudy,
+      services: draftData.services,
+      contacts: draftData.contacts
+    })
+    
+    // Update local state to reflect successful save
+    sellerData.value = { 
+      ...sellerData.value, 
+      name: draftData.name, 
+      bio: draftData.bio,
+      avatar: draftData.avatar,
+      quirk: draftData.quirk,
+      case_study_title: draftData.featuredCaseStudy.title,
+      case_study_quote: draftData.featuredCaseStudy.quote,
+      case_study_challenge: draftData.featuredCaseStudy.challenge,
+      case_study_execution: draftData.featuredCaseStudy.execution,
+      case_study_result: draftData.featuredCaseStudy.result,
+      case_study_image: draftData.featuredCaseStudy.image,
+      services_json: JSON.stringify(draftData.services),
+      contacts_json: JSON.stringify(draftData.contacts)
+    }
+    
+    alert("Changes saved successfully to your heritage archive!")
+  } catch (e) {
+    console.error("Failed to save changes:", e)
+    alert("Failed to save changes. Please try again.")
+  }
+}
+
+const cancelChanges = () => {
+  initializeDraft()
+}
+
+const addService = () => {
+  draftData.services.push({
+    id: Date.now(),
+    name: "New Service",
+    price: "TSh 0",
+    desc: "Describe your bespoke offering here."
+  })
+}
+
+const removeService = (id) => {
+  draftData.services = draftData.services.filter(s => s.id !== id)
+}
+
+const addContact = () => {
+  draftData.contacts.push({
+    id: Date.now(),
+    type: 'custom',
+    label: 'New Link',
+    value: '',
+    isDefault: false
+  })
+}
+
+const removeContact = (id) => {
+  draftData.contacts = draftData.contacts.filter(c => c.id !== id || c.isDefault)
+}
 
 const filteredProducts = computed(() => {
   if (activeFilter.value === 'process') {
@@ -85,7 +271,17 @@ const loadTailorData = async () => {
       avatar: s.avatar,
       bio: s.gives,
       whatsapp: s.whatsapp,
-      isVerified: true 
+      email: s.email,
+      isVerified: true,
+      quirk: s.quirk,
+      case_study_title: s.case_study_title,
+      case_study_quote: s.case_study_quote,
+      case_study_challenge: s.case_study_challenge,
+      case_study_execution: s.case_study_execution,
+      case_study_result: s.case_study_result,
+      case_study_image: s.case_study_image,
+      services_json: s.services_json,
+      contacts_json: s.contacts_json
     }
 
     products.value = data.products.map(p => ({
@@ -102,6 +298,32 @@ const loadTailorData = async () => {
       ...r,
       author_name: (r.first_name || r.last_name) ? `${r.first_name || ''} ${r.last_name || ''}`.trim() : r.username
     }))
+
+    // Update SEO Meta Tags
+    const pageTitle = `${sellerData.value.name} | Alfietz Artisan Portfolio`;
+    const pageDesc = sellerData.value.bio || `Explore the heritage portfolio of ${sellerData.value.name} on Alfietz. Discover bespoke African craftsmanship and custom-tailored fashion.`;
+    
+    document.title = pageTitle;
+    
+    const updateMeta = (name, content, attr = 'name') => {
+      let meta = document.querySelector(`meta[${attr}="${name}"]`);
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.setAttribute(attr, name);
+        document.head.appendChild(meta);
+      }
+      meta.setAttribute('content', content);
+    };
+
+    updateMeta('description', pageDesc);
+    updateMeta('og:title', pageTitle, 'property');
+    updateMeta('og:description', pageDesc, 'property');
+    updateMeta('og:image', sellerData.value.avatar, 'property');
+    updateMeta('twitter:title', pageTitle);
+    updateMeta('twitter:description', pageDesc);
+    updateMeta('twitter:image', sellerData.value.avatar);
+
+    initializeDraft()
   } catch (e) {
     console.error("Error fetching tailor details:", e)
   } finally {
@@ -201,147 +423,471 @@ const makeCall = () => {
   </div>
 
   <div v-else class="tailor-page pattern-heritage animate-fade">
-    
-    <div class="top-nav-glass">
-      <button class="back-btn" @click="$emit('go-back')">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>
-      </button>
-      <span class="header-username">{{ sellerData.name || sellerData.username }}</span>
-      <button class="icon-btn-round">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
-      </button>
-    </div>
-
-    <!-- IG Hero Section -->
-    <header class="ig-hero">
-      <div class="hero-main">
-        <div class="avatar-ring" :class="{ 'verified': sellerData.isVerified }">
-          <img :src="sellerData.avatar" :alt="sellerData.name" class="profile-img" />
-          <div v-if="sellerData.isVerified" class="verify-badge-small">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="4"><polyline points="20 6 9 17 4 12"></polyline></svg>
-          </div>
-        </div>
-        
-        <div class="hero-stats">
-          <div class="stat-box clickable" @click="activeFilter = 'all'">
-            <span class="stat-num">{{ products.length }}</span>
-            <span class="stat-label">Posts</span>
-          </div>
-          <div class="stat-box">
-            <span class="stat-num">{{ tailorStats.likes }}</span>
-            <span class="stat-label">Likes</span>
-          </div>
-          <div class="stat-box">
-            <span class="stat-num">{{ tailorStats.clients }}</span>
-            <span class="stat-label">Clients</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="hero-bio">
-        <h1 class="bio-name">{{ sellerData.name }}</h1>
-        <span class="bio-tag">Digital Tailor • Heritage Artisan</span>
-        <p class="bio-text">{{ sellerData.bio || 'Preserving African heritage through every stitch and pattern. Custom commissions available.' }}</p>
-        <div class="bio-links">
-          <div class="bio-link-item" @click="connectToWhatsApp">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-13.4 8.38 8.38 0 0 1 3.8.9L21 3z"/></svg>
-            <span>WhatsApp</span>
-          </div>
-          <div class="bio-link-item" @click="makeCall">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.79 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-            <span>Call</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="hero-actions">
-        <button class="action-btn-secondary">Share</button>
-        <button class="action-btn-secondary flex-center gap-4" @click="$emit('go-reviews', sellerData.id)">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-          Reviews
-        </button>
-      </div>
-    </header>
-
-    <!-- Highlights Bar -->
-    <div class="highlights-container">
-      <div class="highlight-item" @click="activeFilter = 'process'">
-        <div class="highlight-circle" :class="{ 'active': activeFilter === 'process' }">
-          <img v-if="highlights.process" :src="highlights.process" class="highlight-img" />
-          <span v-else>✂️</span>
-        </div>
-        <span>Process</span>
-      </div>
-      <div class="highlight-item" @click="activeFilter = 'fabrics'">
-        <div class="highlight-circle" :class="{ 'active': activeFilter === 'fabrics' }">
-          <img v-if="highlights.fabrics" :src="highlights.fabrics" class="highlight-img" />
-          <span v-else>🧵</span>
-        </div>
-        <span>Fabrics</span>
-      </div>
-      <div class="highlight-item" @click="$emit('go-reviews', sellerData.id)">
-        <div class="highlight-circle">⭐</div>
-        <span>Reviews ({{ reviews.length }})</span>
-      </div>
-    </div>
-
-    <!-- Recent Reviews (Dynamic) -->
-    <section class="reviews-preview">
-      <div class="section-header-row">
-        <h3 class="bio-name">Recent Reviews</h3>
-        <button v-if="reviews.length > 0" class="view-all-link" @click="$emit('go-reviews', sellerData.id)">View All</button>
-      </div>
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       
-      <div v-if="reviews.length > 0" class="reviews-mini-list">
-        <div v-for="review in reviews.slice(0, 2)" :key="review.id" class="review-mini-card">
-          <div class="review-mini-header">
-            <img :src="review.author_avatar" class="mini-avatar" />
-            <div class="mini-info">
-              <span class="mini-name">{{ review.author_name }}</span>
-              <div class="star-rating mini">
-                <span v-for="n in 5" :key="n" class="star" :class="n <= review.rating ? 'filled' : 'empty'">★</span>
-              </div>
-            </div>
+      <!-- NAVIGATION -->
+      <nav class="flex items-center justify-between mb-10 text-sm uppercase tracking-widest font-semibold border-b border-white/10 pb-6">
+          <a href="#" @click.prevent="$emit('go-back')" class="text-xl font-serif text-white tracking-normal capitalize flex items-center gap-2">
+            <i class="fas fa-chevron-left text-xs opacity-50"></i>
+            {{ sellerData.name.split(' ')[0] }}'s Atelier
+          </a>
+          
+          <div class="hidden md:flex gap-8 text-gray-400">
+              <a href="#work" class="text-alfie-accent hover:text-white transition">Work</a>
+              <a href="#about" class="hover:text-white transition">About</a>
+              <a href="#services" class="hover:text-white transition">Services</a>
+              <a href="#contact" class="hover:text-white transition">Contact</a>
           </div>
-          <p class="mini-text">"{{ review.text }}"</p>
+          
+          <button class="text-gray-400 hover:text-white transition" @click="$emit('go-reviews', sellerData.id)">
+              <i class="fas fa-star text-lg"></i>
+          </button>
+      </nav>
+
+      <!-- HERO SECTION -->
+      <div class="relative w-full h-80 rounded-2xl overflow-hidden mb-16 bg-alfie-card flex items-center justify-center text-center">
+          <EditableImage 
+            :src="draftData.avatar" 
+            :is-editable="isOwner" 
+            aspect-ratio="auto"
+            class="absolute inset-0 w-full h-full object-cover opacity-30 grayscale mix-blend-overlay"
+            @change="(val) => draftData.avatar = val"
+          />
+          <div class="absolute inset-0 bg-gradient-to-b from-transparent to-alfie-dark"></div>
+          
+          <div class="relative z-10 max-w-3xl px-4">
+              <h1 class="font-serif text-5xl md:text-7xl text-white mb-4 leading-tight">
+                <EditableText v-model="draftData.name" :is-editable="isOwner" placeholder="Artisan Name" />
+              </h1>
+              <p class="text-alfie-accent tracking-[0.2em] text-sm uppercase font-bold">Master Tailor • Heritage Artisan</p>
+          </div>
+      </div>
+
+      <!-- CASE STUDY SECTION -->
+      <div id="about" class="mb-24 bg-alfie-card p-6 md:p-10 rounded-2xl border border-white/5">
+          <h2 class="font-serif text-3xl text-white mb-8 flex items-center gap-4">
+              <span class="w-8 h-px bg-alfie-accent"></span> Featured Case Study
+          </h2>
+          
+          <div class="flex flex-col md:flex-row gap-10 items-center">
+              <div class="md:w-1/2 w-full overflow-hidden rounded-xl shadow-2xl relative">
+                  <EditableImage 
+                    :src="draftData.featuredCaseStudy.image" 
+                    :is-editable="isOwner" 
+                    aspect-ratio="4/3"
+                    @change="(val) => draftData.featuredCaseStudy.image = val"
+                  />
+                  <div class="absolute top-4 left-4 bg-black/70 backdrop-blur-md px-3 py-1 rounded text-xs text-alfie-accent uppercase font-bold">Client Commission</div>
+              </div>
+              <div class="md:w-1/2 flex flex-col gap-6">
+                  <div>
+                      <h3 class="text-2xl font-serif text-white mb-2">
+                        <EditableText v-model="draftData.featuredCaseStudy.title" :is-editable="isOwner" placeholder="Case Study Title" />
+                      </h3>
+                      <p class="text-sm text-gray-400 italic">
+                        "<EditableText v-model="draftData.featuredCaseStudy.quote" :is-editable="isOwner" multiline placeholder="Client quote..." />"
+                      </p>
+                  </div>
+                  
+                  <div class="space-y-4 text-sm text-gray-300">
+                      <div>
+                          <span class="text-alfie-accent font-bold uppercase text-xs block mb-1">The Challenge:</span>
+                          <p><EditableText v-model="draftData.featuredCaseStudy.challenge" :is-editable="isOwner" multiline placeholder="The challenge..." /></p>
+                      </div>
+                      <div>
+                          <span class="text-alfie-accent font-bold uppercase text-xs block mb-1">The Execution:</span>
+                          <p><EditableText v-model="draftData.featuredCaseStudy.execution" :is-editable="isOwner" multiline placeholder="The execution..." /></p>
+                      </div>
+                      <div>
+                          <span class="text-alfie-accent font-bold uppercase text-xs block mb-1">The Result:</span>
+                          <p><EditableText v-model="draftData.featuredCaseStudy.result" :is-editable="isOwner" multiline placeholder="The result..." /></p>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
+
+      <div class="flex flex-col lg:flex-row gap-12 lg:gap-20 mt-12">
+          
+          <!-- SIDEBAR -->
+          <div class="lg:w-1/3 flex flex-col gap-10">
+              <div>
+                  <h3 class="font-serif text-2xl mb-4 text-white border-b border-white/10 pb-4">The Artisan</h3>
+                  <div class="text-gray-400 leading-relaxed text-sm mb-4">
+                      <EditableText v-model="draftData.bio" :is-editable="isOwner" multiline placeholder="Tell your heritage story..." />
+                  </div>
+                  <div class="bg-white/5 p-4 rounded-lg border border-white/10">
+                      <div class="text-xs text-gray-300 flex items-start gap-3">
+                          <i class="fas fa-coffee text-alfie-accent mt-1"></i> 
+                          <span>
+                            <strong class="text-white">Studio Quirk:</strong> 
+                            <EditableText v-model="draftData.quirk" :is-editable="isOwner" placeholder="Your studio quirk..." />
+                          </span>
+                      </div>
+                  </div>
+              </div>
+
+              <!-- SERVICES -->
+              <div id="services">
+                  <div class="flex justify-between items-center border-b border-white/10 mb-4 pb-4">
+                    <h3 class="font-serif text-2xl text-white m-0">Offerings</h3>
+                    <button v-if="isOwner" @click="addService" class="text-alfie-accent hover:text-white text-xs font-bold uppercase tracking-wider transition">
+                      + Add New
+                    </button>
+                  </div>
+                  <div class="flex flex-col gap-3">
+                      <div v-for="service in draftData.services" :key="service.id" class="p-4 bg-alfie-card hover:bg-white/5 transition rounded-sm border border-white/5 relative group/service">
+                          <button v-if="isOwner" @click="removeService(service.id)" class="absolute -top-2 -right-2 w-6 h-6 bg-red-500/80 hover:bg-red-500 text-white rounded-full flex items-center justify-center transition-colors z-10 shadow-lg">
+                            <i class="fas fa-times text-[10px]"></i>
+                          </button>
+                          <div class="flex justify-between items-center mb-2">
+                              <span class="text-white font-semibold text-sm">
+                                <EditableText v-model="service.name" :is-editable="isOwner" placeholder="Service Name" />
+                              </span>
+                              <span class="text-alfie-accent text-xs font-bold">
+                                <EditableText v-model="service.price" :is-editable="isOwner" placeholder="Price" />
+                              </span>
+                          </div>
+                          <p class="text-xs text-gray-400 leading-relaxed">
+                            <EditableText v-model="service.desc" :is-editable="isOwner" multiline placeholder="Service description..." />
+                          </p>
+                      </div>
+                  </div>
+              </div>
+
+              <!-- CONTACT -->
+              <div id="contact">
+                  <div class="flex justify-between items-center border-b border-white/10 mb-4 pb-4">
+                    <h3 class="font-serif text-2xl text-white m-0">Start a Project</h3>
+                    <button v-if="isOwner" @click="addContact" class="text-alfie-accent hover:text-white text-xs font-bold uppercase tracking-wider transition">
+                      + Add Link
+                    </button>
+                  </div>
+                  <div class="flex flex-col gap-4">
+                      <!-- WhatsApp Inquiry (Legacy Fallback/Default style) -->
+                      <a v-if="!isOwner && (!draftData.contacts || draftData.contacts.length === 0)" href="#" @click.prevent="connectToWhatsApp" class="group flex items-center justify-between p-4 bg-alfie-accent text-alfie-dark hover:bg-yellow-400 transition rounded-sm shadow-[0_0_15px_rgba(212,175,55,0.2)] hover:shadow-[0_0_25px_rgba(212,175,55,0.4)]">
+                          <span class="text-sm font-bold tracking-wide">WhatsApp Inquiry</span>
+                          <i class="fab fa-whatsapp text-xl animate-pulse"></i>
+                      </a>
+                      
+                      <!-- Dynamic Contacts -->
+                      <div v-for="contact in draftData.contacts" :key="contact.id" class="relative group/contact">
+                          <button v-if="isOwner && !contact.isDefault" @click="removeContact(contact.id)" class="absolute -top-2 -right-2 w-6 h-6 bg-red-500/80 hover:bg-red-500 text-white rounded-full flex items-center justify-center transition-colors z-10 shadow-lg">
+                            <i class="fas fa-times text-[10px]"></i>
+                          </button>
+                          
+                          <div :class="['flex items-center justify-between p-4 transition rounded-sm shadow-lg', contact.type === 'whatsapp' ? 'bg-alfie-accent text-alfie-dark hover:bg-yellow-400' : 'bg-alfie-card border border-white/5 hover:border-alfie-accent/50 text-white']">
+                              <div class="flex-1 flex items-center gap-3">
+                                  <i v-if="contact.type === 'whatsapp'" class="fab fa-whatsapp text-xl animate-pulse"></i>
+                                  <i v-else-if="contact.type === 'email'" class="fas fa-envelope text-xl text-alfie-accent"></i>
+                                  <i v-else-if="contact.type === 'phone'" class="fas fa-phone text-xl text-alfie-accent"></i>
+                                  <i v-else class="fas fa-link text-xl text-alfie-accent"></i>
+                                  
+                                  <div class="flex flex-col flex-1">
+                                    <span v-if="contact.type !== 'custom'" class="text-sm font-bold tracking-wide opacity-90">{{ contact.label }}</span>
+                                    <EditableText v-else v-model="contact.label" :is-editable="isOwner" placeholder="Link Label (e.g. Website)" class="text-sm font-bold tracking-wide mb-1" />
+                                    
+                                    <EditableText v-model="contact.value" :is-editable="isOwner" :placeholder="contact.type === 'email' ? 'your@email.com' : (contact.type === 'phone' || contact.type === 'whatsapp' ? '+255 700 000 000' : 'https://...')" class="text-xs font-medium" />
+                                  </div>
+                              </div>
+                              <a v-if="!isOwner && contact.value" :href="contact.type === 'email' ? 'mailto:'+contact.value : (contact.type === 'phone' ? 'tel:'+contact.value : (contact.type === 'whatsapp' ? 'https://wa.me/'+contact.value.replace(/[^0-9]/g, '') : contact.value))" target="_blank" class="w-8 h-8 flex items-center justify-center rounded-full bg-black/10 hover:bg-black/20 transition ml-4">
+                                <i class="fas fa-external-link-alt text-[10px]"></i>
+                              </a>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+
+          <!-- PORTFOLIO GRID -->
+          <div id="work" class="lg:w-2/3">
+              <div class="flex justify-between items-end mb-8 border-b border-white/10 pb-4">
+                  <h2 class="font-serif text-3xl text-white">Visual Archive</h2>
+              </div>
+              
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div v-for="product in products" :key="product.id" 
+                       class="group relative overflow-hidden bg-alfie-card rounded-xl aspect-[4/5] shadow-lg cursor-pointer"
+                       @click="$emit('go-details', product)">
+                       
+                      <img :src="product.image" class="w-full h-full object-cover group-hover:scale-105 transition duration-700">
+                      
+                      <div class="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition duration-500 flex flex-col justify-center p-8 text-center">
+                          <h4 class="text-white font-serif text-2xl mb-2">{{ product.name }}</h4>
+                          <p class="text-gray-400 text-sm mb-6">{{ product.description }}</p>
+                          
+                          <div class="grid grid-cols-2 gap-4 text-left border-t border-white/10 pt-4">
+                              <div>
+                                  <span class="text-[10px] text-alfie-accent uppercase tracking-widest block">Technique</span>
+                                  <span class="text-xs text-white">{{ product.categoryName || 'Bespoke' }}</span>
+                              </div>
+                              <div>
+                                  <span class="text-[10px] text-alfie-accent uppercase tracking-widest block">Material</span>
+                                  <span class="text-xs text-white">{{ product.material || 'Organic Fabric' }}</span>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
+
+      <!-- STUDIO GALLERY -->
+      <div id="gallery" class="mt-24 pt-12 border-t border-white/10 mb-12">
+          <div class="flex justify-between items-end mb-8">
+              <h2 class="font-serif text-3xl text-white">Studio Gallery</h2>
+              <p class="text-sm text-gray-400">Raw textures, tools, & works in progress</p>
+          </div>
+          
+          <div class="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
+              <div v-for="(product, index) in products.slice(0, 8)" :key="index" class="break-inside-avoid relative group rounded-lg overflow-hidden cursor-pointer mb-4">
+                  <img :src="product.image" class="w-full h-auto object-cover grayscale-[20%] group-hover:grayscale-0 transition duration-500">
+                  
+                  <div class="absolute top-3 left-3 bg-alfie-dark/90 backdrop-blur-sm text-alfie-accent text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider border border-alfie-accent/30 group-hover:opacity-0 transition duration-300 shadow-lg">
+                      TSh {{ product.price }}
+                  </div>
+
+                  <div class="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition duration-300 flex flex-col items-center justify-center p-4 text-center">
+                      <i class="fas fa-expand text-white/40 text-xl absolute top-4 right-4 hover:text-white transition"></i>
+                      
+                      <h4 class="text-white font-serif text-lg mb-1">{{ product.name }}</h4>
+                      <p class="text-alfie-accent font-bold mb-4">TSh {{ product.price }}</p>
+                      <button class="bg-alfie-accent text-alfie-dark px-5 py-2 rounded-sm text-xs font-bold uppercase tracking-wider hover:bg-yellow-400 transition shadow-[0_0_10px_rgba(212,175,55,0.3)]"
+                              @click.stop="$emit('go-details', product)">
+                          View Piece
+                      </button>
+                  </div>
+              </div>
+          </div>
+      </div>
+
+      <!-- TESTIMONIALS -->
+      <div class="mb-20">
+          <h2 class="font-serif text-3xl text-white mb-8 text-center">Client Testimonials</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div v-for="review in reviews" :key="review.id" class="bg-alfie-card p-8 rounded-xl border border-white/5 relative">
+                  <i class="fas fa-quote-left text-4xl text-white/5 absolute top-4 left-4"></i>
+                  <div class="flex gap-1 text-alfie-accent text-xs mb-4">
+                      <i v-for="n in 5" :key="n" class="fas fa-star" :class="{ 'opacity-30': n > review.rating }"></i>
+                  </div>
+                  <p class="text-gray-300 text-sm mb-6 relative z-10 italic leading-relaxed">"{{ review.text }}"</p>
+                  <div class="flex items-center gap-3 border-t border-white/10 pt-4">
+                      <img :src="review.author_avatar" class="w-8 h-8 rounded-full object-cover">
+                      <p class="text-white text-xs font-bold uppercase tracking-widest">{{ review.author_name }}</p>
+                  </div>
+              </div>
+              <div v-if="reviews.length === 0" class="col-span-full text-center py-10 bg-white/5 rounded-xl border border-dashed border-white/10">
+                <p class="text-gray-400 italic">No testimonials yet. Be the first to share your experience!</p>
+              </div>
+          </div>
+      </div>
+
+      <!-- FOOTER -->
+      <footer class="border-t border-white/10 pt-8 pb-4 flex flex-col md:flex-row justify-between items-center gap-6">
+          <div class="text-xl font-serif text-white flex items-center gap-2">
+              <i class="fas fa-cut text-alfie-accent"></i> Alfietz
+          </div>
+          <div class="flex gap-4">
+              <a v-for="social in socials" :key="social.platform" :href="social.url" class="w-10 h-10 rounded-full bg-alfie-card border border-white/5 flex items-center justify-center text-gray-400 hover:text-white hover:bg-alfie-accent transition">
+                  <i :class="'fab fa-' + social.platform"></i>
+              </a>
+          </div>
+          <p class="text-xs text-gray-600">&copy; 2026 {{ sellerData.name }}. Powered by Alfietz.</p>
+      </footer>
+    </div>
+
+    <!-- FLOATING SAVE BAR -->
+    <transition name="slide-up">
+      <div v-if="hasUnsavedChanges" class="fixed bottom-0 left-0 w-full p-4 z-[200] flex justify-center">
+        <div class="bg-alfie-card/90 backdrop-blur-xl border border-alfie-accent/30 rounded-2xl shadow-2xl p-4 flex items-center gap-6 max-w-lg w-full">
+          <div class="flex-1">
+            <h4 class="text-white text-sm font-bold m-0">Unsaved Changes</h4>
+            <p class="text-gray-400 text-[10px] uppercase tracking-wider m-0">You have modified your artisan profile</p>
+          </div>
+          <div class="flex gap-3">
+            <button @click="cancelChanges" class="px-4 py-2 rounded-lg text-xs font-bold text-gray-400 hover:text-white transition uppercase">
+              Discard
+            </button>
+            <button @click="saveAllChanges" class="px-6 py-2 bg-alfie-accent text-alfie-dark rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-yellow-400 transition shadow-lg">
+              Save Changes
+            </button>
+          </div>
         </div>
       </div>
-      <div v-else class="empty-reviews-cta">
-        <p>No heritage reviews yet. Be the first to commission a piece!</p>
-      </div>
-    </section>
-
-    <!-- Tabbed Grid View -->
-    <div class="grid-nav" id="products-grid">
-      <div class="grid-tab" :class="{ active: activeFilter === 'all' }" @click="activeFilter = 'all'">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-      </div>
-      <div class="grid-tab" :class="{ active: activeFilter !== 'all' }">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-      </div>
-    </div>
-
-    <div v-if="filteredProducts.length > 0" class="ig-grid">
-      <div 
-        v-for="product in filteredProducts" 
-        :key="product.id" 
-        class="grid-post tap-active"
-        @click="$emit('go-details', product)"
-      >
-        <img :src="product.image" alt="Post" class="post-img" />
-        <div v-if="product.status === 'Out of Stock'" class="oos-dot"></div>
-      </div>
-    </div>
-    <div v-else class="empty-grid-cta">
-      <p v-if="activeFilter === 'all'">No posts yet from this artisan.</p>
-      <p v-else>No {{ activeFilter }} posts found.</p>
-      <button v-if="activeFilter !== 'all'" class="view-all-link" @click="activeFilter = 'all'">View all posts</button>
-    </div>
-
+    </transition>
   </div>
 </template>
 
 <style scoped>
+/* LOOKBOOK SPECIFIC STYLES */
+.font-serif { font-family: 'Playfair Display', Georgia, serif; }
+.text-alfie-accent { color: #d4af37; }
+.bg-alfie-accent { background-color: #d4af37; }
+.bg-alfie-dark { background-color: #0a0705; }
+.bg-alfie-card { background-color: #140f0a; }
+.text-alfie-dark { color: #0a0705; }
+
+.tailor-page {
+  background-color: #0a0705;
+  color: #f3f2f1;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+}
+
+/* Custom Utilities for Masonry and Layout */
+.columns-1 { column-count: 1; }
+@media (min-width: 640px) { .sm:columns-2 { column-count: 2; } }
+@media (min-width: 768px) { .md:columns-3 { column-count: 3; } }
+@media (min-width: 1024px) { .lg:columns-4 { column-count: 4; } }
+.break-inside-avoid { break-inside: avoid; }
+
+/* Tailwind-like shim for common classes used in template */
+.max-w-6xl { max-width: 72rem; }
+.mx-auto { margin-left: auto; margin-right: auto; }
+.px-4 { padding-left: 1rem; padding-right: 1rem; }
+.py-10 { padding-top: 2.5rem; padding-bottom: 2.5rem; }
+.flex { display: flex; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.mb-10 { margin-bottom: 2.5rem; }
+.text-sm { font-size: 0.875rem; }
+.uppercase { text-transform: uppercase; }
+.tracking-widest { letter-spacing: 0.1em; }
+.font-semibold { font-weight: 600; }
+.border-b { border-bottom-width: 1px; }
+.border-white\/10 { border-color: rgba(255, 255, 255, 0.1); }
+.pb-6 { padding-bottom: 1.5rem; }
+.text-xl { font-size: 1.25rem; }
+.hidden { display: none; }
+@media (min-width: 768px) { .md\:flex { display: flex; } }
+.gap-8 { gap: 2rem; }
+.text-gray-400 { color: #9ca3af; }
+.hover\:text-white:hover { color: #ffffff; }
+.transition { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+.relative { position: relative; }
+.w-full { width: 100%; }
+.h-80 { height: 20rem; }
+.rounded-2xl { border-radius: 1rem; }
+.overflow-hidden { overflow: hidden; }
+.mb-16 { margin-bottom: 4rem; }
+.justify-center { justify-content: center; }
+.text-center { text-align: center; }
+.absolute { position: absolute; }
+.inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
+.h-full { height: 100%; }
+.object-cover { object-fit: cover; }
+.opacity-30 { opacity: 0.3; }
+.grayscale { filter: grayscale(100%); }
+.mix-blend-overlay { mix-blend-mode: overlay; }
+.bg-gradient-to-b { background-image: linear-gradient(to bottom, var(--tw-gradient-stops)); }
+.from-transparent { --tw-gradient-from: transparent; --tw-gradient-to: rgb(0 0 0 / 0); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
+.to-alfie-dark { --tw-gradient-to: #0a0705; }
+.z-10 { z-index: 10; }
+.max-w-3xl { max-width: 48rem; }
+.mb-4 { margin-bottom: 1rem; }
+.leading-tight { line-height: 1.25; }
+.text-5xl { font-size: 3rem; }
+@media (min-width: 768px) { .md\:text-7xl { font-size: 4.5rem; } }
+.text-white { color: #ffffff; }
+.tracking-\[0\.2em\] { letter-spacing: 0.2em; }
+.font-bold { font-weight: 700; }
+.mb-24 { margin-bottom: 6rem; }
+.p-6 { padding: 1.5rem; }
+@media (min-width: 768px) { .md\:p-10 { padding: 2.5rem; } }
+.border { border-width: 1px; }
+.border-white\/5 { border-color: rgba(255, 255, 255, 0.05); }
+.text-3xl { font-size: 1.875rem; }
+.mb-8 { margin-bottom: 2rem; }
+.gap-4 { gap: 1rem; }
+.w-8 { width: 2rem; }
+.h-px { height: 1px; }
+.flex-col { flex-direction: column; }
+@media (min-width: 768px) { .md\:flex-row { flex-direction: row; } }
+.gap-10 { gap: 2.5rem; }
+@media (min-width: 768px) { .md\:w-1\/2 { width: 50%; } }
+.rounded-xl { border-radius: 0.75rem; }
+.shadow-2xl { box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25); }
+.hover\:scale-105:hover { transform: scale(1.05); }
+.duration-700 { transition-duration: 700ms; }
+.top-4 { top: 1rem; }
+.left-4 { left: 1rem; }
+.bg-black\/70 { background-color: rgb(0 0 0 / 0.7); }
+.backdrop-blur-md { backdrop-filter: blur(12px); }
+.px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+.py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+.rounded { border-radius: 0.25rem; }
+.text-xs { font-size: 0.75rem; }
+.text-2xl { font-size: 1.5rem; }
+.mb-2 { margin-bottom: 0.5rem; }
+.text-gray-400 { color: #9ca3af; }
+.italic { font-style: italic; }
+.space-y-4 > :not([hidden]) ~ :not([hidden]) { margin-top: 1rem; }
+.text-gray-300 { color: #d1d5db; }
+.block { display: block; }
+.mb-1 { margin-bottom: 0.25rem; }
+@media (min-width: 1024px) { .lg\:flex-row { flex-direction: row; } }
+.lg\:gap-20 { gap: 5rem; }
+@media (min-width: 1024px) { .lg\:w-1\/3 { width: 33.333333%; } }
+.leading-relaxed { line-height: 1.625; }
+.bg-white\/5 { background-color: rgba(255, 255, 255, 0.05); }
+.p-4 { padding: 1rem; }
+.rounded-lg { border-radius: 0.5rem; }
+.items-start { align-items: flex-start; }
+.gap-3 { gap: 0.75rem; }
+.mt-1 { margin-top: 0.25rem; }
+.hover\:bg-white\/5:hover { background-color: rgba(255, 255, 255, 0.05); }
+.rounded-sm { border-radius: 0.125rem; }
+.font-semibold { font-weight: 600; }
+.bg-alfie-accent { background-color: #d4af37; }
+.hover\:bg-yellow-400:hover { background-color: #fbbf24; }
+.shadow-\[0_0_15px_rgba\(212\,175\,55\,0\.2\)\] { box-shadow: 0 0 15px rgba(212,175,55,0.2); }
+.hover\:shadow-\[0_0_25px_rgba\(212\,175\,55\,0\.4\)\]:hover { box-shadow: 0 0 25px rgba(212,175,55,0.4); }
+.animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+@media (min-width: 1024px) { .lg\:w-2\/3 { width: 66.666667%; } }
+.border-b { border-bottom-width: 1px; }
+.grid { display: grid; }
+.grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+@media (min-width: 768px) { .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.gap-6 { gap: 1.5rem; }
+.aspect-\[4\/5\] { aspect-ratio: 4 / 5; }
+.shadow-lg { box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); }
+.bg-black\/80 { background-color: rgb(0 0 0 / 0.8); }
+.opacity-0 { opacity: 0; }
+.group:hover .group-hover\:opacity-100 { opacity: 1; }
+.duration-500 { transition-duration: 500ms; }
+.p-8 { padding: 2rem; }
+.border-t { border-top-width: 1px; }
+.pt-4 { padding-top: 1rem; }
+.text-\[10px\] { font-size: 10px; }
+.mt-24 { margin-top: 6rem; }
+.pt-12 { padding-top: 3rem; }
+.grayscale-\[20\%\] { filter: grayscale(20%); }
+.group:hover .group-hover\:grayscale-0 { filter: grayscale(0); }
+.top-3 { top: 0.75rem; }
+.left-3 { left: 0.75rem; }
+.bg-alfie-dark\/90 { background-color: rgba(10, 7, 5, 0.9); }
+.backdrop-blur-sm { backdrop-filter: blur(4px); }
+.tracking-wider { letter-spacing: 0.05em; }
+.border-alfie-accent\/30 { border-color: rgba(212, 175, 55, 0.3); }
+.duration-300 { transition-duration: 300ms; }
+.bg-black\/70 { background-color: rgba(0, 0, 0, 0.7); }
+.right-4 { right: 1rem; }
+.text-white\/40 { color: rgba(255, 255, 255, 0.4); }
+.text-lg { font-size: 1.125rem; }
+.mb-4 { margin-bottom: 1rem; }
+.px-5 { padding-left: 1.25rem; padding-right: 1.25rem; }
+.py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+.shadow-\[0_0_10px_rgba\(212\,175\,55\,0\.3\)\] { box-shadow: 0 0 10px rgba(212, 175, 55, 0.3); }
+.mb-20 { margin-bottom: 5rem; }
+.text-4xl { font-size: 2.25rem; }
+.text-white\/5 { color: rgba(255, 255, 255, 0.05); }
+.gap-1 { gap: 0.25rem; }
+.mb-6 { margin-bottom: 1.5rem; }
+.w-10 { width: 2.5rem; }
+.h-10 { height: 2.5rem; }
+.text-gray-600 { color: #4b5563; }
+
+/* LOADING & SKELETON STYLES */
 .heritage-status-overlay {
   position: fixed;
   top: 0;
@@ -392,7 +938,6 @@ const makeCall = () => {
   100% { transform: scale(1); filter: drop-shadow(0 0 0px var(--accent-amber)); }
 }
 
-/* Skeleton Loading Animation */
 .skeleton-mode {
   pointer-events: none;
   background: var(--wood-deep);
@@ -441,7 +986,6 @@ const makeCall = () => {
   background: var(--wood-walnut);
 }
 
-/* Shimmer Effect */
 .skeleton-mode [class*="skeleton-"] {
   position: relative;
   overflow: hidden;
@@ -545,12 +1089,6 @@ const makeCall = () => {
   margin-bottom: 12px;
 }
 
-.tailor-page {
-  background-color: var(--wood-deep);
-  min-height: 100vh;
-  padding-bottom: 20px;
-}
-
 .top-nav-glass {
   position: sticky;
   top: 0;
@@ -640,248 +1178,6 @@ const makeCall = () => {
   color: var(--text-muted);
 }
 
-.hero-bio {
-  margin-bottom: 16px;
-}
-
-.bio-name {
-  font-size: 15px;
-  font-weight: 800;
-  margin: 0;
-}
-
-.bio-tag {
-  font-size: 13px;
-  color: var(--text-muted);
-}
-
-.bio-text {
-  font-size: 14px;
-  line-height: 1.4;
-  margin: 4px 0;
-  color: var(--text-primary);
-}
-
-.bio-links {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-top: 8px;
-}
-
-.bio-link-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #3897f0;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.bio-link-item:hover {
-  text-decoration: underline;
-}
-
-.hero-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.flex-center { display: flex; align-items: center; justify-content: center; }
-.gap-4 { gap: 4px; }
-
-.action-btn-primary {
-  flex: 1;
-  background: var(--accent-amber);
-  color: white;
-  border-radius: 8px;
-  height: 36px;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.action-btn-secondary {
-  flex: 1;
-  background: var(--wood-walnut);
-  border: 1px solid var(--glass-border);
-  color: var(--text-primary);
-  border-radius: 8px;
-  height: 36px;
-  font-size: 13px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.highlights-container {
-  display: flex;
-  gap: 16px;
-  padding: 0 16px 20px;
-  overflow-x: auto;
-}
-.highlight-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-  cursor: pointer;
-}
-
-.reviews-preview {
-  padding: 0 16px 24px;
-}
-
-.section-header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.view-all-link {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--accent-amber);
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-
-.reviews-mini-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.review-mini-card {
-  background: var(--wood-walnut);
-  border: 1px solid var(--glass-border);
-  border-radius: 12px;
-  padding: 12px;
-}
-
-.review-mini-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
-}
-
-.mini-avatar {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.mini-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.mini-name {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.star-rating.mini .star {
-  font-size: 10px;
-}
-
-.star.filled { color: #FFC107; }
-.star.empty { color: #E0E0E0; }
-
-.mini-text {
-  font-size: 12px;
-  color: var(--text-muted);
-  font-style: italic;
-  margin: 0;
-}
-
-.empty-reviews-cta {
-  background: var(--wood-walnut);
-  border: 1px dashed var(--glass-border);
-  padding: 20px;
-  border-radius: 12px;
-  text-align: center;
-}
-
-.empty-reviews-cta p {
-  font-size: 13px;
-  color: var(--text-muted);
-  margin: 0;
-}
-
-.highlight-circle {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: var(--wood-walnut);
-  border: 1px solid var(--glass-border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-}
-
-.highlight-item span {
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.grid-nav {
-  display: flex;
-  border-top: 1px solid var(--glass-border);
-}
-
-.grid-tab {
-  flex: 1;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-muted);
-}
-
-.grid-tab.active {
-  color: var(--accent-amber);
-  border-top: 1.5px solid var(--accent-amber);
-}
-
-.ig-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 2px;
-}
-
-.grid-post {
-  aspect-ratio: 1;
-  position: relative;
-  overflow: hidden;
-  background: var(--wood-walnut);
-}
-
-.post-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.oos-dot {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 8px;
-  height: 8px;
-  background: #EF4444;
-  border-radius: 50%;
-  box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
-}
-
 .back-btn {
   background-color: var(--wood-walnut) !important;
   border: 1px solid var(--glass-border) !important;
@@ -896,5 +1192,17 @@ const makeCall = () => {
   align-items: center;
   justify-content: center;
   color: var(--text-primary);
+}
+
+/* Slide Up Transition */
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.slide-up-enter-from,
+.slide-up-leave-to {
+  transform: translateY(100%);
+  opacity: 0;
 }
 </style>

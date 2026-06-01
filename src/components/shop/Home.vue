@@ -292,6 +292,8 @@ watch(searchQuery, (newVal) => {
 
 .home-container {
   padding: 24px 24px 40px 24px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 /* Search Bar (Ancestral Tech) */
@@ -725,29 +727,28 @@ watch(searchQuery, (newVal) => {
   width: 200px;
   flex-shrink: 0;
   scroll-snap-align: start;
-  flex-direction: column !important;
-  height: auto !important;
-  border-radius: 24px !important;
+  height: auto;
+  border-radius: 24px;
 }
 
 .scroll-container :deep(.image-wrapper) {
-  width: 100% !important;
-  height: 200px !important;
-  border-radius: 24px 24px 0 0 !important;
+  width: 100%;
+  height: 200px;
+  border-radius: 24px 24px 0 0;
 }
 
 .scroll-container :deep(.product-details) {
-  padding: 16px !important;
-  gap: 12px !important;
+  padding: 16px;
+  gap: 12px;
 }
 
 .scroll-container :deep(.product-name) {
-  font-size: 13px !important;
-  -webkit-line-clamp: 1 !important;
+  font-size: 13px;
+  -webkit-line-clamp: 1;
 }
 
 .scroll-container :deep(.price-row) {
-  margin-top: 0 !important;
+  margin-top: 0;
 }
 
 @media (min-width: 768px) {
@@ -755,7 +756,7 @@ watch(searchQuery, (newVal) => {
     width: 260px;
   }
   .scroll-container :deep(.image-wrapper) {
-    height: 260px !important;
+    height: 260px;
   }
 }
 

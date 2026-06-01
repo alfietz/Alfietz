@@ -20,6 +20,7 @@ defineEmits(['go-back', 'go-details', 'toggle-like'])
         v-for="item in favoriteItems" 
         :key="item.id" 
         :product="item" 
+        horizontal
         @select="$emit('go-details', item)"
         @toggle-like="(p) => $emit('toggle-like', p)"
       />
@@ -33,6 +34,8 @@ defineEmits(['go-back', 'go-details', 'toggle-like'])
   background-color: var(--wood-deep);
   min-height: 100vh;
   padding: 24px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .header-row {
