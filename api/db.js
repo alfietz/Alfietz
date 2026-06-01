@@ -9,8 +9,19 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Load environment variables
-dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+const envPath = path.resolve(process.cwd(), '.env');
+const envLocalPath = path.resolve(process.cwd(), '.env.local');
+
+dotenv.config({ path: envLocalPath });
+dotenv.config({ path: envPath });
+
+// Log for debugging (only names, not values)
+if (process.env.NODE_ENV === 'development') {
+  console.log('Environment loaded:', {
+    hasTursoUrl: !!(process.env.TURSO_URL || process.env.VITE_TURSO_URL),
+    hasResendKey: !!process.env.RESEND_API_KEY
+  });
+}
 
 const sanitize = (val) => typeof val === 'bigint' ? val.toString() : val;
 
@@ -52,6 +63,37 @@ async function checkRateLimit(client, key, limit, windowSeconds) {
 }
 
 export default async function handler(req, res) {
+  // CORS Headers
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization, X-Heritage-Platform, X-Heritage-App-Key'
+  );
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  // Platform Verification (Independence & Security)
+  const platform = req.headers['x-heritage-platform'] || 'unknown';
+  const appKey = req.headers['x-heritage-app-key'] || 'none';
+
+  // In production, these should be set via process.env for maximum security
+  const VALID_ANDROID_KEY = process.env.ANDROID_APP_KEY || 'heritage_android_secure_v1';
+  const VALID_WEB_KEY = process.env.WEB_APP_KEY || 'heritage_web_public_v1';
+
+  let isVerified = false;
+  if (platform === 'android' && appKey === VALID_ANDROID_KEY) isVerified = true;
+  if (platform === 'web' && appKey === VALID_WEB_KEY) isVerified = true;
+
+  // Reject unauthorized platforms or keys
+  if (!isVerified) {
+    console.error(`[Security] Unauthorized access attempt: Platform=${platform}, Key=${appKey}`);
+    return res.status(403).json({ error: 'Unauthorized Platform: Heritage access denied.' });
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }

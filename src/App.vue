@@ -13,6 +13,7 @@ import NavigationBar from './components/layout/NavigationBar.vue'
 import WebHeader from './components/layout/WebHeader.vue'
 import LoadingSpinner from './components/layout/LoadingSpinner.vue'
 import Splash from './components/layout/Splash.vue'
+import { Capacitor } from '@capacitor/core'
 import { SpeedInsights } from "@vercel/speed-insights/vue"
 import { Analytics } from "@vercel/analytics/vue"
 
@@ -845,8 +846,8 @@ const showNavBar = computed(() => {
       <span class="toast-message">{{ toast.message }}</span>
     </div>
 
-    <SpeedInsights />
-    <Analytics />
+    <SpeedInsights v-if="!Capacitor.isNativePlatform()" />
+    <Analytics v-if="!Capacitor.isNativePlatform()" />
   </div>
 </template>
 

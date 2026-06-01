@@ -4,41 +4,87 @@
  * the Turso URL and Auth Token from the frontend.
  */
 
+import { Capacitor, CapacitorHttp } from '@capacitor/core';
+
 export const db = {
+  /**
+   * Auto-discovers the correct API URL based on the environment.
+   */
+  getApiUrl: () => {
+    // 1. Check if a manual URL is provided in .env
+    if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+
+    // 2. If running as a Native App (Android/APK), use the production URL
+    if (Capacitor.isNativePlatform()) {
+      const url = 'https://alfie.vercel.app/api/db'; 
+      // alert(`Native API URL: ${url}`); // Temporary debug alert
+      return url;
+    }
+
+    // 3. Fallback to relative path for Web/Development
+    return '/api/db';
+  },
+
   /**
    * Runs a secure predefined action on the server.
    */
   runAction: async (action, params = {}) => {
     try {
+      const isNative = Capacitor.isNativePlatform();
       const headers = {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'X-Heritage-Platform': isNative ? 'android' : 'web',
+        'X-Heritage-App-Key': isNative 
+          ? (import.meta.env.VITE_ANDROID_APP_KEY || 'heritage_android_secure_v1')
+          : 'heritage_web_public_v1'
       };
 
       // Get token from storage
-      const token = localStorage.getItem('alfie_app_auth_token');
-      if (token) {
-        headers['Authorization'] = `Bearer ${JSON.parse(token)}`;
+      const tokenString = localStorage.getItem('alfie_app_auth_token');
+      if (tokenString) {
+        headers['Authorization'] = `Bearer ${JSON.parse(tokenString)}`;
       }
 
-      const response = await fetch('/api/db', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ action, params }, (key, value) =>
-          typeof value === 'bigint' ? value.toString() : value
-        ),
-      });
+      const apiUrl = db.getApiUrl();
+      const body = JSON.stringify({ action, params }, (key, value) =>
+        typeof value === 'bigint' ? value.toString() : value
+      );
 
-      if (response.status === 401) {
+      let data;
+      let status;
+
+      // Use CapacitorHttp for Native to bypass CORS and improve reliability
+      if (isNative) {
+        console.log(`[NativeRequest] Calling: ${apiUrl} for action: ${action}`);
+        const response = await CapacitorHttp.post({
+          url: apiUrl, // CapacitorHttp uses lowercase 'url'
+          headers,
+          data: JSON.parse(body)
+        });
+        data = response.data;
+        status = response.status;
+        console.log(`[NativeRequest] Status: ${status}`);
+      } else {
+        // Use standard fetch for Web
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers,
+          body
+        });
+        status = response.status;
+        data = await response.json();
+      }
+
+      if (status === 401) {
         // Session expired, clear local token
         localStorage.removeItem('alfie_app_auth_token');
       }
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Server responded with ${response.status}`);
+      if (status >= 400) {
+        throw new Error(data.error || `Server responded with ${status}`);
       }
 
-      return await response.json();
+      return data;
     } catch (error) {
       console.error(`Action Error [${action}]:`, error);
       throw error;
