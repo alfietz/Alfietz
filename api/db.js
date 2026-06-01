@@ -198,17 +198,34 @@ export default async function handler(req, res) {
         let productCount = 0;
 
         if (userId !== 'guest') {
-          const [favsRes, notifsRes, countRes] = await Promise.all([
+          const [favsRes, notifsRes, countRes, userStatsRes] = await Promise.all([
             client.execute({ sql: "SELECT product_id FROM favorites WHERE user_id = ?", args: [userId] }),
             client.execute({ sql: "SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC", args: [userId] }),
-            client.execute({ sql: "SELECT COUNT(*) as total FROM products WHERE owner_id = ?", args: [userId] })
+            client.execute({ sql: "SELECT COUNT(*) as total FROM products WHERE owner_id = ?", args: [userId] }),
+            client.execute({ 
+              sql: `
+                SELECT 
+                  (SELECT AVG(rating) FROM reviews WHERE product_id IN (SELECT id FROM products WHERE owner_id = u.id)) as avg_rating,
+                  (SELECT SUM(likes_count) FROM products WHERE owner_id = u.id) as total_likes
+                FROM users u WHERE u.id = ?
+              `, 
+              args: [userId] 
+            })
           ]);
           favorites = favsRes.rows.map(r => sanitize(r.product_id));
           notifications = mapRows(notifsRes);
           productCount = sanitize(countRes.rows[0]?.total || 0);
+          
+          const uStats = userStatsRes.rows[0];
+          customResponse = {
+            ...customResponse,
+            userRating: uStats ? sanitize(uStats.avg_rating || 0) : 0,
+            userTotalLikes: uStats ? sanitize(uStats.total_likes || 0) : 0
+          };
         }
 
         customResponse = {
+          ...customResponse,
           categories: mapRows(cats),
           trendingProducts: mapRows(trending),
           allProducts: mapRows(all),
@@ -410,9 +427,17 @@ export default async function handler(req, res) {
                  (SELECT created_at FROM messages WHERE (sender_id = u.id AND receiver_id = ?) OR (sender_id = ? AND receiver_id = u.id) ORDER BY created_at DESC LIMIT 1) as last_message_time,
                  (SELECT COUNT(*) FROM messages WHERE sender_id = u.id AND receiver_id = ? AND is_read = 0) as unread_count
           FROM users u
-          WHERE u.id IN (SELECT DISTINCT sender_id FROM messages WHERE receiver_id = ? UNION SELECT DISTINCT receiver_id FROM messages WHERE sender_id = ?)
+          WHERE u.id IN (
+            SELECT DISTINCT sender_id FROM messages WHERE receiver_id = ? 
+            UNION 
+            SELECT DISTINCT receiver_id FROM messages WHERE sender_id = ?
+            UNION
+            SELECT DISTINCT customer_id FROM negotiations WHERE tailor_id = ?
+            UNION
+            SELECT DISTINCT tailor_id FROM negotiations WHERE customer_id = ?
+          )
         `;
-        args = [params.userId, params.userId, params.userId, params.userId, params.userId, params.userId, params.userId];
+        args = [params.userId, params.userId, params.userId, params.userId, params.userId, params.userId, params.userId, params.userId, params.userId];
         break;
 
       case 'get_messages':
@@ -422,9 +447,12 @@ export default async function handler(req, res) {
 
       case 'get_orders':
         sql = `
-          SELECT o.*, u.first_name as tailor_first_name, u.last_name as tailor_last_name, u.username as tailor_name, u.whatsapp as tailor_phone
+          SELECT o.*, 
+                 u_tailor.first_name as tailor_first_name, u_tailor.last_name as tailor_last_name, u_tailor.username as tailor_username, u_tailor.whatsapp as tailor_phone,
+                 u_customer.first_name as customer_first_name, u_customer.last_name as customer_last_name, u_customer.username as customer_username, u_customer.whatsapp as customer_phone
           FROM orders o
-          LEFT JOIN users u ON o.tailor_id = u.id
+          JOIN users u_tailor ON o.tailor_id = u_tailor.id
+          JOIN users u_customer ON o.customer_id = u_customer.id
           WHERE o.customer_id = ? OR o.tailor_id = ? 
           ORDER BY o.created_at DESC
         `;
@@ -433,8 +461,26 @@ export default async function handler(req, res) {
 
       case 'get_tailor_console_data':
         const [cOrders, cNegs, cProducts, cRevs] = await Promise.all([
-          client.execute({ sql: "SELECT * FROM orders WHERE tailor_id = ? ORDER BY created_at DESC", args: [params.userId] }),
-          client.execute({ sql: "SELECT * FROM negotiations WHERE tailor_id = ? ORDER BY created_at DESC", args: [params.userId] }),
+          client.execute({ 
+            sql: `
+              SELECT o.*, u.first_name, u.last_name, u.username, u.whatsapp as customer_phone
+              FROM orders o
+              JOIN users u ON o.customer_id = u.id
+              WHERE o.tailor_id = ? 
+              ORDER BY o.created_at DESC
+            `, 
+            args: [params.userId] 
+          }),
+          client.execute({ 
+            sql: `
+              SELECT n.*, u.first_name, u.last_name, u.username, u.whatsapp as customer_phone
+              FROM negotiations n
+              JOIN users u ON n.customer_id = u.id
+              WHERE n.tailor_id = ? 
+              ORDER BY n.created_at DESC
+            `, 
+            args: [params.userId] 
+          }),
           client.execute({ sql: "SELECT p.*, c.name as categoryName FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE p.owner_id = ? ORDER BY p.id DESC", args: [params.userId] }),
           client.execute({ sql: "SELECT r.*, u.first_name, u.last_name, u.username, u.avatar as author_avatar FROM reviews r JOIN users u ON r.user_id = u.id WHERE r.product_id IN (SELECT id FROM products WHERE owner_id = ?) ORDER BY r.created_at DESC LIMIT 5", args: [params.userId] })
         ]);
@@ -457,7 +503,17 @@ export default async function handler(req, res) {
       // Fallback for remaining simple actions
       case 'update_profile':
         sql = 'UPDATE users SET username = ?, first_name = ?, last_name = ?, whatsapp = ?, avatar = ?, user_type = ?, needs = ?, gives = ? WHERE id = ?';
-        args = [params.username, params.firstName, params.lastName, params.whatsapp, params.avatar, params.userType, params.needs, params.gives, params.id];
+        args = [
+          sanitize(params.username), 
+          sanitize(params.firstName), 
+          sanitize(params.lastName), 
+          sanitize(params.whatsapp), 
+          sanitize(params.avatar), 
+          sanitize(params.userType), 
+          sanitize(params.needs || ''), 
+          sanitize(params.gives || ''), 
+          sanitize(params.id)
+        ];
         break;
       case 'delete_product':
         await client.execute({ sql: 'DELETE FROM favorites WHERE product_id = ?', args: [params.productId] });

@@ -60,7 +60,7 @@ const fetchData = async () => {
     activeOrders.value = data.orders.map(o => ({
       id: o.id,
       item: o.item_name,
-      customer: `${o.first_name || ''} ${o.last_name || ''}`.trim(),
+      customer: (o.first_name || o.last_name) ? `${o.first_name || ''} ${o.last_name || ''}`.trim() : o.username,
       customer_id: o.customer_id,
       customerFirstName: o.first_name,
       customerPhone: o.customer_phone,
@@ -75,7 +75,7 @@ const fetchData = async () => {
 
     negotiations.value = data.negotiations.map(n => ({
       id: n.id,
-      customer: `${n.first_name || ''} ${n.last_name || ''}`.trim(),
+      customer: (n.first_name || n.last_name) ? `${n.first_name || ''} ${n.last_name || ''}`.trim() : n.username,
       customer_id: n.customer_id,
       customerFirstName: n.first_name,
       customerPhone: n.customer_phone,

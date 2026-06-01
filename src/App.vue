@@ -13,7 +13,6 @@ import NavigationBar from './components/layout/NavigationBar.vue'
 import WebHeader from './components/layout/WebHeader.vue'
 import LoadingSpinner from './components/layout/LoadingSpinner.vue'
 import Splash from './components/layout/Splash.vue'
-import { Capacitor } from '@capacitor/core'
 import { SpeedInsights } from "@vercel/speed-insights/vue"
 import { Analytics } from "@vercel/analytics/vue"
 
@@ -395,9 +394,8 @@ const fetchInitialData = async (force = false) => {
     }
 
     if (userData.value.id !== 'guest') {
-      const myUser = data.trendingSellers.find(s => s.id === userData.value.id);
-      if (myUser) {
-        userData.value.rating = myUser.avg_rating ? parseFloat(myUser.avg_rating).toFixed(1) : '0.0';
+      if (data.userRating !== undefined) {
+        userData.value.rating = parseFloat(data.userRating || 0).toFixed(1);
       }
       userNotifications.value = data.notifications;
       userProductCount.value = data.productCount;
@@ -645,6 +643,7 @@ const handleUpdateProfile = async (val) => {
   try {
     await db.runAction('update_profile', val);
     userData.value = { ...val };
+    setStored('user_data', userData.value);
     showToast('Profile updated successfully!', 'success')
     await fetchInitialData();
     navigateTo('profile');
@@ -776,6 +775,7 @@ const showNavBar = computed(() => {
           @go-login="navigateTo('login')"
           @go-forgot="navigateTo('forgot-password')"
           @go-settings="navigateTo('settings')"
+          @go-edit-profile="navigateTo('edit-profile')"
           @go-console="navigateTo('tailor-console')"
           @go-orders="navigateTo('orders')"
           @go-negotiations="navigateTo('orders')"
@@ -846,8 +846,8 @@ const showNavBar = computed(() => {
       <span class="toast-message">{{ toast.message }}</span>
     </div>
 
-    <SpeedInsights v-if="!Capacitor.isNativePlatform()" />
-    <Analytics v-if="!Capacitor.isNativePlatform()" />
+    <SpeedInsights />
+    <Analytics />
   </div>
 </template>
 

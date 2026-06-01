@@ -4,8 +4,6 @@
  * the Turso URL and Auth Token from the frontend.
  */
 
-import { Capacitor, CapacitorHttp } from '@capacitor/core';
-
 export const db = {
   /**
    * Auto-discovers the correct API URL based on the environment.
@@ -14,14 +12,7 @@ export const db = {
     // 1. Check if a manual URL is provided in .env
     if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
 
-    // 2. If running as a Native App (Android/APK), use the production URL
-    if (Capacitor.isNativePlatform()) {
-      const url = 'https://alfie.vercel.app/api/db'; 
-      // alert(`Native API URL: ${url}`); // Temporary debug alert
-      return url;
-    }
-
-    // 3. Fallback to relative path for Web/Development
+    // 2. Fallback to relative path for Web/Development
     return '/api/db';
   },
 
@@ -30,13 +21,10 @@ export const db = {
    */
   runAction: async (action, params = {}) => {
     try {
-      const isNative = Capacitor.isNativePlatform();
       const headers = {
         'Content-Type': 'application/json',
-        'X-Heritage-Platform': isNative ? 'android' : 'web',
-        'X-Heritage-App-Key': isNative 
-          ? (import.meta.env.VITE_ANDROID_APP_KEY || 'heritage_android_secure_v1')
-          : 'heritage_web_public_v1'
+        'X-Heritage-Platform': 'web',
+        'X-Heritage-App-Key': 'heritage_web_public_v1'
       };
 
       // Get token from storage
@@ -50,30 +38,14 @@ export const db = {
         typeof value === 'bigint' ? value.toString() : value
       );
 
-      let data;
-      let status;
-
-      // Use CapacitorHttp for Native to bypass CORS and improve reliability
-      if (isNative) {
-        console.log(`[NativeRequest] Calling: ${apiUrl} for action: ${action}`);
-        const response = await CapacitorHttp.post({
-          url: apiUrl, // CapacitorHttp uses lowercase 'url'
-          headers,
-          data: JSON.parse(body)
-        });
-        data = response.data;
-        status = response.status;
-        console.log(`[NativeRequest] Status: ${status}`);
-      } else {
-        // Use standard fetch for Web
-        const response = await fetch(apiUrl, {
-          method: 'POST',
-          headers,
-          body
-        });
-        status = response.status;
-        data = await response.json();
-      }
+      // Use standard fetch for Web
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers,
+        body
+      });
+      const status = response.status;
+      const data = await response.json();
 
       if (status === 401) {
         // Session expired, clear local token

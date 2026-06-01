@@ -1,8 +1,9 @@
+<!-------- (Help.vue) ./src/components/communication/Help.vue ------------>
 <script setup>
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-defineEmits(['go-back'])
+defineEmits(['go-back', 'navigate'])
 
 const navigateTo = (routeName) => {
   console.log(`[Help] Navigating to: ${routeName}`);
@@ -13,10 +14,10 @@ const navigateTo = (routeName) => {
 </script>
 
 <template>
-  <div class="help-page">
+  <div class="help-page pattern-heritage animate-fade">
     <div class="header-row">
       <button class="back-btn" @click="$emit('go-back')">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
       </button>
       <h1 class="title">Help & Legal Center</h1>
     </div>
@@ -109,52 +110,125 @@ const navigateTo = (routeName) => {
 </template>
 
 <style scoped>
-.help-page { background-color: var(--wood-deep); min-height: 100vh; padding: 24px 20px; display: flex; flex-direction: column; }
-.header-row { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; flex-shrink: 0; }
-.title { font-size: 22px; font-weight: 600; color: var(--text-primary); margin: 0; }
+.help-page {
+  background-color: var(--wood-deep);
+  min-height: 100vh;
+  padding: 40px 24px;
+  max-width: 800px;
+  margin: 0 auto;
+}
 
-.content-scroll { flex: 1; overflow-y: auto; padding-bottom: 40px; }
+.header-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 40px;
+}
 
-.legal-section { margin-bottom: 40px; }
-h3 { font-size: 18px; font-weight: 600; color: var(--text-amber); margin: 0 0 8px 0; }
-.section-desc { font-size: 14px; color: var(--text-muted); margin: 0 0 16px 0; line-height: 1.5; }
+.back-btn {
+  background-color: var(--wood-walnut) !important;
+  border: 1px solid var(--glass-border) !important;
+  color: var(--text-primary) !important;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease !important;
+}
 
-.legal-links { display: flex; flex-direction: column; gap: 12px; }
+.back-btn:hover {
+  background-color: var(--wood-polished) !important;
+  border-color: var(--accent-amber) !important;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.content-scroll {
+  padding-bottom: 40px;
+}
+
+.legal-section {
+  margin-bottom: 40px;
+}
+
+h3 {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-amber);
+  margin: 0 0 12px 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.section-desc {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin: 0 0 20px 0;
+  line-height: 1.6;
+}
+
+.legal-links {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .legal-link-btn { 
-  display: flex; justify-content: space-between; align-items: center; 
-  background: var(--wood-walnut); border: 1px solid var(--border-color); 
-  padding: 16px; border-radius: 12px; color: var(--text-primary); 
-  font-size: 15px; font-weight: 500; cursor: pointer; transition: all 0.2s;
-}
-.legal-link-btn:hover { background: var(--wood-medium); border-color: var(--text-amber); }
-.legal-link-btn svg { color: var(--text-amber); }
-
-.faq-section { margin-bottom: 24px; }
-.faq-item { background: var(--wood-walnut); padding: 16px; border-radius: 12px; margin-bottom: 12px; border: 1px solid var(--border-color); }
-.faq-item h4 { font-size: 15px; font-weight: 600; color: var(--text-primary); margin: 0 0 8px 0; }
-.faq-item p { font-size: 14px; color: var(--text-secondary); margin: 0; line-height: 1.5; }
-
-.back-btn {
-  background-color: var(--wood-walnut) !important;
-  border: 1px solid var(--glass-border) !important;
-  color: var(--text-primary) !important;
-  transition: all 0.2s ease !important;
+  display: flex;
+  justify-content: space-between;
+  align-items: center; 
+  background: var(--wood-walnut);
+  border: 1px solid var(--glass-border); 
+  padding: 16px;
+  border-radius: 12px;
+  color: var(--text-primary); 
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
 }
 
-.back-btn:hover {
-  background-color: var(--wood-polished) !important;
-  border-color: var(--accent-amber) !important;
+.legal-link-btn:hover {
+  background: var(--wood-polished);
+  border-color: var(--accent-amber);
+  transform: translateX(4px);
 }
 
-.back-btn {
-  background-color: var(--wood-walnut) !important;
-  border: 1px solid var(--glass-border) !important;
-  color: var(--text-primary) !important;
-  transition: all 0.2s ease !important;
+.legal-link-btn svg {
+  color: var(--accent-amber);
 }
 
-.back-btn:hover {
-  background-color: var(--wood-polished) !important;
-  border-color: var(--accent-amber) !important;
+.faq-section {
+  margin-top: 20px;
+}
+
+.faq-item {
+  background: var(--wood-walnut);
+  padding: 20px;
+  border-radius: 16px;
+  margin-bottom: 16px;
+  border: 1px solid var(--glass-border);
+}
+
+.faq-item h4 {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0 0 8px 0;
+}
+
+.faq-item p {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.6;
 }
 </style>

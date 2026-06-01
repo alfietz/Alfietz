@@ -1,4 +1,4 @@
-<!-------- (ReviewsList.vue) ./src/components/ReviewsList.vue ------------>
+<!-------- (ReviewsList.vue) ./src/components/communication/ReviewsList.vue ------------>
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
 import { db } from '../../db/client'
@@ -20,7 +20,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['go-back', 'write-review', 'go-product'])
+const emit = defineEmits(['go-back', 'write-review', 'go-product', 'navigate'])
 
 const reviews = ref([])
 const loading = ref(true)
@@ -66,8 +66,6 @@ const fetchReviews = async () => {
   try {
     loading.value = true
     
-    // Prioritize the context: if it's app reviews, ignore IDs. 
-    // If it's tailor reviews, ignore product IDs (prevents App.vue fallback collision).
     const res = await db.runAction('get_reviews', {
       isApp: props.isApp,
       tailorId: props.isApp ? null : props.tailorId,
@@ -120,10 +118,10 @@ function formatDate(dateStr) {
 </script>
 
 <template>
-  <div class="reviews-page">
+  <div class="reviews-page pattern-heritage animate-fade">
     <div class="header-row">
       <button class="back-btn" @click="$emit('go-back')">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
       </button>
       <h1 class="title">
         {{ isApp ? 'Tribe Experiences' : (tailorId ? (tailorInfo ? tailorInfo.name + "'s Reviews" : 'Artisan Reviews') : 'Heritage Reviews') }}
@@ -242,99 +240,25 @@ function formatDate(dateStr) {
 </template>
 
 <style scoped>
-/* ... (existing styles) ... */
-
-.review-media-box {
-  margin-top: 12px;
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid var(--glass-border);
-  max-width: 300px;
-}
-
-.review-img {
-  width: 100%;
-  height: auto;
-  display: block;
-}
-
-.product-context {
-  margin: 0 -4px 4px;
-  background: rgba(0,0,0,0.15);
-  border-radius: 12px;
-  padding: 8px 12px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  cursor: pointer;
-  border: 1px solid transparent;
-  transition: all 0.2s;
-}
-
-.product-context:hover {
-  background: rgba(0,0,0,0.25);
-  border-color: rgba(217, 164, 4, 0.2);
-}
-
-.product-mini-img-box {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  overflow: hidden;
-  background: var(--wood-deep);
-  flex-shrink: 0;
-}
-
-.product-mini-img-box img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.product-context-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.context-label {
-  font-size: 9px;
-  font-weight: 800;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  letter-spacing: 0.5px;
-}
-
-.context-name {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text-amber);
-}
-
-/* ... rest of existing styles ... */
-
-<style scoped>
 .reviews-page {
   background: var(--wood-deep);
   min-height: 100vh;
-  font-family: 'Inter', -apple-system, sans-serif;
-  padding: 24px 20px 140px;
+  padding: 40px 24px 140px;
   max-width: 800px;
   margin: 0 auto;
-  display: flex;
-  flex-direction: column;
 }
 
 .header-row {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 32px;
+  gap: 20px;
+  margin-bottom: 40px;
 }
 
 .back-btn {
-  background-color: var(--wood-walnut);
-  border: 1px solid var(--glass-border);
+  background-color: var(--wood-walnut) !important;
+  border: 1px solid var(--glass-border) !important;
+  color: var(--text-primary) !important;
   border-radius: 50%;
   width: 44px;
   height: 44px;
@@ -342,22 +266,19 @@ function formatDate(dateStr) {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: var(--text-primary);
-  transition: all 0.2s ease;
+  transition: all 0.2s ease !important;
 }
 
 .back-btn:hover {
-  background-color: var(--wood-polished);
-  border-color: var(--accent-amber);
-  transform: scale(1.05);
+  background-color: var(--wood-polished) !important;
+  border-color: var(--accent-amber) !important;
 }
 
 .title {
   font-size: 24px;
   font-weight: 800;
-  color: var(--text-amber);
+  color: var(--text-primary);
   margin: 0;
-  letter-spacing: -0.5px;
 }
 
 .loading-reviews {
@@ -383,7 +304,6 @@ function formatDate(dateStr) {
   to { transform: rotate(360deg); }
 }
 
-/* Rating Overview Card */
 .rating-overview-card {
   background: var(--wood-walnut);
   border: 1px solid var(--glass-border);
@@ -392,10 +312,9 @@ function formatDate(dateStr) {
   display: flex;
   gap: 32px;
   margin-bottom: 32px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
 }
 
-@media (max-width: 500px) {
+@media (max-width: 600px) {
   .rating-overview-card {
     flex-direction: column;
     gap: 24px;
@@ -416,8 +335,7 @@ function formatDate(dateStr) {
   font-size: 48px;
   font-weight: 800;
   color: var(--text-primary);
-  margin: 0 0 4px 0;
-  line-height: 1;
+  margin: 0;
 }
 
 .star-rating {
@@ -433,9 +351,8 @@ function formatDate(dateStr) {
 
 .rating-count {
   font-size: 14px;
-  font-weight: 600;
   color: var(--text-muted);
-  margin: 8px 0 0 0;
+  margin-top: 8px;
 }
 
 .rating-bars {
@@ -451,18 +368,13 @@ function formatDate(dateStr) {
   align-items: center;
   gap: 12px;
   cursor: pointer;
-  transition: all 0.2s;
   padding: 4px;
   border-radius: 8px;
+  transition: background 0.2s;
 }
 
-.rating-bar-row:hover {
-  background: rgba(255,255,255,0.05);
-}
-
-.rating-bar-row.active {
-  background: rgba(217, 164, 4, 0.1);
-}
+.rating-bar-row:hover { background: rgba(255,255,255,0.05); }
+.rating-bar-row.active { background: rgba(217, 164, 4, 0.1); }
 
 .star-label {
   font-size: 12px;
@@ -482,30 +394,22 @@ function formatDate(dateStr) {
 .bar-fill {
   height: 100%;
   background: var(--accent-amber);
-  border-radius: 3px;
-  transition: width 0.8s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+  transition: width 0.8s ease;
 }
 
 .count-label {
   font-size: 12px;
-  font-weight: 600;
   color: var(--text-muted);
   width: 20px;
   text-align: right;
 }
 
-/* Controls */
 .reviews-controls {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
   gap: 12px;
-  flex-wrap: wrap;
-}
-
-.sort-select-wrapper {
-  position: relative;
 }
 
 .sort-select {
@@ -515,22 +419,8 @@ function formatDate(dateStr) {
   padding: 10px 16px;
   border-radius: 12px;
   font-size: 14px;
-  font-weight: 600;
   outline: none;
   cursor: pointer;
-  appearance: none;
-  min-width: 160px;
-}
-
-.sort-select-wrapper::after {
-  content: '▼';
-  font-size: 10px;
-  position: absolute;
-  right: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-muted);
-  pointer-events: none;
 }
 
 .clear-filter {
@@ -544,7 +434,6 @@ function formatDate(dateStr) {
   cursor: pointer;
 }
 
-/* Reviews List */
 .reviews-list {
   display: flex;
   flex-direction: column;
@@ -559,11 +448,6 @@ function formatDate(dateStr) {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  transition: transform 0.2s;
-}
-
-.review-card:hover {
-  border-color: rgba(217, 164, 4, 0.3);
 }
 
 .review-header {
@@ -571,45 +455,18 @@ function formatDate(dateStr) {
   gap: 16px;
 }
 
-.avatar-wrapper {
-  position: relative;
-}
-
 .avatar {
   width: 52px;
   height: 52px;
   border-radius: 16px;
   object-fit: cover;
-  border: 2px solid var(--glass-border);
-}
-
-.top-reviewer-badge {
-  position: absolute;
-  bottom: -4px;
-  right: -4px;
-  background: var(--accent-amber);
-  color: white;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid var(--wood-walnut);
 }
 
 .reviewer-info {
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   gap: 4px;
-}
-
-.name-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
 .reviewer-name {
@@ -620,16 +477,16 @@ function formatDate(dateStr) {
 }
 
 .verified-badge {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 4px;
   font-size: 10px;
   font-weight: 800;
   color: #10B981;
-  text-transform: uppercase;
   background: rgba(16, 185, 129, 0.1);
   padding: 2px 6px;
   border-radius: 6px;
+  width: fit-content;
 }
 
 .meta-row {
@@ -640,14 +497,35 @@ function formatDate(dateStr) {
 
 .review-time {
   font-size: 12px;
-  font-weight: 500;
   color: var(--text-muted);
 }
 
-.review-content {
-  border-left: 2px solid rgba(255,255,255,0.05);
-  padding-left: 16px;
+.product-context {
+  background: rgba(0,0,0,0.15);
+  border-radius: 12px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
 }
+
+.product-mini-img-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.product-mini-img-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product-context-info { flex: 1; display: flex; flex-direction: column; }
+.context-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; }
+.context-name { font-size: 13px; font-weight: 700; color: var(--text-amber); }
 
 .review-text {
   margin: 0;
@@ -655,6 +533,15 @@ function formatDate(dateStr) {
   line-height: 1.6;
   color: var(--text-muted);
 }
+
+.review-media-box {
+  margin-top: 12px;
+  border-radius: 12px;
+  overflow: hidden;
+  max-width: 300px;
+}
+
+.review-img { width: 100%; display: block; }
 
 .review-footer {
   display: flex;
@@ -669,34 +556,19 @@ function formatDate(dateStr) {
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  transition: color 0.2s;
+  color: var(--text-muted);
 }
 
-.helpful-btn { color: var(--text-muted); }
-.helpful-btn:hover { color: var(--accent-amber); }
-
-.report-btn { color: rgba(255,255,255,0.2); margin-left: auto; }
-.report-btn:hover { color: #EF4444; }
+.report-btn { margin-left: auto; color: rgba(255,255,255,0.2); }
 
 .no-reviews {
   text-align: center;
   padding: 60px 20px;
   color: var(--text-muted);
-  background: var(--wood-walnut);
   border-radius: 24px;
   border: 1px dashed var(--glass-border);
 }
 
-.empty-icon {
-  font-size: 40px;
-  margin-bottom: 16px;
-  opacity: 0.5;
-}
-
-/* Bottom Action */
 .bottom-action {
   position: fixed;
   bottom: 0;
@@ -725,24 +597,5 @@ function formatDate(dateStr) {
   justify-content: center;
   gap: 12px;
   box-shadow: 0 10px 25px var(--accent-glow);
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.primary-btn:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 15px 30px var(--accent-glow);
-}
-
-.primary-btn:active {
-  transform: scale(0.95);
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.4s ease-out forwards;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 </style>

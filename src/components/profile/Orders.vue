@@ -21,6 +21,22 @@ const STORAGE_KEY = 'alfie_orders_cache'
 const orders = ref([])
 const loading = ref(true)
 
+const dialog = ref({
+  show: false,
+  title: '',
+  message: '',
+  type: 'info'
+})
+
+const showDialog = (options) => {
+  dialog.value = {
+    show: true,
+    title: options.title || '',
+    message: options.message || '',
+    type: options.type || 'info'
+  }
+}
+
 onMounted(async () => {
   // 1. Instant Cache Load
   const cached = localStorage.getItem(STORAGE_KEY)
@@ -43,7 +59,7 @@ const fetchOrders = async () => {
     const newOrders = res.rows.map(o => ({
       id: o.id,
       item: o.item_name,
-      tailor: o.tailor_name,
+      tailor: (o.tailor_first_name || o.tailor_last_name) ? `${o.tailor_first_name || ''} ${o.tailor_last_name || ''}`.trim() : o.tailor_username,
       tailor_id: o.tailor_id,
       tailorFirstName: o.tailor_first_name,
       tailorPhone: o.tailor_phone,

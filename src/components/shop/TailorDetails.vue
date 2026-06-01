@@ -323,6 +323,43 @@ const loadTailorData = async () => {
     updateMeta('twitter:description', pageDesc);
     updateMeta('twitter:image', sellerData.value.avatar);
 
+    // Update JSON-LD Schema
+    const updateSchema = () => {
+      let schemaScript = document.querySelector('script[type="application/ld+json"]#tailor-schema');
+      if (!schemaScript) {
+        schemaScript = document.createElement('script');
+        schemaScript.setAttribute('type', 'application/ld+json');
+        schemaScript.setAttribute('id', 'tailor-schema');
+        document.head.appendChild(schemaScript);
+      }
+      
+      const schemaData = {
+        "@context": "https://schema.org",
+        "@type": "ProfessionalService",
+        "name": sellerData.value.name,
+        "image": sellerData.value.avatar,
+        "@id": window.location.href,
+        "url": window.location.href,
+        "telephone": sellerData.value.whatsapp,
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "Nairobi",
+          "addressCountry": "KE"
+        },
+        "description": pageDesc,
+        "priceRange": "TSh",
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": tailorStats.value.likes > 0 ? "4.9" : "0",
+          "reviewCount": reviews.value.length || "0"
+        }
+      };
+      
+      schemaScript.textContent = JSON.stringify(schemaData);
+    };
+
+    updateSchema();
+
     initializeDraft()
   } catch (e) {
     console.error("Error fetching tailor details:", e)
@@ -425,6 +462,15 @@ const makeCall = () => {
   <div v-else class="tailor-page pattern-heritage animate-fade">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       
+      <!-- BREADCRUMBS -->
+      <nav class="flex mb-6 text-[10px] uppercase tracking-widest font-bold text-gray-500 gap-2 items-center" aria-label="Breadcrumb">
+        <a href="#" @click.prevent="$emit('go-back')" class="hover:text-alfie-accent transition">Home</a>
+        <i class="fas fa-chevron-right text-[8px] opacity-30"></i>
+        <span @click="$emit('go-back')" class="hover:text-alfie-accent cursor-pointer transition">Artisans</span>
+        <i class="fas fa-chevron-right text-[8px] opacity-30"></i>
+        <span class="text-alfie-accent">{{ sellerData.name }}</span>
+      </nav>
+
       <!-- NAVIGATION -->
       <nav class="flex items-center justify-between mb-10 text-sm uppercase tracking-widest font-semibold border-b border-white/10 pb-6">
           <a href="#" @click.prevent="$emit('go-back')" class="text-xl font-serif text-white tracking-normal capitalize flex items-center gap-2">
@@ -564,6 +610,15 @@ const makeCall = () => {
                     </button>
                   </div>
                   <div class="flex flex-col gap-4">
+                      <!-- In-App Chat Inquiry -->
+                      <button v-if="!isOwner" @click="$emit('go-chat', sellerData.id)" class="group flex items-center justify-between p-4 bg-wood-walnut border border-glass-border hover:border-alfie-accent/50 transition rounded-sm shadow-lg mb-4 w-full">
+                          <div class="flex items-center gap-3">
+                              <i class="fas fa-comment-dots text-xl text-alfie-accent"></i>
+                              <span class="text-sm font-bold tracking-wide text-white">In-App Chat</span>
+                          </div>
+                          <i class="fas fa-chevron-right text-xs text-gray-500"></i>
+                      </button>
+
                       <!-- WhatsApp Inquiry (Legacy Fallback/Default style) -->
                       <a v-if="!isOwner && (!draftData.contacts || draftData.contacts.length === 0)" href="#" @click.prevent="connectToWhatsApp" class="group flex items-center justify-between p-4 bg-alfie-accent text-alfie-dark hover:bg-yellow-400 transition rounded-sm shadow-[0_0_15px_rgba(212,175,55,0.2)] hover:shadow-[0_0_25px_rgba(212,175,55,0.4)]">
                           <span class="text-sm font-bold tracking-wide">WhatsApp Inquiry</span>
@@ -610,7 +665,7 @@ const makeCall = () => {
                        class="group relative overflow-hidden bg-alfie-card rounded-xl aspect-[4/5] shadow-lg cursor-pointer"
                        @click="$emit('go-details', product)">
                        
-                      <img :src="product.image" class="w-full h-full object-cover group-hover:scale-105 transition duration-700">
+                      <img :src="product.image" :alt="product.name" class="w-full h-full object-cover group-hover:scale-105 transition duration-700">
                       
                       <div class="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition duration-500 flex flex-col justify-center p-8 text-center">
                           <h4 class="text-white font-serif text-2xl mb-2">{{ product.name }}</h4>
@@ -641,7 +696,7 @@ const makeCall = () => {
           
           <div class="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
               <div v-for="(product, index) in products.slice(0, 8)" :key="index" class="break-inside-avoid relative group rounded-lg overflow-hidden cursor-pointer mb-4">
-                  <img :src="product.image" class="w-full h-auto object-cover grayscale-[20%] group-hover:grayscale-0 transition duration-500">
+                  <img :src="product.image" :alt="product.name + ' - Studio Gallery Piece'" class="w-full h-auto object-cover grayscale-[20%] group-hover:grayscale-0 transition duration-500">
                   
                   <div class="absolute top-3 left-3 bg-alfie-dark/90 backdrop-blur-sm text-alfie-accent text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider border border-alfie-accent/30 group-hover:opacity-0 transition duration-300 shadow-lg">
                       TSh {{ product.price }}

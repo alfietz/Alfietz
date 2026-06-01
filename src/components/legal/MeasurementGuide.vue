@@ -1,12 +1,13 @@
+<!-------- (MeasurementGuide.vue) ./src/components/legal/MeasurementGuide.vue ------------>
 <script setup>
 defineEmits(['go-back'])
 </script>
 
 <template>
-  <div class="document-page">
+  <div class="document-page pattern-heritage animate-fade">
     <div class="header-row">
       <button class="back-btn" @click="$emit('go-back')">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
       </button>
       <h1 class="title">Measurement Guide</h1>
     </div>
@@ -38,27 +39,41 @@ defineEmits(['go-back'])
         <li><strong>Wear Thin Clothing:</strong> Take measurements while wearing thin undergarments or light clothing for the best fit.</li>
       </ul>
 
-      <p class="pro-tip"><strong>Pro Tip:</strong> When ordering on Alfietz, you can paste these measurements into the "Special Requirements" box during your WhatsApp order!</p>
+      <div class="pro-tip">
+        <h3>Pro Tip</h3>
+        <p>When ordering on Alfietz, you can paste these measurements into the "Special Requirements" box during your WhatsApp order!</p>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.document-page { background-color: var(--wood-deep); min-height: 100vh; padding: 24px 20px; display: flex; flex-direction: column; }
-.header-row { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; flex-shrink: 0; }
-.title { font-size: 22px; font-weight: 600; color: var(--text-primary); margin: 0; }
-.content-scroll { flex: 1; overflow-y: auto; padding-bottom: 40px; }
-.last-updated { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; font-style: italic; }
-h2 { font-size: 16px; font-weight: 600; color: var(--text-amber); margin: 24px 0 8px 0; }
-p, li { font-size: 14px; color: var(--text-primary); line-height: 1.6; margin: 0 0 12px 0; }
-ul { padding-left: 20px; margin-bottom: 16px; }
-.pro-tip { background: var(--wood-walnut); padding: 16px; border-radius: 12px; border: 1px solid var(--accent-amber); margin-top: 24px; }
-strong { color: var(--text-amber); font-weight: 600; }
+.document-page {
+  background-color: var(--wood-deep);
+  min-height: 100vh;
+  padding: 40px 24px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 40px;
+}
 
 .back-btn {
   background-color: var(--wood-walnut) !important;
   border: 1px solid var(--glass-border) !important;
   color: var(--text-primary) !important;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
   transition: all 0.2s ease !important;
 }
 
@@ -67,15 +82,78 @@ strong { color: var(--text-amber); font-weight: 600; }
   border-color: var(--accent-amber) !important;
 }
 
-.back-btn {
-  background-color: var(--wood-walnut) !important;
-  border: 1px solid var(--glass-border) !important;
-  color: var(--text-primary) !important;
-  transition: all 0.2s ease !important;
+.title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
 }
 
-.back-btn:hover {
-  background-color: var(--wood-polished) !important;
-  border-color: var(--accent-amber) !important;
+.content-scroll {
+  padding-bottom: 40px;
+}
+
+.last-updated {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 32px;
+  font-style: italic;
+  display: block;
+  border-left: 2px solid var(--accent-amber);
+  padding-left: 12px;
+}
+
+h2 {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-amber);
+  margin: 32px 0 12px 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+p {
+  font-size: 15px;
+  color: var(--text-muted);
+  line-height: 1.7;
+  margin: 0 0 20px 0;
+}
+
+ul {
+  padding-left: 20px;
+  margin-bottom: 24px;
+}
+
+li {
+  font-size: 15px;
+  color: var(--text-muted);
+  line-height: 1.7;
+  margin-bottom: 12px;
+}
+
+strong {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.pro-tip {
+  background: var(--wood-walnut);
+  padding: 24px;
+  border-radius: 16px;
+  border: 1px solid var(--accent-amber);
+  margin-top: 40px;
+}
+
+.pro-tip h3 {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--accent-amber);
+  margin: 0 0 8px 0;
+  text-transform: uppercase;
+}
+
+.pro-tip p {
+  margin-bottom: 0;
+  font-style: italic;
 }
 </style>
