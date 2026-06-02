@@ -657,12 +657,7 @@ export default async function handler(req, res) {
             from: 'Alfietz <info@alfietz.shop>',
             to: params.email,
             subject: 'Your Heritage Verification Code',
-            template: { 
-              id: '374690a1-273f-4ed3-85ef-7608bc84acaf',
-              variables: {
-                VERIFICATION_CODE: otp
-              }
-            }
+            text: `Your Heritage verification code is: ${otp}\n\nThis code will expire in 30 minutes. If you did not request this, please ignore this email.`
           });
           if (error) {
             console.error('Email Sending Error:', error);
@@ -726,20 +721,12 @@ export default async function handler(req, res) {
           
           if (customerRes.rows.length > 0) {
             const customer = customerRes.rows[0];
+            const customerName = sanitize(customer[1]);
             const { data, error } = await resend.emails.send({
               from: 'Alfietz <info@alfietz.shop>',
               to: sanitize(customer[0]),
               subject: 'Your Heritage Order is Confirmed!',
-              template: { 
-                id: 'order-confirmation',
-                variables: {
-                  NAME: sanitize(customer[1]),
-                  PRODUCT: params.itemName,
-                  PRICE: params.price,
-                  SIZE: params.size,
-                  COLOR: params.color
-                }
-              }
+              text: `Habari ${customerName}!\n\nYour order for "${params.itemName}" has been placed successfully.\n\nOrder Details:\n- Item: ${params.itemName}\n- Price: ${params.price}\n- Size: ${params.size}\n- Color: ${params.color}\n\nThank you for supporting African artisans through Alfietz!`
             });
             if (error) {
               console.error('Order Email Error:', error);
