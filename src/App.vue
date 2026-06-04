@@ -768,11 +768,21 @@ const handleCartCheckout = (group) => {
   
   // Robust normalization for WhatsApp
   let phoneNumber = group.tailorPhone || '';
-  const cleanNumber = phoneNumber.replace(/[^0-9]/g, '')
-  let normalized = cleanNumber.startsWith('0') ? '255' + cleanNumber.slice(1) : cleanNumber
+  let cleaned = phoneNumber.replace(/[^0-9]/g, '')
+  if (cleaned.startsWith('2550')) {
+    cleaned = '255' + cleaned.slice(4)
+  } else if (cleaned.startsWith('0')) {
+    cleaned = '255' + cleaned.slice(1)
+  }
+  const normalized = cleaned
   
   const url = `https://wa.me/${normalized}?text=${encodeURIComponent(message)}`;
-  window.open(url, '_blank');
+  
+  if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+    window.location.href = url
+  } else {
+    window.open(url, '_blank')
+  }
 }
 
 const handleAddToCart = (product, options = {}) => {

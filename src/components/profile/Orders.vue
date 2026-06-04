@@ -96,8 +96,13 @@ const openWhatsApp = (order) => {
     })
     return;
   }
-  const cleanNumber = order.tailorPhone.replace(/[^0-9]/g, '')
-  let normalized = cleanNumber.startsWith('0') ? '255' + cleanNumber.slice(1) : cleanNumber
+  const cleaned = order.tailorPhone.replace(/[^0-9]/g, '')
+  let normalized = cleaned
+  if (normalized.startsWith('2550')) {
+    normalized = '255' + normalized.slice(4)
+  } else if (normalized.startsWith('0')) {
+    normalized = '255' + normalized.slice(1)
+  }
   
   const buyerName = props.userData.firstName || props.userData.username
   const tailorName = order.tailorFirstName || order.tailor
@@ -105,7 +110,12 @@ const openWhatsApp = (order) => {
   const message = `Hi ${tailorName}! 👋\n\nThis is ${buyerName}. I'm reaching out regarding my order #${order.id} for the "${order.item}". 📦\n\nI'd like to check on its status and see if there are any updates! Thank you for your amazing craft. ✨\n\nBest regards,\n${buyerName} ✍️`;
   
   const url = `https://wa.me/${normalized}?text=${encodeURIComponent(message)}`
-  window.open(url, '_blank')
+  
+  if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+    window.location.href = url
+  } else {
+    window.open(url, '_blank')
+  }
 }
 </script>
 

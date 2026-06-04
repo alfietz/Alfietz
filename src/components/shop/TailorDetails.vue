@@ -394,8 +394,13 @@ watch(() => route.params.username, loadTailorData)
 
 const connectToWhatsApp = () => {
   let phoneNumber = sellerData.value.whatsapp || "255700000000";
-  const cleanNumber = phoneNumber.replace(/[^0-9]/g, '')
-  let normalized = cleanNumber.startsWith('0') ? '255' + cleanNumber.slice(1) : cleanNumber
+  let cleaned = phoneNumber.replace(/[^0-9]/g, '')
+  if (cleaned.startsWith('2550')) {
+    cleaned = '255' + cleaned.slice(4)
+  } else if (cleaned.startsWith('0')) {
+    cleaned = '255' + cleaned.slice(1)
+  }
+  const normalized = cleaned
   
   const buyerName = props.userData.firstName || props.userData.username
   const tailorName = sellerData.value.name || sellerData.value.username
@@ -409,14 +414,25 @@ const connectToWhatsApp = () => {
   const message = `Habari ${tailorName}! ${scissors}\n\nMy name is ${buyerName}, and I've been admiring your incredible work on Alfietz! ${star}\n\nI'm very interested in commissioning a custom piece from you and would love to discuss how we can bring a new heritage vision to life. ${needle}${sparkles}\n\nLooking forward to hearing from you!\n\nBest regards,\n${buyerName} ${pen}`;
   
   const url = `https://wa.me/${normalized}?text=${encodeURIComponent(message)}`;
-  window.open(url, '_blank');
+  
+  if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+    window.location.href = url
+  } else {
+    window.open(url, '_blank')
+  }
+  
   hasConnected.value = true
 }
 
 const shareToWhatsApp = () => {
   const text = `Check out the incredible heritage work of ${sellerData.value.name || sellerData.value.username} on Alfietz! ✨✂️\n\n${window.location.href}`
-  const url = `https://wa.me/?text=${encodeURIComponent(text)}`
-  window.open(url, '_blank')
+  const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`
+  
+  if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+    window.location.href = url
+  } else {
+    window.open(url, '_blank')
+  }
 }
 
 const makeCall = () => {
