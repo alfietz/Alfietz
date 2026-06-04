@@ -38,3 +38,4 @@ reserve.vue
 .vercel
 .env*.local
 plan.md
+.env*
