@@ -175,6 +175,40 @@ export default async function handler(req, res) {
       });
     };
 
+    const initializeTailorProfile = async (userId, userWhatsapp, userEmail) => {
+      const defaultContacts = JSON.stringify([
+        { id: 1, type: 'whatsapp', label: 'WhatsApp', value: userWhatsapp || '', isDefault: true },
+        { id: 2, type: 'email', label: 'Email', value: userEmail || '', isDefault: true },
+        { id: 3, type: 'phone', label: 'Phone', value: userWhatsapp || '', isDefault: true }
+      ]);
+      const defaultServices = JSON.stringify([
+        { id: 1, name: "Bespoke Tailoring", price: "From $50", desc: "Custom made-to-measure garments designed specifically for your body and style." },
+        { id: 2, name: "Heritage Restoration", price: "From $30", desc: "Specialized care and repair for traditional textiles like Kente, Ankara, and Maasai beadwork." },
+        { id: 3, name: "Precision Fitting", price: "Hourly Rate", desc: "Hardware-level adjustments and tailoring to your existing wardrobe." }
+      ]);
+
+      await client.execute({
+        sql: `
+          INSERT OR IGNORE INTO tailor_profiles (
+            user_id, quirk, case_study_title, case_study_quote, case_study_challenge, 
+            case_study_execution, case_study_result, case_study_image, services_json, contacts_json
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `,
+        args: [
+          userId,
+          "I believe every stitch tells a story of where we've been and where we're going.",
+          "The Urban Heritage Silhouette",
+          "I needed a look that commands respect, but breathes with my heritage.",
+          "Designing a formal piece that maintains structure while using traditional hand-loomed textiles.",
+          "We sourced organic, high-thread-count materials and used deconstructed techniques.",
+          "A perfectly tailored garment that won 'Best Heritage Piece'.",
+          "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=800&q=80",
+          defaultServices,
+          defaultContacts
+        ]
+      });
+    };
+
     let sql = '';
     let args = [];
     let customResponse = null;
@@ -309,14 +343,14 @@ export default async function handler(req, res) {
         });
         if (tailorRes.rows.length === 0) return res.status(404).json({ error: 'Tailor not found' });
         
-        const t = tailorRes.rows[0];
-        const tailorId = sanitize(t.id);
+        const tailorObj = mapRows(tailorRes)[0];
+        const tailorId = tailorObj.id;
         const [tProds, tStats, tRevs] = await Promise.all([
           client.execute({ sql: "SELECT p.*, c.name as categoryName FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE p.owner_id = ? ORDER BY p.id DESC", args: [tailorId] }),
           client.execute({ sql: "SELECT (SELECT SUM(likes_count) FROM products WHERE owner_id = ?) as total_likes, (SELECT COUNT(*) FROM orders WHERE tailor_id = ?) as total_clients", args: [tailorId, tailorId] }),
           client.execute({ sql: "SELECT r.*, u.first_name, u.last_name, u.username, u.avatar as author_avatar FROM reviews r JOIN users u ON r.user_id = u.id WHERE r.product_id IN (SELECT id FROM products WHERE owner_id = ?) ORDER BY r.created_at DESC LIMIT 3", args: [tailorId] })
         ]);
-        customResponse = { tailor: mapRows(tailorRes)[0], products: mapRows(tProds), stats: mapRows(tStats)[0], reviews: mapRows(tRevs) };
+        customResponse = { tailor: tailorObj, products: mapRows(tProds), stats: mapRows(tStats)[0], reviews: mapRows(tRevs) };
         break;
 
       case 'update_tailor_details':
@@ -405,6 +439,11 @@ export default async function handler(req, res) {
           return res.status(429).json({ error: `Too many signup attempts. Please try again in ${Math.ceil(signupLimit.reset / 60)} minutes.` });
         }
 
+        // Validate username (Alphanumeric, underscores, hyphens only. No @, /, \, or spaces)
+        if (!/^[a-zA-Z0-9_-]+$/.test(params.username)) {
+          return res.status(400).json({ error: 'Username can only contain letters, numbers, underscores, and hyphens. Special characters and spaces are not allowed.' });
+        }
+
         // Check if exists
         const exists = await client.execute({ sql: 'SELECT id FROM users WHERE email = ? OR username = ?', args: [params.email, params.username] });
         if (exists.rows.length > 0) return res.status(400).json({ error: 'Email or username already taken' });
@@ -420,6 +459,11 @@ export default async function handler(req, res) {
           sql: "INSERT INTO session_tokens (token, user_id, expires_at) VALUES (?, ?, ?)",
           args: [stoken, params.id, sexpires]
         });
+
+        // Initialize tailor profile if they are a supplier
+        if (params.userType === 'supplier') {
+          await initializeTailorProfile(params.id, params.whatsapp, params.email);
+        }
 
         // We need to return the token, so we override the standard execute flow
         await client.execute({ sql, args });
@@ -530,6 +574,20 @@ export default async function handler(req, res) {
       
       // Fallback for remaining simple actions
       case 'update_profile':
+        // Validate username (Alphanumeric, underscores, hyphens only. No @, /, \, or spaces)
+        if (!/^[a-zA-Z0-9_-]+$/.test(params.username)) {
+          return res.status(400).json({ error: 'Username can only contain letters, numbers, underscores, and hyphens. Special characters and spaces are not allowed.' });
+        }
+
+        // Check if new username is already taken by ANOTHER user
+        const usernameCheck = await client.execute({
+          sql: "SELECT id FROM users WHERE username = ? AND id != ?",
+          args: [params.username, params.id]
+        });
+        if (usernameCheck.rows.length > 0) {
+          return res.status(400).json({ error: 'Username is already taken by another member of the tribe.' });
+        }
+
         sql = 'UPDATE users SET username = ?, first_name = ?, last_name = ?, whatsapp = ?, avatar = ?, user_type = ?, needs = ?, gives = ? WHERE id = ?';
         args = [
           sanitize(params.username), 
@@ -542,6 +600,15 @@ export default async function handler(req, res) {
           sanitize(params.gives || ''), 
           sanitize(params.id)
         ];
+
+        // If user becomes a supplier, ensure profile exists
+        if (params.userType === 'supplier') {
+          // We need email for initialization, let's fetch it if not provided (though params should have what's needed or we can fetch)
+          // Actually, we can fetch the current user data to be sure
+          const userData = await client.execute({ sql: "SELECT email FROM users WHERE id = ?", args: [params.id] });
+          const email = userData.rows[0] ? sanitize(userData.rows[0][0]) : '';
+          await initializeTailorProfile(params.id, params.whatsapp, email);
+        }
         break;
       case 'delete_product':
         await client.execute({ sql: 'DELETE FROM favorites WHERE product_id = ?', args: [params.productId] });
@@ -560,6 +627,14 @@ export default async function handler(req, res) {
       case 'update_role':
         sql = 'UPDATE users SET user_type = ? WHERE id = ?';
         args = [params.role, params.id];
+
+        // If user becomes a supplier, ensure profile exists
+        if (params.role === 'supplier') {
+          const userData = await client.execute({ sql: "SELECT email, whatsapp FROM users WHERE id = ?", args: [params.id] });
+          const email = userData.rows[0] ? sanitize(userData.rows[0][0]) : '';
+          const whatsapp = userData.rows[0] ? sanitize(userData.rows[0][1]) : '';
+          await initializeTailorProfile(params.id, whatsapp, email);
+        }
         break;
       case 'update_order_status':
         sql = 'UPDATE orders SET status = ? WHERE id = ?';

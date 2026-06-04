@@ -50,6 +50,14 @@ const validateForm = () => {
     errorMessage.value = 'All fields are required.'
     return false
   }
+
+  // Username validation: Alphanumeric, underscores, hyphens only.
+  const usernameRegex = /^[a-zA-Z0-9_-]+$/
+  if (!usernameRegex.test(tempUser.value.username)) {
+    errorMessage.value = 'Username can only contain letters, numbers, underscores, and hyphens. No spaces or special characters like @, /, or \\ allowed.'
+    return false
+  }
+
   if (tempUser.value.username.length < 3) {
     errorMessage.value = 'Username must be at least 3 characters.'
     return false

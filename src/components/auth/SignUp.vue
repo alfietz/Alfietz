@@ -27,6 +27,14 @@ const validateForm = () => {
     errorMessage.value = 'Please fill in all required fields.'
     return false
   }
+
+  // Username validation: Alphanumeric, underscores, hyphens only.
+  const usernameRegex = /^[a-zA-Z0-9_-]+$/
+  if (!usernameRegex.test(username.value)) {
+    errorMessage.value = 'Username can only contain letters, numbers, underscores, and hyphens. No spaces or special characters like @, /, or \\ allowed.'
+    return false
+  }
+
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   if (!emailRegex.test(email.value)) {
     errorMessage.value = 'Please enter a valid email address.'

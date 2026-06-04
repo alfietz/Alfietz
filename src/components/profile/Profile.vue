@@ -4,7 +4,7 @@ import { ref } from 'vue'
 import LogoutDialog from './LogoutDialog.vue'
 import ProductCard from '../shop/ProductCard.vue'
 
-defineProps({
+const props = defineProps({
   userData: {
     type: Object,
     required: true
@@ -20,10 +20,14 @@ defineProps({
   t: {
     type: Function,
     required: true
+  },
+  isLoading: {
+    type: Boolean,
+    default: false
   }
 })
 
-defineEmits(['go-back', 'go-edit-profile', 'go-settings', 'go-orders', 'go-upload', 'logout', 'go-console', 'go-app-review', 'navigate'])
+defineEmits(['go-back', 'go-edit-profile', 'go-settings', 'go-orders', 'go-upload', 'logout', 'go-console', 'go-app-review', 'navigate', 'toggle-favorite'])
 
 const showLogoutDialog = ref(false)
 </script>
@@ -35,9 +39,17 @@ const showLogoutDialog = ref(false)
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
       </button>
       <h1 class="title">{{ t('profile') }}</h1>
+      <div v-if="isLoading" class="mini-spinner"></div>
     </div>
 
-    <div class="profile-container">
+    <div v-if="isLoading && !userData.id" class="loading-state">
+      <div class="skeleton-avatar"></div>
+      <div class="skeleton-text"></div>
+      <div class="skeleton-text short"></div>
+    </div>
+
+    <div v-else class="profile-container animate-fade">
+
       <!-- Left Column: User Info & Stats -->
       <div class="profile-column-left">
         <!-- User Info -->
@@ -158,6 +170,72 @@ const showLogoutDialog = ref(false)
 </template>
 
 <style scoped>
+.mini-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(217, 119, 6, 0.2);
+  border-top-color: var(--accent-amber);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-left: 12px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 0;
+  gap: 16px;
+}
+
+.skeleton-avatar {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: var(--wood-walnut);
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-text {
+  width: 150px;
+  height: 16px;
+  background: var(--wood-walnut);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-text.short {
+  width: 100px;
+}
+
+.skeleton-avatar::after, .skeleton-text::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0.05) 20%,
+    rgba(255, 255, 255, 0.1) 60%,
+    rgba(255, 255, 255, 0)
+  );
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+
 .profile-page { background-color: var(--wood-deep); min-height: 100vh; padding: 24px 20px; max-width: 1200px; margin: 0 auto; }
 .header-row { display: flex; align-items: center; gap: 16px; margin-bottom: 32px; }
 

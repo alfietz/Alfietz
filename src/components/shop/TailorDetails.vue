@@ -37,7 +37,15 @@ const tailorStats = ref({
 })
 const sellerData = ref({ ...props.seller })
 
-// EDITABLE STATE
+// Watch for prop changes to update local state
+watch(() => props.seller, (newSeller) => {
+  if (newSeller && Object.keys(newSeller).length > 0) {
+    sellerData.value = { ...newSeller }
+    initializeDraft()
+  }
+}, { deep: true })
+
+// ... (keep the rest of computed/reactive)
 const isOwner = computed(() => {
   return props.userData?.id === sellerData.value?.owner_id
 })
@@ -257,11 +265,24 @@ const loadTailorData = async () => {
   const username = route.params.username
   if (!username) return
 
+  // Clean the username (remove leading @)
+  const cleanUsername = username.startsWith('@') ? username.slice(1) : username;
+
   try {
     loading.value = true
-    const data = await db.runAction('get_tailor_details', { username });
+    
+    // Reset products and reviews to avoid showing old data
+    products.value = []
+    reviews.value = []
+    
+    const data = await db.runAction('get_tailor_details', { username: cleanUsername });
     
     const s = data.tailor;
+    if (!s) {
+      loading.value = false
+      return
+    }
+
     sellerData.value = {
       ...sellerData.value,
       id: s.id,

@@ -96,6 +96,31 @@ const filteredExploreItems = computed(() => {
 const router = useRouter()
 const route = useRoute()
 
+// Sync selectedSeller with URL for reloads and direct navigation
+watch(() => route.params.username, (newUsername) => {
+  if (route.name === 'tailor-details' && newUsername) {
+    // Remove leading @ if present in param
+    const cleanUsername = newUsername.startsWith('@') ? newUsername.slice(1) : newUsername;
+    
+    if (!selectedSeller.value || selectedSeller.value.username !== cleanUsername) {
+      const cached = trendingSellers.value.find(s => s.username === cleanUsername);
+      if (cached) {
+        selectedSeller.value = cached;
+      } else {
+        selectedSeller.value = { username: cleanUsername };
+      }
+    }
+  }
+}, { immediate: true });
+
+// Scroll to top on route change since #app is the scroll container
+watch(() => route.path, () => {
+  const appContainer = document.getElementById('app');
+  if (appContainer) {
+    appContainer.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+});
+
 const navigateTo = (screenName, extraState = {}) => {
   if (!screenName && !extraState.selectedProduct && !extraState.selectedSeller && !extraState.selectedCategory) {
     console.warn('[NavigateTo] Warning: screenName is missing and no specific entity navigation was requested.');
@@ -130,6 +155,7 @@ const navigateTo = (screenName, extraState = {}) => {
     }
 
     selectedSeller.value = extraState.selectedSeller
+    setStored('selected_seller', extraState.selectedSeller)
     let username = extraState.selectedSeller.username;
     // Remove leading @ if present to avoid double @ in route
     if (username.startsWith('@')) username = username.slice(1);
@@ -793,7 +819,7 @@ const showNavBar = computed(() => {
 </script>
 
 <template>
-  <div class="app-container">
+  <div class="app-wrapper">
     <!-- DESKTOP HEADER (WEB MODE) -->
     <WebHeader 
       v-if="showNavBar" 
