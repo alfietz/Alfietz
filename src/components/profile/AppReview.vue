@@ -51,12 +51,12 @@ const handleSubmit = () => {
       <button class="back-btn tap-active" @click="$emit('go-back')">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
       </button>
-      <h1 class="title">App Experience</h1>
+      <h1 class="title">{{ t('appExperience') }}</h1>
     </div>
 
     <div class="form-container">
       <div class="rating-section-card">
-        <p class="section-label">How is your journey with Alfietz?</p>
+        <p class="section-label">{{ t('howIsJourney') }}</p>
         <div class="stars-row">
           <button 
             v-for="star in 5" 
@@ -71,17 +71,17 @@ const handleSubmit = () => {
           </button>
         </div>
         <p class="rating-status-text">
-          {{ ['Room for improvement', 'Getting there', 'Good experience', 'Very satisfied', 'Absolutely love it!'][rating - 1] }}
+          {{ [t('rating1'), t('rating2'), t('rating3'), t('rating4'), t('rating5')][rating - 1] }}
         </p>
       </div>
 
       <div class="input-group-modern">
-        <label class="group-label">Your Feedback</label>
+        <label class="group-label">{{ t('feedbackLabel') }}</label>
         <div class="textarea-container">
           <textarea 
             v-model="reviewText" 
             :maxlength="maxChars"
-            placeholder="Share your thoughts on how we can make Alfietz even better for the tribe..." 
+            :placeholder="t('feedbackPlaceholder')" 
             class="review-textarea-modern"
           ></textarea>
           <div class="char-counter" :class="{ 'limit': remainingChars < 30 }">
@@ -91,14 +91,14 @@ const handleSubmit = () => {
       </div>
 
       <div class="image-upload-modern">
-        <label class="group-label">Reference Image (Optional)</label>
+        <label class="group-label">{{ t('referenceImage') }}</label>
         <div v-if="!imagePreview" class="upload-zone" @click="$refs.fileInput.click()">
           <div class="upload-icon-circle">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           </div>
           <div class="upload-text">
-            <span class="main-text">Click to upload image</span>
-            <span class="sub-text">PNG, JPG up to 5MB</span>
+            <span class="main-text">{{ t('clickToUpload') }}</span>
+            <span class="sub-text">{{ t('pngJpgSize') }}</span>
           </div>
           <input type="file" ref="fileInput" hidden accept="image/*" @change="handleImageUpload" />
         </div>
@@ -117,7 +117,7 @@ const handleSubmit = () => {
         :disabled="!reviewText.trim()"
         @click="handleSubmit"
       >
-        <span>Submit Experience</span>
+        <span>{{ t('submitExperience') }}</span>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
       </button>
     </div>

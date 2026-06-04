@@ -1,5 +1,11 @@
 <!-------- (ReturnPolicy.vue) ./src/components/legal/ReturnPolicy.vue ------------>
 <script setup>
+defineProps({
+  t: {
+    type: Function,
+    required: true
+  }
+})
 defineEmits(['go-back'])
 </script>
 
@@ -9,33 +15,33 @@ defineEmits(['go-back'])
       <button class="back-btn" @click="$emit('go-back')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
       </button>
-      <h1 class="title">Return & Refund Policy</h1>
+      <h1 class="title">{{ t('returnPolicyTitle') }}</h1>
     </div>
 
     <div class="content-scroll">
       <p class="last-updated">Last Updated: May 2026</p>
       
-      <p>At Alfietz, we strive to ensure every heritage item meets your expectations. Because our marketplace features both ready-to-wear items and bespoke (custom-made) garments, our return policy varies by item type.</p>
+      <p>{{ t('returnPolicyP1') }}</p>
 
-      <h2>1. Custom & Bespoke Garments</h2>
-      <p>Because custom garments are created specifically to your provided measurements, <strong>they are generally non-refundable and non-returnable</strong> unless there is a verifiable material defect or a significant deviation from the agreed-upon design.</p>
+      <h2>{{ t('returnSec1Title') }}</h2>
+      <p>{{ t('returnSec1P1') }}</p>
       <ul>
-        <li>If a custom item does not fit due to inaccurate measurements provided by the Buyer, the Supplier is not obligated to offer a refund. Minor alterations may be negotiated directly with the Supplier.</li>
-        <li>If the Supplier made an error in measurements or used the wrong materials, the Buyer must report the issue within <strong>7 days</strong> of receipt to arrange an alteration or refund directly with the Supplier.</li>
+        <li>{{ t('returnSec1L1') }}</li>
+        <li>{{ t('returnSec1L2') }}</li>
       </ul>
 
-      <h2>2. Ready-to-Wear Items</h2>
-      <p>For non-custom items (e.g., standard-sized jewelry, pre-made clothing, crafts), Buyers have the right to request a return within <strong>14 days</strong> of receiving the item, provided the item is:</p>
+      <h2>{{ t('returnSec2Title') }}</h2>
+      <p>{{ t('returnSec2P1') }}</p>
       <ul>
-        <li>Unworn, unwashed, and in its original condition.</li>
-        <li>Returned with all original tags and packaging intact.</li>
+        <li>{{ t('returnSec2L1') }}</li>
+        <li>{{ t('returnSec2L2') }}</li>
       </ul>
 
-      <h2>3. Return Process & Shipping</h2>
-      <p>As Alfietz connects Buyers and Suppliers, <strong>all return logistics must be coordinated directly between the Buyer and the Supplier</strong> (usually via WhatsApp). Unless the item is defective, the Buyer is typically responsible for return shipping costs.</p>
+      <h2>{{ t('returnSec3Title') }}</h2>
+      <p>{{ t('returnSec3P1') }}</p>
 
-      <h2>4. Dispute Resolution</h2>
-      <p>If a Buyer and Supplier cannot agree on a return or refund, Alfietz may, at its sole discretion, review the communication and listing details to mediate. However, Alfietz cannot mandate refunds for transactions processed outside our platform.</p>
+      <h2>{{ t('returnSec4Title') }}</h2>
+      <p>{{ t('returnSec4P1') }}</p>
     </div>
   </div>
 </template>

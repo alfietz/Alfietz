@@ -1,11 +1,15 @@
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { ref, onMounted, nextTick, watch } from 'vue'
 import { db } from '../../db/client'
 import { useRoute } from 'vue-router'
 
 const props = defineProps({
   userData: {
     type: Object,
+    required: true
+  },
+  t: {
+    type: Function,
     required: true
   }
 })
@@ -18,26 +22,24 @@ const messages = ref([])
 const newMessage = ref('')
 const loading = ref(true)
 const messagesContainer = ref(null)
-let pollInterval = null
 
 const otherUserId = ref(route.params.userId)
 
 const initChat = async () => {
-  loading.value = true
-  await fetchUserDetails()
-  await fetchMessages(true)
-  
-  // Mark as read
-  await markAsRead()
+  try {
+    loading.value = true
+    await fetchUserDetails()
+    await fetchMessages(false, 'initChat') // Don't set loading inside fetchMessages to avoid double spinner
+    await markAsRead()
+  } catch (e) {
+    console.error("Chat Init Error:", e)
+  } finally {
+    loading.value = false
+  }
 }
 
 onMounted(async () => {
   await initChat()
-  
-  // Simulation of Real-time: Poll every 5 seconds
-  pollInterval = setInterval(() => {
-    fetchMessages(false)
-  }, 5000)
 })
 
 watch(() => route.params.userId, async (newId) => {
@@ -48,14 +50,10 @@ watch(() => route.params.userId, async (newId) => {
   }
 })
 
-onUnmounted(() => {
-  if (pollInterval) clearInterval(pollInterval)
-})
-
 const fetchUserDetails = async () => {
   try {
     const res = await db.runAction('get_user_by_id', { userId: otherUserId.value });
-    if (res.rows.length > 0) {
+    if (res.rows && res.rows.length > 0) {
       otherUser.value = res.rows[0]
     }
   } catch (e) {
@@ -63,7 +61,8 @@ const fetchUserDetails = async () => {
   }
 }
 
-const fetchMessages = async (showLoading = false) => {
+const fetchMessages = async (showLoading = false, reason = 'unknown') => {
+  console.log(`[ChatDetail] Fetching messages. Reason: ${reason}, showLoading: ${showLoading}`);
   try {
     if (showLoading) loading.value = true
     const res = await db.runAction('get_messages', { 
@@ -71,12 +70,10 @@ const fetchMessages = async (showLoading = false) => {
       otherId: otherUserId.value 
     });
     
-    // Only update if count changed to avoid unnecessary re-renders
-    if (res.rows.length !== messages.value.length) {
+    // Only update if data changed
+    if (JSON.stringify(res.rows) !== JSON.stringify(messages.value)) {
       messages.value = res.rows
-      if (!showLoading) {
-        await markAsRead() // Clear notifications if new messages arrived while in chat
-      }
+      await markAsRead()
     }
   } catch (e) {
     console.error("Error fetching messages:", e)
@@ -98,14 +95,8 @@ const sendMessage = async () => {
       content 
     });
     
-    // Add to local list for immediate feedback
-    messages.value.push({
-      id: Date.now(),
-      sender_id: props.userData.id,
-      receiver_id: otherUserId.value,
-      content: content,
-      created_at: new Date().toISOString()
-    })
+    // Refresh the message list after sending
+    await fetchMessages(false, 'sendMessage')
     
     await nextTick()
     scrollToBottom()
@@ -141,28 +132,55 @@ watch(messages, () => {
 </script>
 
 <template>
-  <div class="chat-detail-page">
+  <div class="chat-detail-page animate-fade">
+    <!-- Header -->
     <div class="chat-header">
-      <button class="back-btn" @click="$emit('go-back')">
+      <button class="back-btn tap-active" @click="$emit('go-back')">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>
       </button>
+      
       <div v-if="otherUser" class="user-info">
-        <img :src="otherUser.avatar || 'https://i.pravatar.cc/150'" alt="Avatar" class="header-avatar" />
+        <div class="avatar-wrapper-mini">
+          <img :src="otherUser.avatar || 'https://i.pravatar.cc/150'" alt="Avatar" class="header-avatar" />
+          <div class="online-indicator"></div>
+        </div>
         <div class="header-text">
-          <h2 class="header-name">{{ otherUser.first_name }} {{ otherUser.last_name }}</h2>
+          <h2 class="header-name">
+            {{ (otherUser.first_name || otherUser.firstName) ? `${otherUser.first_name || otherUser.firstName} ${otherUser.last_name || otherUser.lastName || ''}`.trim() : (otherUser.username || 'Artisan') }}
+          </h2>
           <span class="online-status">Online</span>
         </div>
       </div>
+
+      <button class="refresh-btn" @click="fetchMessages(true, 'manualRefresh')" :disabled="loading" title="Refresh messages">
+        <svg :class="{ 'spinning': loading }" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+      </button>
     </div>
 
+    <!-- Messages -->
     <div class="messages-container" ref="messagesContainer">
-      <div v-if="loading" class="loading-state">
-        <div class="spinner"></div>
+      <!-- Loading State -->
+      <div v-if="loading && messages.length === 0" class="loading-state">
+        <div class="skeleton-messages">
+          <div v-for="n in 4" :key="n" class="skeleton-msg" :class="n % 2 === 0 ? 'sent' : 'received'">
+            <div class="skeleton-bubble"></div>
+          </div>
+        </div>
       </div>
-      <div v-else-if="messages.length === 0" class="empty-chat">
-        <div class="heritage-icon">🏺</div>
-        <p>Start a new conversation with this artisan.</p>
+
+      <!-- Empty State -->
+      <div v-else-if="messages.length === 0" class="empty-chat animate-fade-in">
+        <div class="empty-chat-hero">
+          <div class="hero-avatar-wrapper">
+            <img :src="otherUser?.avatar || 'https://i.pravatar.cc/150'" class="hero-avatar" />
+            <div class="pulse-ring"></div>
+          </div>
+          <h2 class="hero-name">{{ (otherUser?.first_name || otherUser?.firstName) ? (otherUser.first_name || otherUser.firstName) : (otherUser?.username || 'Artisan') }}</h2>
+          <p class="hero-subtitle">{{ t('whispersOfHeritage') }}</p>
+        </div>
       </div>
+
+      <!-- Messages List -->
       <div v-else class="messages-list">
         <div 
           v-for="msg in messages" 
@@ -170,6 +188,7 @@ watch(messages, () => {
           class="message-wrapper"
           :class="{ 'sent': msg.sender_id === props.userData.id, 'received': msg.sender_id !== props.userData.id }"
         >
+          <img v-if="msg.sender_id !== props.userData.id" :src="otherUser?.avatar || 'https://i.pravatar.cc/150'" class="bubble-avatar" />
           <div class="message-bubble">
             <p class="message-content">{{ msg.content }}</p>
             <span class="message-time">
@@ -180,12 +199,13 @@ watch(messages, () => {
       </div>
     </div>
 
+    <!-- Input Area -->
     <div class="chat-input-area">
       <div class="quick-emojis">
         <button 
           v-for="emoji in ['🏺', '✨', '🎨', '🧵', '💰', '📦', '🤝', '🦁', '🌍', '🔥']" 
           :key="emoji"
-          class="emoji-btn"
+          class="emoji-btn tap-active"
           @click="addEmoji(emoji)"
         >
           {{ emoji }}
@@ -198,7 +218,7 @@ watch(messages, () => {
           @keydown.enter.prevent="sendMessage"
           rows="1"
         ></textarea>
-        <button class="send-btn" @click="sendMessage" :disabled="!newMessage.trim()">
+        <button class="send-btn tap-active" @click="sendMessage" :disabled="!newMessage.trim()">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
         </button>
       </div>
@@ -230,11 +250,29 @@ watch(messages, () => {
   gap: 12px;
 }
 
-.header-avatar {
+.avatar-wrapper-mini {
+  position: relative;
   width: 40px;
   height: 40px;
+}
+
+.header-avatar {
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
-  border: 1px solid var(--glass-border);
+  border: 1.5px solid var(--glass-border);
+  object-fit: cover;
+}
+
+.online-indicator {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 10px;
+  height: 10px;
+  background: #10B981;
+  border: 2px solid var(--wood-walnut);
+  border-radius: 50%;
 }
 
 .header-text {
@@ -255,6 +293,31 @@ watch(messages, () => {
   font-weight: 600;
 }
 
+.refresh-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  transition: all 0.3s;
+}
+
+.refresh-btn:hover:not(:disabled) {
+  color: var(--accent-amber);
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 .messages-container {
   flex: 1;
   overflow-y: auto;
@@ -263,16 +326,94 @@ watch(messages, () => {
   flex-direction: column;
 }
 
-.empty-chat {
-  flex: 1;
+.skeleton-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.skeleton-msg {
+  display: flex;
+  width: 100%;
+}
+
+.skeleton-msg.sent { justify-content: flex-end; }
+.skeleton-msg.received { justify-content: flex-start; }
+
+.skeleton-bubble {
+  height: 44px;
+  width: 60%;
+  background: var(--wood-walnut);
+  border-radius: 18px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+}
+
+.skeleton-bubble::after {
+  content: "";
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+
+.empty-chat-hero {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  color: var(--text-muted);
+  gap: 16px;
+  text-align: center;
+  margin-top: 40px;
 }
 
-.heritage-icon { font-size: 40px; margin-bottom: 16px; }
+.hero-avatar-wrapper {
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+
+.hero-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--accent-amber);
+}
+
+.pulse-ring {
+  position: absolute;
+  top: -4px; left: -4px; right: -4px; bottom: -4px;
+  border-radius: 50%;
+  border: 2px solid var(--accent-amber);
+  animation: avatar-pulse 2s infinite;
+}
+
+@keyframes avatar-pulse {
+  0% { transform: scale(1); opacity: 0.5; }
+  100% { transform: scale(1.3); opacity: 0; }
+}
+
+.hero-name {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.hero-subtitle {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-amber);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
 
 .messages-list {
   display: flex;
@@ -288,14 +429,23 @@ watch(messages, () => {
 .message-wrapper.sent { justify-content: flex-end; }
 .message-wrapper.received { justify-content: flex-start; }
 
+.bubble-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 8px;
+  margin-top: auto;
+  border: 1px solid var(--glass-border);
+}
+
 .message-bubble {
-  max-width: 80%;
-  padding: 12px 18px;
+  max-width: 75%;
+  padding: 12px 16px;
   border-radius: 18px;
-  position: relative;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
   font-size: 15px;
   line-height: 1.5;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
 .sent .message-bubble {
@@ -316,43 +466,30 @@ watch(messages, () => {
   opacity: 0.6;
   display: block;
   text-align: right;
-  margin-top: 6px;
-  font-family: 'JetBrains Mono', monospace;
+  margin-top: 4px;
 }
 
 .chat-input-area {
   padding: 12px 20px 32px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px);
+  background: var(--wood-deep);
   border-top: 1px solid var(--glass-border);
 }
 
 .quick-emojis {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   margin-bottom: 12px;
   overflow-x: auto;
-  padding-bottom: 4px;
   scrollbar-width: none;
 }
-
-.quick-emojis::-webkit-scrollbar { display: none; }
 
 .emoji-btn {
   background: var(--wood-walnut);
   border: 1px solid var(--glass-border);
-  border-radius: 10px;
+  border-radius: 8px;
   padding: 6px 10px;
-  font-size: 18px;
+  font-size: 16px;
   cursor: pointer;
-  transition: all 0.2s;
-  flex-shrink: 0;
-}
-
-.emoji-btn:hover {
-  transform: scale(1.15);
-  border-color: var(--accent-amber);
-  background: var(--wood-polished);
 }
 
 .input-wrapper {
@@ -360,27 +497,20 @@ watch(messages, () => {
   align-items: center;
   gap: 12px;
   background: var(--wood-walnut);
-  border: 1.5px solid var(--glass-border);
-  border-radius: 30px;
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
   padding: 8px 16px;
-  transition: all 0.3s;
-}
-
-.input-wrapper:focus-within {
-  border-color: var(--accent-amber);
-  box-shadow: 0 0 15px var(--accent-glow);
 }
 
 .input-wrapper textarea {
   flex: 1;
   background: transparent;
   border: none;
-  color: var(--input-text);
+  color: var(--text-primary);
   padding: 8px 0;
   font-size: 15px;
   outline: none;
   resize: none;
-  max-height: 120px;
 }
 
 .send-btn {
@@ -388,31 +518,17 @@ watch(messages, () => {
   border: none;
   color: var(--accent-amber);
   cursor: pointer;
-  padding: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-.send-btn:disabled {
-  color: var(--text-muted);
-  cursor: not-allowed;
-}
-
-.send-btn:not(:disabled):hover {
-  transform: scale(1.1);
 }
 
 .back-btn {
-  background-color: var(--wood-walnut) !important;
-  border: 1px solid var(--glass-border) !important;
-  color: var(--text-primary) !important;
-  transition: all 0.2s ease !important;
-}
-
-.back-btn:hover {
-  background-color: var(--wood-polished) !important;
-  border-color: var(--accent-amber) !important;
+  background: var(--wood-walnut);
+  border: 1px solid var(--glass-border);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
 }
 </style>

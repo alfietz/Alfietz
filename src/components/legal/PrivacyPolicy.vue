@@ -1,5 +1,11 @@
 <!-------- (PrivacyPolicy.vue) ./src/components/legal/PrivacyPolicy.vue ------------>
 <script setup>
+defineProps({
+  t: {
+    type: Function,
+    required: true
+  }
+})
 defineEmits(['go-back'])
 </script>
 
@@ -9,52 +15,52 @@ defineEmits(['go-back'])
       <button class="back-btn" @click="$emit('go-back')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
       </button>
-      <h1 class="title">Privacy Policy</h1>
+      <h1 class="title">{{ t('privacyPolicyTitle') }}</h1>
     </div>
 
     <div class="content-scroll">
       <p class="last-updated">Last Updated: May 2026</p>
 
-      <h2>1. Introduction</h2>
-      <p>Welcome to the Alfietz App, operated independently by the <strong>Alfietz Team</strong>. We are committed to protecting the privacy and security of our users. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our mobile and web applications.</p>
+      <h2>{{ t('privacySec1Title') }}</h2>
+      <p>{{ t('privacyP1') }}</p>
 
-      <h2>2. Information We Collect</h2>
-      <p>We may collect the following types of information:</p>
+      <h2>{{ t('privacySec2Title') }}</h2>
+      <p>{{ t('privacySec2P1') }}</p>
       <ul>
-        <li><strong>Personal Identification Data:</strong> Name, email address, WhatsApp number, and account credentials.</li>
-        <li><strong>Sensitive/Measurement Data:</strong> For custom clothing orders, we collect physical measurements. This data is treated with the highest level of confidentiality.</li>
-        <li><strong>Transaction Data:</strong> Order history, favorite items, and communication records via the platform.</li>
-        <li><strong>Device & Usage Data:</strong> IP addresses, browser types, device identifiers, and interactions with the App, collected via local storage and basic analytics.</li>
+        <li>{{ t('privacySec2L1') }}</li>
+        <li>{{ t('privacySec2L2') }}</li>
+        <li>{{ t('privacySec2L3') }}</li>
+        <li>{{ t('privacySec2L4') }}</li>
       </ul>
 
-      <h2>3. How We Use Your Information</h2>
-      <p>Your data is used to:</p>
+      <h2>{{ t('privacySec3Title') }}</h2>
+      <p>{{ t('privacySec3P1') }}</p>
       <ul>
-        <li>Create and manage your account.</li>
-        <li>Facilitate communication between Buyers and Suppliers (e.g., generating WhatsApp links).</li>
-        <li>Provide customized tailoring services by sharing necessary measurements securely with selected tailors.</li>
-        <li>Improve our Platform, resolve technical issues, and detect fraud.</li>
+        <li>{{ t('privacySec3L1') }}</li>
+        <li>{{ t('privacySec3L2') }}</li>
+        <li>{{ t('privacySec3L3') }}</li>
+        <li>{{ t('privacySec3L4') }}</li>
       </ul>
 
-      <h2>4. Data Sharing & Disclosure</h2>
-      <p>We do not sell your personal data to third parties. We may share your information only in the following circumstances:</p>
+      <h2>{{ t('privacySec4Title') }}</h2>
+      <p>{{ t('privacySec4P1') }}</p>
       <ul>
-        <li><strong>With Suppliers:</strong> When a Buyer initiates an order, necessary contact and measurement data is shared with the specific Supplier.</li>
-        <li><strong>Legal Compliance:</strong> If required by law, subpoena, or to protect the rights, property, or safety of Alfietz, our users, or others.</li>
-        <li><strong>Service Providers:</strong> With trusted third-party vendors who assist in operating our platform (e.g., Turso database hosting), under strict confidentiality agreements.</li>
+        <li>{{ t('privacySec4L1') }}</li>
+        <li>{{ t('privacySec4L2') }}</li>
+        <li>{{ t('privacySec4L3') }}</li>
       </ul>
 
-      <h2>5. Cookies & Local Storage</h2>
-      <p>Alfietz relies on local storage (e.g., <code>localStorage</code>) to maintain your session, theme preferences, and localized settings. By using the app, you consent to the use of these essential local storage mechanisms. We may use cookies in the future for analytics, for which separate consent will be requested.</p>
+      <h2>{{ t('privacySec5Title') }}</h2>
+      <p>{{ t('privacySec5P1') }}</p>
 
-      <h2>6. Data Security</h2>
-      <p>We implement robust technical and organizational measures to secure your personal data against unauthorized access, loss, or alteration. However, no electronic transmission over the internet or information storage technology can be guaranteed to be 100% secure.</p>
+      <h2>{{ t('privacySec6Title') }}</h2>
+      <p>{{ t('privacySec6P1') }}</p>
 
-      <h2>7. Your Privacy Rights</h2>
-      <p>Depending on your jurisdiction, you may have the right to access, correct, update, or delete your personal data. You can manage your profile within the App or contact us to exercise these rights.</p>
+      <h2>{{ t('privacySec7Title') }}</h2>
+      <p>{{ t('privacySec7P1') }}</p>
 
-      <h2>8. Contact Us</h2>
-      <p>For any questions regarding this Privacy Policy or your data, please contact the Alfietz legal team via our Help and Support channels.</p>
+      <h2>{{ t('privacySec8Title') }}</h2>
+      <p>{{ t('privacySec8P1') }}</p>
     </div>
   </div>
 </template>

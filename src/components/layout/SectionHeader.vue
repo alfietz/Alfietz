@@ -11,7 +11,11 @@ defineProps({
   },
   linkText: {
     type: String,
-    default: 'View all'
+    default: ''
+  },
+  t: {
+    type: Function,
+    required: false
   }
 })
 
@@ -26,7 +30,7 @@ defineEmits(['view-all'])
       class="view-all-btn" 
       @click="$emit('view-all')"
     >
-      <span>{{ linkText }}</span>
+      <span>{{ linkText || (t ? t('viewAll') : 'View all') }}</span>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="chevron-icon">
         <path d="m9 18 6-6-6-6"/>
       </svg>

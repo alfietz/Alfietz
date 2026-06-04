@@ -26,7 +26,7 @@ defineEmits(['select'])
       <div class="name-badge-row">
         <h4 class="seller-name">{{ seller.name }}</h4>
       </div>
-      <div v-if="seller.isVerified" class="shop-verified-tag">Physical Shop</div>
+      <div v-if="seller.isVerified" class="shop-verified-tag">100+ Served • Physical Shop</div>
       <div class="seller-rating">
         <span class="star">★</span>
         <span class="rating-value">{{ seller.rating || '0.0' }}</span>

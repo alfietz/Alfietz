@@ -2,6 +2,12 @@
 <script setup>
 import { useRouter } from 'vue-router'
 
+const props = defineProps({
+  t: {
+    type: Function,
+    required: true
+  }
+})
 const router = useRouter()
 defineEmits(['go-back', 'navigate'])
 
@@ -19,89 +25,89 @@ const navigateTo = (routeName) => {
       <button class="back-btn" @click="$emit('go-back')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
       </button>
-      <h1 class="title">Help & Legal Center</h1>
+      <h1 class="title">{{ t('helpTitle') }}</h1>
     </div>
 
     <div class="content-scroll">
       
       <div class="legal-section">
-        <h3>Community & Feedback</h3>
-        <p class="section-desc">See what the tribe is saying about Alfietz and share your own journey.</p>
+        <h3>{{ t('commFeedback') }}</h3>
+        <p class="section-desc">{{ t('commFeedbackDesc') }}</p>
         <div class="legal-links">
           <button class="legal-link-btn" @click="$emit('navigate', 'reviews', { isApp: true })">
-            <span>Tribe Experiences</span>
+            <span>{{ t('tribeExperiences') }}</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
           </button>
           <button class="legal-link-btn" @click="$emit('navigate', 'app-review')">
-            <span>Share Your Journey</span>
+            <span>{{ t('shareJourney') }}</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
           </button>
         </div>
       </div>
 
       <div class="legal-section">
-        <h3>Heritage & Safety</h3>
-        <p class="section-desc">Resources to ensure a safe and accurate heritage experience.</p>
+        <h3>{{ t('heritageSafety') }}</h3>
+        <p class="section-desc">{{ t('heritageSafetyDesc') }}</p>
         <div class="legal-links">
           <button class="legal-link-btn" @click="navigateTo('safety')">
-            <span>Safety & Security Tips</span>
+            <span>{{ t('safetyTipsTitle') }}</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
           </button>
           <button class="legal-link-btn" @click="navigateTo('measurements')">
-            <span>Measurement Guide</span>
+            <span>{{ t('measurementsTitle') }}</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
           </button>
         </div>
       </div>
 
       <div class="legal-section">
-        <h3>Legal Documents</h3>
-        <p class="section-desc">Review our policies to understand your rights and responsibilities on the Alfietz platform.</p>
+        <h3>{{ t('legalDocs') }}</h3>
+        <p class="section-desc">{{ t('legalDocsDesc') }}</p>
         
         <div class="legal-links">
           <button class="legal-link-btn" @click="navigateTo('terms')">
-            <span>Terms & Conditions</span>
+            <span>{{ t('termsConditionsTitle') }}</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
           </button>
           <button class="legal-link-btn" @click="navigateTo('privacy')">
-            <span>Privacy Policy</span>
+            <span>{{ t('privacyPolicyTitle') }}</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
           </button>
           <button class="legal-link-btn" @click="navigateTo('returns')">
-            <span>Return & Refund Policy</span>
+            <span>{{ t('returnPolicyTitle') }}</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
           </button>
           <button class="legal-link-btn" @click="navigateTo('guidelines')">
-            <span>Community Guidelines</span>
+            <span>{{ t('communityGuidelinesTitle') }}</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
           </button>
           <button class="legal-link-btn" @click="navigateTo('ip-policy')">
-            <span>Intellectual Property</span>
+            <span>{{ t('ipPolicyTitle') }}</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
           </button>
           <button class="legal-link-btn" @click="navigateTo('about')">
-            <span>About Alfietz</span>
+            <span>{{ t('aboutUs') }}</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
           </button>
         </div>
       </div>
 
       <div class="faq-section">
-        <h3>Frequently Asked Questions</h3>
+        <h3>{{ t('faqTitle') }}</h3>
         
         <div class="faq-item">
-          <h4>How do I contact a Tailor?</h4>
-          <p>You can contact tailors directly by clicking the "Connect via WhatsApp" button on any product detail page.</p>
+          <h4>{{ t('faq1Q') }}</h4>
+          <p>{{ t('faq1A') }}</p>
         </div>
         
         <div class="faq-item">
-          <h4>Are custom measurements private?</h4>
-          <p>Yes. Measurements are securely stored and only shared with the specific tailor you select for an order.</p>
+          <h4>{{ t('faq2Q') }}</h4>
+          <p>{{ t('faq2A') }}</p>
         </div>
         
         <div class="faq-item">
-          <h4>How do I report a problem?</h4>
-          <p>If you encounter issues with an order or a user, please use the Feedback section or email support@alfietz.shop.</p>
+          <h4>{{ t('faq3Q') }}</h4>
+          <p>{{ t('faq3A') }}</p>
         </div>
       </div>
 

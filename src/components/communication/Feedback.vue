@@ -2,6 +2,12 @@
 <script setup>
 import { ref } from 'vue'
 
+const props = defineProps({
+  t: {
+    type: Function,
+    required: true
+  }
+})
 const feedbackText = ref('')
 const emit = defineEmits(['go-back', 'submit'])
 
@@ -18,13 +24,13 @@ const handleSubmit = () => {
       <button class="back-btn" @click="$emit('go-back')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
       </button>
-      <h1 class="title">Feedback</h1>
+      <h1 class="title">{{ t('feedback') }}</h1>
     </div>
 
     <div class="form-container">
       <textarea 
         v-model="feedbackText" 
-        placeholder="Write your feedback..." 
+        :placeholder="t('writeFeedback')" 
         class="feedback-input"
       ></textarea>
     </div>
@@ -36,7 +42,7 @@ const handleSubmit = () => {
         :disabled="!feedbackText.trim()"
         @click="handleSubmit"
       >
-        Submit
+        {{ t('submit') }}
       </button>
     </div>
   </div>

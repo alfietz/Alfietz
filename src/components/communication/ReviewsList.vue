@@ -17,6 +17,10 @@ const props = defineProps({
   isApp: {
     type: Boolean,
     default: false
+  },
+  t: {
+    type: Function,
+    required: true
   }
 })
 
@@ -89,7 +93,7 @@ const fetchReviews = async () => {
     if (props.tailorId && res.rows.length > 0) {
       const r = res.rows[0];
       tailorInfo.value = {
-        name: (r.tailor_first || r.tailor_last) ? `${r.tailor_first || ''} ${r.tailor_last || ''}`.trim() : (r.tailor_username || 'Artisan')
+        name: (r.tailor_first || r.tailor_last) ? `${r.tailor_first || ''} ${r.tailor_last || ''}`.trim() : (r.tailor_username || props.t('artisan'))
       }
     }
   } catch (e) {
@@ -103,17 +107,17 @@ onMounted(fetchReviews)
 watch(() => [props.productId, props.tailorId], fetchReviews)
 
 function formatDate(dateStr) {
-  if (!dateStr) return 'Recently'
+  if (!dateStr) return props.t('recently')
   const date = new Date(dateStr)
   const now = new Date()
   const diffTime = Math.abs(now - date)
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
   
-  if (diffDays < 1) return 'Today'
-  if (diffDays < 7) return `${diffDays} days ago`
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`
+  if (diffDays < 1) return props.t('today')
+  if (diffDays < 7) return `${diffDays} ${props.t('daysAgo')}`
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)} ${props.t('weeksAgo')}`
   
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
 }
 </script>
 
@@ -124,13 +128,13 @@ function formatDate(dateStr) {
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
       </button>
       <h1 class="title">
-        {{ isApp ? 'Tribe Experiences' : (tailorId ? (tailorInfo ? tailorInfo.name + "'s Reviews" : 'Artisan Reviews') : 'Heritage Reviews') }}
+        {{ isApp ? t('tribeReviewsTitle') : (tailorId ? (tailorInfo ? tailorInfo.name + "'s " + t('reviewsCount') : t('artisanReviewsTitle')) : t('heritageReviewsTitle')) }}
       </h1>
     </div>
 
     <div v-if="loading" class="loading-reviews">
       <div class="spinner"></div>
-      <p>Consulting the ancestors for reviews...</p>
+      <p>{{ t('consultingAncestors') }}</p>
     </div>
 
     <template v-else>
@@ -141,7 +145,7 @@ function formatDate(dateStr) {
           <div class="star-rating large-stars">
             <span v-for="n in 5" :key="n" class="star" :class="n <= Math.round(averageRating) ? 'filled' : 'empty'">★</span>
           </div>
-          <p class="rating-count">{{ totalReviews }} reviews</p>
+          <p class="rating-count">{{ totalReviews }} {{ t('reviewsCount') }}</p>
         </div>
         
         <div class="rating-bars">
@@ -159,13 +163,13 @@ function formatDate(dateStr) {
       <div class="reviews-controls">
         <div class="sort-select-wrapper">
           <select v-model="sortBy" class="sort-select">
-            <option value="newest">Newest First</option>
-            <option value="highest">Highest Rated</option>
-            <option value="lowest">Lowest Rated</option>
+            <option value="newest">{{ t('newestFirst') }}</option>
+            <option value="highest">{{ t('highestRated') }}</option>
+            <option value="lowest">{{ t('lowestRated') }}</option>
           </select>
         </div>
         <button v-if="filterRating !== 0" class="clear-filter" @click="filterRating = 0">
-          Clear Filter ({{ filterRating }}★) ✕
+          {{ t('clearFilter') }} ({{ filterRating }}★) ✕
         </button>
       </div>
 
@@ -184,7 +188,7 @@ function formatDate(dateStr) {
                 <h4 class="reviewer-name">{{ review.author }}</h4>
                 <span class="verified-badge">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-                  Verified
+                  {{ t('verified') }}
                 </span>
               </div>
               <div class="meta-row">
@@ -202,7 +206,7 @@ function formatDate(dateStr) {
               <img :src="review.productImage" alt="Product" />
             </div>
             <div class="product-context-info">
-              <span class="context-label">Review for</span>
+              <span class="context-label">{{ t('reviewFor') }}</span>
               <span class="context-name">{{ review.productName }}</span>
             </div>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
@@ -211,29 +215,29 @@ function formatDate(dateStr) {
           <div class="review-content">
             <p class="review-text">{{ review.text }}</p>
             <div v-if="review.image" class="review-media-box">
-              <img :src="review.image" alt="Customer Photo" class="review-img" @click="selectedZoomImage = review.image" />
+              <img :src="review.image" alt="Customer Photo" class="review-img" />
             </div>
           </div>
           <div class="review-footer">
             <button class="helpful-btn">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
-              Helpful
+              {{ t('helpful') }}
             </button>
-            <button class="report-btn">Report</button>
+            <button class="report-btn">{{ t('report') }}</button>
           </div>
         </div>
       </div>
       <div v-else class="no-reviews">
         <div class="empty-icon">📜</div>
-        <p v-if="filterRating !== 0">No {{ filterRating }}-star reviews found.</p>
-        <p v-else>No reviews yet for this {{ isApp ? 'app experience' : (tailorId ? 'artisan' : 'heritage piece') }}.</p>
+        <p v-if="filterRating !== 0">{{ t('noReviewsFound').replace('{rating}', filterRating) }}</p>
+        <p v-else>{{ t('noReviewsYet').replace('{item}', isApp ? t('appExperience') : (tailorId ? t('artisan') : t('heritagePiece'))) }}</p>
       </div>
     </template>
 
     <div v-if="productId || isApp" class="bottom-action">
       <button class="primary-btn" @click="isApp ? $emit('navigate', 'app-review') : $emit('write-review')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-        {{ isApp ? 'Share Your Journey' : 'Write a Review' }}
+        {{ isApp ? t('shareJourney') : t('writeReview') }}
       </button>
     </div>
   </div>

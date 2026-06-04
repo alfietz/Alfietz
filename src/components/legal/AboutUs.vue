@@ -1,5 +1,11 @@
 <!-------- (AboutUs.vue) ./src/components/legal/AboutUs.vue ------------>
 <script setup>
+defineProps({
+  t: {
+    type: Function,
+    required: true
+  }
+})
 defineEmits(['go-back'])
 </script>
 
@@ -9,7 +15,7 @@ defineEmits(['go-back'])
       <button class="back-btn" @click="$emit('go-back')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
       </button>
-      <h1 class="title">About Us</h1>
+      <h1 class="title">{{ t('aboutUs') }}</h1>
     </div>
 
     <div class="about-content">
@@ -18,29 +24,24 @@ defineEmits(['go-back'])
         <div class="logo-container">
           <img src="../../assets/logo.png" alt="Alfie Logo" class="logo-img" />
         </div>
-        <p class="company-name">Independent Heritage Marketplace</p>
+        <p class="company-name">{{ t('independentMarketplace') }}</p>
       </div>
 
       <!-- Mission Statement -->
       <div class="mission-card">
-        <h3>The Spirit of Alfietz</h3>
+        <h3>{{ t('spiritOfAlfie') }}</h3>
         <p>
-          At <strong>Alfietz</strong>, we believe that fashion is the ultimate storyteller of heritage. 
-          Our platform serves as a vibrant bridge connecting the world with the soulful craftsmanship 
-          of master tailors and visionary designers across the continent.
+          {{ t('missionP1') }}
         </p>
         <p>
-          From the intricate weaves of Kente to the bold expressions of Ankara, we are dedicated to 
-          elevating traditional techniques through modern silhouettes. We empower local artisans 
-          to showcase their heritage competitively, ensuring every garment tells a story of 
-          authenticity, pride, and unparalleled skill.
+          {{ t('missionP2') }}
         </p>
       </div>
 
       <!-- App Version -->
       <div class="version-info">
-        <p>Celebrating Heritage Since 2024</p>
-        <p>© 2024 Alfietz - African Heritage Initiative</p>
+        <p>{{ t('celebratingSince') }}</p>
+        <p>© 2024 Alfietz - {{ t('heritageInitiative') }}</p>
       </div>
     </div>
   </div>

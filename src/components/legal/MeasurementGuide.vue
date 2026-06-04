@@ -1,5 +1,11 @@
 <!-------- (MeasurementGuide.vue) ./src/components/legal/MeasurementGuide.vue ------------>
 <script setup>
+defineProps({
+  t: {
+    type: Function,
+    required: true
+  }
+})
 defineEmits(['go-back'])
 </script>
 
@@ -9,39 +15,39 @@ defineEmits(['go-back'])
       <button class="back-btn" @click="$emit('go-back')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
       </button>
-      <h1 class="title">Measurement Guide</h1>
+      <h1 class="title">{{ t('measurementsTitle') }}</h1>
     </div>
 
     <div class="content-scroll">
       <p class="last-updated">Last Updated: May 2026</p>
       
-      <p>To ensure your custom heritage piece fits perfectly, please follow this guide when taking measurements. We recommend using a flexible tape measure and having a friend help for accuracy.</p>
+      <p>{{ t('measP1') }}</p>
 
-      <h2>1. For Garments (Tops & Dresses)</h2>
+      <h2>{{ t('measSec1Title') }}</h2>
       <ul>
-        <li><strong>Chest/Bust:</strong> Measure around the fullest part of your chest, keeping the tape horizontal.</li>
-        <li><strong>Waist:</strong> Measure around your natural waistline (the narrowest part), usually just above the navel.</li>
-        <li><strong>Shoulder Width:</strong> Measure from the edge of one shoulder bone across the back to the other shoulder bone.</li>
-        <li><strong>Sleeve Length:</strong> Measure from the shoulder bone down to your wrist (or desired length).</li>
+        <li><strong>{{ t('measSec1L1').split(':')[0] }}:</strong>{{ t('measSec1L1').split(':')[1] }}</li>
+        <li><strong>{{ t('measSec1L2').split(':')[0] }}:</strong>{{ t('measSec1L2').split(':')[1] }}</li>
+        <li><strong>{{ t('measSec1L3').split(':')[0] }}:</strong>{{ t('measSec1L3').split(':')[1] }}</li>
+        <li><strong>{{ t('measSec1L4').split(':')[0] }}:</strong>{{ t('measSec1L4').split(':')[1] }}</li>
       </ul>
 
-      <h2>2. For Bottoms (Trousers & Skirts)</h2>
+      <h2>{{ t('measSec2Title') }}</h2>
       <ul>
-        <li><strong>Hips:</strong> Measure around the fullest part of your hips.</li>
-        <li><strong>Inseam:</strong> Measure from the crotch point down to the ankle bone.</li>
-        <li><strong>Total Length:</strong> Measure from the waist down to the desired hemline.</li>
+        <li><strong>{{ t('measSec2L1').split(':')[0] }}:</strong>{{ t('measSec2L1').split(':')[1] }}</li>
+        <li><strong>{{ t('measSec2L2').split(':')[0] }}:</strong>{{ t('measSec2L2').split(':')[1] }}</li>
+        <li><strong>{{ t('measSec2L3').split(':')[0] }}:</strong>{{ t('measSec2L3').split(':')[1] }}</li>
       </ul>
 
-      <h2>3. General Tips</h2>
+      <h2>{{ t('measSec3Title') }}</h2>
       <ul>
-        <li><strong>Keep it Level:</strong> Ensure the tape measure is always parallel to the floor.</li>
-        <li><strong>Don't Pull Too Tight:</strong> The tape should be snug but not digging into your skin.</li>
-        <li><strong>Wear Thin Clothing:</strong> Take measurements while wearing thin undergarments or light clothing for the best fit.</li>
+        <li>{{ t('measSec3L1') }}</li>
+        <li>{{ t('measSec3L2') }}</li>
+        <li>{{ t('measSec3L3') }}</li>
       </ul>
 
       <div class="pro-tip">
-        <h3>Pro Tip</h3>
-        <p>When ordering on Alfietz, you can paste these measurements into the "Special Requirements" box during your WhatsApp order!</p>
+        <h3>{{ t('measProTipTitle') }}</h3>
+        <p>{{ t('measProTipP1') }}</p>
       </div>
     </div>
   </div>

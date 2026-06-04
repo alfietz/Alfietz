@@ -2,6 +2,13 @@
 <script setup>
 import { ref, computed } from 'vue'
 
+const props = defineProps({
+  t: {
+    type: Function,
+    required: true
+  }
+})
+
 const reviewText = ref('')
 const rating = ref(5)
 const maxChars = 350
@@ -9,14 +16,19 @@ const selectedTags = ref([])
 const reviewImage = ref(null)
 const isUploading = ref(false)
 
-const tags = [
-  'Excellent Quality', 'Perfect Fit', 'Vibrant Colors', 
-  'Fast Delivery', 'Great Material', 'Unique Design',
-  'Authentic', 'Highly Recommend'
-]
+const tags = computed(() => [
+  props.t('tags.excellentQuality'), 
+  props.t('tags.perfectFit'), 
+  props.t('tags.vibrantColors'), 
+  props.t('tags.fastDelivery'), 
+  props.t('tags.greatMaterial'), 
+  props.t('tags.uniqueDesign'),
+  props.t('tags.authentic'), 
+  props.t('tags.highlyRecommend')
+])
 
 const remainingChars = computed(() => maxChars - reviewText.value.length)
-
+// ... (rest of logic)
 const toggleTag = (tag) => {
   if (selectedTags.value.includes(tag)) {
     selectedTags.value = selectedTags.value.filter(t => t !== tag)
@@ -58,12 +70,12 @@ defineEmits(['go-back', 'submit'])
       <button class="back-btn tap-active" @click="$emit('go-back')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
       </button>
-      <h1 class="title">Share Your Journey</h1>
+      <h1 class="title">{{ t('shareJourneyTitle') }}</h1>
     </div>
 
     <div class="form-container">
       <div class="rating-selection">
-        <p class="rating-label">How was your heritage experience?</p>
+        <p class="rating-label">{{ t('heritageExpLabel') }}</p>
         <div class="stars">
           <button 
             v-for="star in 5" 
@@ -78,13 +90,13 @@ defineEmits(['go-back', 'submit'])
           </button>
         </div>
         <p class="rating-text-feedback">
-          {{ ['Could be better', 'Fair', 'Great Heritage', 'Amazing Quality', 'Pure Mastery'][rating - 1] }}
+          {{ [t('ratingText1'), t('ratingText2'), t('ratingText3'), t('ratingText4'), t('ratingText5')][rating - 1] }}
         </p>
       </div>
 
       <!-- Photo Upload Section -->
       <div class="input-group">
-        <label class="group-label">Show the Tribe (Add Photos)</label>
+        <label class="group-label">{{ t('showTribeLabel') }}</label>
         <div class="photo-upload-area">
           <div v-if="reviewImage" class="preview-container">
             <img :src="reviewImage" class="image-preview" alt="Review preview" />
@@ -97,13 +109,13 @@ defineEmits(['go-back', 'submit'])
             <div class="upload-icon-box">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
             </div>
-            <span>Add a photo of you wearing the piece</span>
+            <span>{{ t('addPhotoWearing') }}</span>
           </label>
         </div>
       </div>
 
       <div class="input-group">
-        <label class="group-label">Quick Tags</label>
+        <label class="group-label">{{ t('quickTagsLabel') }}</label>
         <div class="tags-cloud">
           <button 
             v-for="tag in tags" 
@@ -118,12 +130,12 @@ defineEmits(['go-back', 'submit'])
       </div>
 
       <div class="input-group">
-        <label class="group-label">Your Story</label>
+        <label class="group-label">{{ t('yourStoryLabel') }}</label>
         <div class="textarea-wrapper">
           <textarea 
             v-model="reviewText" 
             :maxlength="maxChars"
-            placeholder="Tell the tribe about the fit, the feel, and the craftsmanship..." 
+            :placeholder="t('storyPlaceholder')" 
             class="review-input"
           ></textarea>
           <div class="char-count" :class="{ 'warning': remainingChars < 50 }">
@@ -139,7 +151,7 @@ defineEmits(['go-back', 'submit'])
         :disabled="(!reviewText.trim() && rating === 0) || isUploading"
         @click="$emit('submit', { rating, text: reviewText, image: reviewImage })"
       >
-        <span>Share with the Tribe</span>
+        <span>{{ t('shareWithTribe') }}</span>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
       </button>
     </div>

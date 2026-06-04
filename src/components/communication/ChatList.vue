@@ -6,6 +6,10 @@ const props = defineProps({
   userData: {
     type: Object,
     required: true
+  },
+  t: {
+    type: Function,
+    required: true
   }
 })
 
@@ -38,10 +42,10 @@ const fetchConversations = async () => {
     
     const newConversations = res.rows.map(r => ({
       id: r.id,
-      name: `${r.first_name || ''} ${r.last_name || ''}`.trim() || r.username,
+      name: (r.first_name || r.last_name) ? `${r.first_name || ''} ${r.last_name || ''}`.trim() : r.username,
       avatar: r.avatar,
-      lastMessage: r.last_message || 'No messages yet',
-      time: r.last_message_time ? new Date(r.last_message_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
+      lastMessage: r.last_message || props.t('noMessages'),
+      time: r.last_message_time ? formatTime(r.last_message_time) : '',
       unread: r.unread_count > 0
     }))
 
@@ -56,6 +60,11 @@ const fetchConversations = async () => {
     loading.value = false
   }
 }
+
+function formatTime(dateStr) {
+  const date = new Date(dateStr)
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+}
 </script>
 
 <template>
@@ -65,19 +74,27 @@ const fetchConversations = async () => {
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>
       </button>
       <div class="header-text">
-        <h1 class="title">Tribe Conversations</h1>
-        <p class="subtitle">Whispers of the heritage</p>
+        <h1 class="title">{{ t('chats') }}</h1>
+        <p class="subtitle">{{ t('whispersOfHeritage') }}</p>
       </div>
+      <button class="refresh-btn-alt" @click="fetchConversations" :disabled="loading" title="Refresh conversations">
+        <svg :class="{ 'spinning': loading }" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+      </button>
     </div>
 
-    <div v-if="loading" class="loading-state">
-      <div class="heritage-spinner"></div>
-      <p class="loading-msg">Summoning your whispers...</p>
+    <div v-if="loading && conversations.length === 0" class="loading-state">
+      <div v-for="n in 5" :key="n" class="skeleton-convo">
+        <div class="skeleton-avatar"></div>
+        <div class="skeleton-info">
+          <div class="skeleton-line"></div>
+          <div class="skeleton-line short"></div>
+        </div>
+      </div>
     </div>
 
     <div v-else-if="conversations.length === 0" class="empty-state">
       <div class="empty-icon">💬</div>
-      <p>No conversations yet. Reach out to a tailor to start your heritage journey!</p>
+      <p>{{ t('noChatsYet') }}</p>
     </div>
 
     <div v-else class="conversations-list">
@@ -104,6 +121,36 @@ const fetchConversations = async () => {
 </template>
 
 <style scoped>
+.refresh-btn-alt {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  transition: all 0.3s;
+}
+
+.refresh-btn-alt:hover:not(:disabled) {
+  color: var(--accent-amber);
+}
+
+.refresh-btn-alt:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 .chat-list-page {
   padding: 40px 24px;
   max-width: 800px;
@@ -141,23 +188,74 @@ const fetchConversations = async () => {
   margin: 2px 0 0 0;
 }
 
-.heritage-spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid rgba(217, 119, 6, 0.1);
-  border-top-color: var(--accent-amber);
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.skeleton-convo {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  background: var(--wood-walnut);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  align-items: center;
+}
+
+.skeleton-avatar {
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 16px;
+  background: var(--wood-deep);
+  position: relative;
+  overflow: hidden;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+.skeleton-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.loading-msg {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
+.skeleton-line {
+  height: 14px;
+  width: 120px;
+  background: var(--wood-deep);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-line.short { width: 180px; height: 12px; }
+
+.skeleton-avatar::after, .skeleton-line::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0.03) 20%,
+    rgba(255, 255, 255, 0.07) 60%,
+    rgba(255, 255, 255, 0)
+  );
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 80px 20px;
   color: var(--text-muted);
 }
 

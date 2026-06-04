@@ -18,12 +18,12 @@ const emit = defineEmits(['go-back', 'go-signup', 'go-forgot', 'login'])
 
 const validateForm = () => {
   if (!email.value || !password.value) {
-    errorMessage.value = 'Please enter both email and password.'
+    errorMessage.value = props.t('errEmailPass')
     return false
   }
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   if (!emailRegex.test(email.value)) {
-    errorMessage.value = 'Please enter a valid email address.'
+    errorMessage.value = props.t('errInvalidEmail')
     return false
   }
   errorMessage.value = ''

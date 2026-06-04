@@ -24,28 +24,28 @@ const emit = defineEmits(['go-back', 'go-login', 'signup'])
 
 const validateForm = () => {
   if (!username.value || !firstName.value || !lastName.value || !email.value || !password.value || !confirmPassword.value) {
-    errorMessage.value = 'Please fill in all required fields.'
+    errorMessage.value = props.t('errFillFields')
     return false
   }
 
   // Username validation: Alphanumeric, underscores, hyphens only.
   const usernameRegex = /^[a-zA-Z0-9_-]+$/
   if (!usernameRegex.test(username.value)) {
-    errorMessage.value = 'Username can only contain letters, numbers, underscores, and hyphens. No spaces or special characters like @, /, or \\ allowed.'
+    errorMessage.value = props.t('errUsernameChars')
     return false
   }
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   if (!emailRegex.test(email.value)) {
-    errorMessage.value = 'Please enter a valid email address.'
+    errorMessage.value = props.t('errInvalidEmail')
     return false
   }
   if (password.value.length < 6) {
-    errorMessage.value = 'Password must be at least 6 characters long.'
+    errorMessage.value = props.t('errPassLength')
     return false
   }
   if (password.value !== confirmPassword.value) {
-    errorMessage.value = 'Passwords do not match.'
+    errorMessage.value = props.t('errPassMatch')
     return false
   }
   errorMessage.value = ''

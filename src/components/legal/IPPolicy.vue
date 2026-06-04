@@ -1,5 +1,11 @@
 <!-------- (IPPolicy.vue) ./src/components/legal/IPPolicy.vue ------------>
 <script setup>
+defineProps({
+  t: {
+    type: Function,
+    required: true
+  }
+})
 defineEmits(['go-back'])
 </script>
 
@@ -9,27 +15,27 @@ defineEmits(['go-back'])
       <button class="back-btn" @click="$emit('go-back')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
       </button>
-      <h1 class="title">Intellectual Property</h1>
+      <h1 class="title">{{ t('ipPolicyTitle') }}</h1>
     </div>
 
     <div class="content-scroll">
       <p class="last-updated">Last Updated: May 2026</p>
       
-      <h2>1. Artisan Ownership</h2>
-      <p>At Alfietz, we believe the creator is the soul of the craft. All designs, patterns, and craftsmanship uploaded by Suppliers remain the **exclusive intellectual property** of the respective artisan or brand. Alfietz does not claim ownership of your unique heritage designs.</p>
+      <h2>{{ t('ipSec1Title') }}</h2>
+      <p>{{ t('ipSec1P1') }}</p>
 
-      <h2>2. Platform License</h2>
-      <p>By uploading content (images, descriptions) to Alfietz, you grant Alfietz a non-exclusive, worldwide, royalty-free license to use, display, and share that content for the sole purpose of promoting your work and the Alfietz platform on social media, marketing materials, and within the app.</p>
+      <h2>{{ t('ipSec2Title') }}</h2>
+      <p>{{ t('ipSec2P1') }}</p>
 
-      <h2>3. Protection of Designs</h2>
-      <p>Users are strictly prohibited from copying, reproducing, or commercially exploiting the designs found on Alfietz without the express written consent of the original creator. We take design "scraping" seriously and will ban users found to be stealing artisan IP.</p>
+      <h2>{{ t('ipSec3Title') }}</h2>
+      <p>{{ t('ipSec3P1') }}</p>
 
-      <h2>4. Reporting Infringement</h2>
-      <p>If you believe your intellectual property has been infringed upon by another user on our platform, please send a detailed "Notice of Infringement" to support@alfietz.shop including:</p>
+      <h2>{{ t('ipSec4Title') }}</h2>
+      <p>{{ t('ipSec4P1') }}</p>
       <ul>
-        <li>A description of the copyrighted work you claim has been infringed.</li>
-        <li>The link to the infringing listing on Alfietz.</li>
-        <li>Your contact information and proof of ownership.</li>
+        <li>{{ t('ipSec4L1') }}</li>
+        <li>{{ t('ipSec4L2') }}</li>
+        <li>{{ t('ipSec4L3') }}</li>
       </ul>
     </div>
   </div>

@@ -525,11 +525,13 @@ const makeCall = () => {
           <div class="relative z-10 max-w-3xl px-4">
               <h1 class="font-serif text-5xl md:text-7xl text-white mb-4 leading-tight flex items-center justify-center gap-4">
                 <EditableText v-model="draftData.name" :is-editable="isOwner" placeholder="Artisan Name" />
-                <div v-if="sellerData.is_verified" class="w-8 h-8 md:w-12 md:h-12 bg-alfie-accent rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(212,175,55,0.4)]" title="Physical Shop Verified">
+                <div v-if="sellerData.is_verified || sellerData.isVerified" class="w-8 h-8 md:w-12 md:h-12 bg-alfie-accent rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(212,175,55,0.4)]" title="100+ Customers Served">
                     <svg class="w-1/2 h-1/2" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                 </div>
               </h1>
-              <p class="text-alfie-accent tracking-[0.2em] text-sm uppercase font-bold">Master Tailor • Heritage Artisan</p>
+              <p class="text-alfie-accent tracking-[0.2em] text-sm uppercase font-bold">
+                {{ (sellerData.is_verified || sellerData.isVerified) ? '100+ Heritage Projects Served • ' : '' }}Master Tailor • Heritage Artisan
+              </p>
           </div>
       </div>
 
@@ -635,12 +637,19 @@ const makeCall = () => {
                   </div>
                   <div class="flex flex-col gap-4">
                       <!-- In-App Chat Inquiry -->
-                      <button v-if="!isOwner" @click="$emit('go-chat', sellerData.id)" class="group flex items-center justify-between p-4 bg-wood-walnut border border-glass-border hover:border-alfie-accent/50 transition rounded-sm shadow-lg mb-4 w-full">
+                      <button 
+                        v-if="!isOwner" 
+                        :disabled="!sellerData.id || loading"
+                        @click="sellerData.id && $emit('go-chat', sellerData.id)" 
+                        class="group flex items-center justify-between p-4 bg-wood-walnut border border-glass-border hover:border-alfie-accent/50 transition rounded-sm shadow-lg mb-4 w-full"
+                        :class="{ 'opacity-50 cursor-not-allowed': !sellerData.id || loading }"
+                      >
                           <div class="flex items-center gap-3">
                               <i class="fas fa-comment-dots text-xl text-alfie-accent"></i>
                               <span class="text-sm font-bold tracking-wide text-white">In-App Chat</span>
                           </div>
-                          <i class="fas fa-chevron-right text-xs text-gray-500"></i>
+                          <i v-if="!loading" class="fas fa-chevron-right text-xs text-gray-500"></i>
+                          <div v-else class="w-4 h-4 border-2 border-alfie-accent border-t-transparent rounded-full animate-spin"></div>
                       </button>
 
                       <!-- WhatsApp Inquiry (Legacy Fallback/Default style) -->

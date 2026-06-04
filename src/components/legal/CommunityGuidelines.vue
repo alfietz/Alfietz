@@ -1,5 +1,11 @@
 <!-------- (CommunityGuidelines.vue) ./src/components/legal/CommunityGuidelines.vue ------------>
 <script setup>
+defineProps({
+  t: {
+    type: Function,
+    required: true
+  }
+})
 defineEmits(['go-back'])
 </script>
 
@@ -9,33 +15,33 @@ defineEmits(['go-back'])
       <button class="back-btn" @click="$emit('go-back')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
       </button>
-      <h1 class="title">Community Guidelines</h1>
+      <h1 class="title">{{ t('communityGuidelinesTitle') }}</h1>
     </div>
 
     <div class="content-scroll">
       <p class="last-updated">Last Updated: May 2026</p>
       
-      <p>Alfietz is built on respect, heritage, and genuine craftsmanship. To maintain the integrity of "The Tribe," all users must adhere to these Community Guidelines.</p>
+      <p>{{ t('commP1') }}</p>
 
-      <h2>1. Authenticity & Heritage</h2>
-      <p>Alfietz is dedicated to authentic African heritage crafts and clothing. Suppliers are strictly prohibited from listing mass-produced, counterfeit, or drop-shipped items disguised as handmade goods. We celebrate authentic artisanship.</p>
+      <h2>{{ t('commSec1Title') }}</h2>
+      <p>{{ t('commSec1P1') }}</p>
 
-      <h2>2. Respectful Communication</h2>
-      <p>Whether communicating on the platform or via integrated WhatsApp links, all interactions must be professional and respectful. Harassment, hate speech, discrimination, or abusive language toward any Buyer, Supplier, or Alfietz staff will result in immediate account termination.</p>
+      <h2>{{ t('commSec2Title') }}</h2>
+      <p>{{ t('commSec2P1') }}</p>
 
-      <h2>3. Honest Representation</h2>
-      <p>Suppliers must accurately photograph and describe their items. Misleading buyers regarding the materials, origin, or production time of an item is a violation of our trust policies.</p>
+      <h2>{{ t('commSec3Title') }}</h2>
+      <p>{{ t('commSec3P1') }}</p>
 
-      <h2>4. Prohibited Items</h2>
-      <p>The following items may not be sold on Alfietz:</p>
+      <h2>{{ t('commSec4Title') }}</h2>
+      <p>{{ t('commSec4P1') }}</p>
       <ul>
-        <li>Items that violate intellectual property rights (e.g., unauthorized use of trademarked logos).</li>
-        <li>Offensive or culturally appropriative materials designed to mock heritage.</li>
-        <li>Any illegal goods or services.</li>
+        <li>{{ t('commSec4L1') }}</li>
+        <li>{{ t('commSec4L2') }}</li>
+        <li>{{ t('commSec4L3') }}</li>
       </ul>
 
-      <h2>5. Reporting Violations</h2>
-      <p>If you encounter a user or listing that violates these guidelines, please use the Feedback or Help section to report it to the Alfietz moderation team immediately.</p>
+      <h2>{{ t('commSec5Title') }}</h2>
+      <p>{{ t('commSec5P1') }}</p>
     </div>
   </div>
 </template>

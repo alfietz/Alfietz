@@ -97,9 +97,8 @@ const router = useRouter()
 const route = useRoute()
 
 // Sync selectedSeller with URL for reloads and direct navigation
-watch(() => route.params.username, (newUsername) => {
+watch(() => route.params.username, async (newUsername) => {
   if (route.name === 'tailor-details' && newUsername) {
-    // Remove leading @ if present in param
     const cleanUsername = newUsername.startsWith('@') ? newUsername.slice(1) : newUsername;
     
     if (!selectedSeller.value || selectedSeller.value.username !== cleanUsername) {
@@ -107,6 +106,8 @@ watch(() => route.params.username, (newUsername) => {
       if (cached) {
         selectedSeller.value = cached;
       } else {
+        // If not cached, we only have the username. 
+        // TailorDetails.vue will fetch the full details (including ID).
         selectedSeller.value = { username: cleanUsername };
       }
     }
@@ -797,20 +798,8 @@ const handleRemoveFromCart = (cartId) => {
 }
 
 // Lifecycle
-let syncInterval = null;
 onMounted(() => {
   fetchInitialData()
-  
-  // Keep the app "alive" with background syncs every 30 seconds
-  syncInterval = setInterval(() => {
-    if (userData.value.id !== 'guest') {
-      fetchInitialData()
-    }
-  }, 30000)
-})
-
-onUnmounted(() => {
-  if (syncInterval) clearInterval(syncInterval)
 })
 
 const showNavBar = computed(() => {
@@ -907,7 +896,7 @@ const showNavBar = computed(() => {
           @go-tailor="(s) => navigateTo('tailor-details', { selectedSeller: s })"
           @search="handleSearch"
           @update:user-data="handleUpdateProfile"
-          @update:language="(val) => currentLanguage = val"
+          @update:language="(val) => { currentLanguage = val; setStored('language', val); }"
           @update:role="handleUpdateRole"
           @go-help="navigateTo('help')"
           @go-privacy="navigateTo('privacy')"

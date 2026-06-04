@@ -1,5 +1,11 @@
 <!-------- (SafetyTips.vue) ./src/components/legal/SafetyTips.vue ------------>
 <script setup>
+defineProps({
+  t: {
+    type: Function,
+    required: true
+  }
+})
 defineEmits(['go-back'])
 </script>
 
@@ -9,35 +15,35 @@ defineEmits(['go-back'])
       <button class="back-btn" @click="$emit('go-back')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
       </button>
-      <h1 class="title">Safety & Security Tips</h1>
+      <h1 class="title">{{ t('safetyTipsTitle') }}</h1>
     </div>
 
     <div class="content-scroll">
       <p class="last-updated">Last Updated: May 2026</p>
       
-      <p>Your safety is our priority. Since Alfietz connects you directly with artisans via WhatsApp, please follow these guidelines to ensure a secure and happy heritage experience.</p>
+      <p>{{ t('safetyTipsP1') }}</p>
 
-      <h2>1. Secure Payments</h2>
+      <h2>{{ t('safetyTip1Title') }}</h2>
       <ul>
-        <li><strong>Avoid Full Upfront Payments:</strong> For custom orders, it is standard to pay a deposit (e.g., 50%) and the balance upon completion/delivery. Avoid paying 100% upfront to sellers you haven't worked with before.</li>
-        <li><strong>Use Traceable Methods:</strong> Use mobile money (M-Pesa, Airtel Money) or bank transfers that provide a digital receipt. Avoid sending cash via untraceable means.</li>
-        <li><strong>Verify the Receiver:</strong> Ensure the name on the mobile money account matches the Supplier's name on Alfietz.</li>
+        <li>{{ t('safetyTip1L1') }}</li>
+        <li>{{ t('safetyTip1L2') }}</li>
+        <li>{{ t('safetyTip1L3') }}</li>
       </ul>
 
-      <h2>2. Safe Communication</h2>
+      <h2>{{ t('safetyTip2Title') }}</h2>
       <ul>
-        <li><strong>Keep it on WhatsApp:</strong> By using the "Order via WhatsApp" button, you ensure a chat history exists. Do not move the conversation to disappearing message apps.</li>
-        <li><strong>Save Your History:</strong> Keep screenshots of your measurements, agreed prices, and delivery dates in case a dispute arises.</li>
+        <li>{{ t('safetyTip2L1') }}</li>
+        <li>{{ t('safetyTip2L2') }}</li>
       </ul>
 
-      <h2>3. Meeting in Person</h2>
+      <h2>{{ t('safetyTip3Title') }}</h2>
       <ul>
-        <li><strong>Public Places:</strong> If you are meeting a Supplier for a fitting or delivery, always meet in a well-lit, busy public place.</li>
-        <li><strong>Tell Someone:</strong> Let a friend or family member know where you are going and who you are meeting.</li>
+        <li>{{ t('safetyTip3L1') }}</li>
+        <li>{{ t('safetyTip3L2') }}</li>
       </ul>
 
-      <h2>4. Reporting Suspicious Activity</h2>
-      <p>If a user asks for personal financial details (like PIN codes or passwords) or behaves suspiciously, stop communication immediately and report them via the Alfietz Feedback section.</p>
+      <h2>{{ t('safetyTip4Title') }}</h2>
+      <p>{{ t('safetyTip4P') }}</p>
     </div>
   </div>
 </template>

@@ -6,9 +6,13 @@ const props = defineProps({
   userData: {
     type: Object,
     required: true
+  },
+  t: {
+    type: Function,
+    required: true
   }
 })
-
+// ... (rest of imports)
 const tempUser = ref({ ...props.userData })
 const errorMessage = ref('')
 const isUploading = ref(false)
@@ -47,26 +51,26 @@ const handleImageUpload = async (event) => {
 
 const validateForm = () => {
   if (!tempUser.value.username || !tempUser.value.firstName || !tempUser.value.lastName || !tempUser.value.whatsapp) {
-    errorMessage.value = 'All fields are required.'
+    errorMessage.value = props.t('errAllFields')
     return false
   }
 
   // Username validation: Alphanumeric, underscores, hyphens only.
   const usernameRegex = /^[a-zA-Z0-9_-]+$/
   if (!usernameRegex.test(tempUser.value.username)) {
-    errorMessage.value = 'Username can only contain letters, numbers, underscores, and hyphens. No spaces or special characters like @, /, or \\ allowed.'
+    errorMessage.value = props.t('errUsernameChars')
     return false
   }
 
   if (tempUser.value.username.length < 3) {
-    errorMessage.value = 'Username must be at least 3 characters.'
+    errorMessage.value = props.t('errUsernameShort')
     return false
   }
   // Basic phone validation (allows + and digits, min 7 chars)
   const phoneRegex = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/im
   // Simple check if regex is too strict for international:
   if (tempUser.value.whatsapp.length < 7) {
-    errorMessage.value = 'Please enter a valid WhatsApp number.'
+    errorMessage.value = props.t('errInvalidPhone')
     return false
   }
   errorMessage.value = ''
@@ -85,7 +89,7 @@ const saveChanges = () => {
       <button class="back-btn" @click="$emit('go-back')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
       </button>
-      <h1 class="title">Edit profile</h1>
+      <h1 class="title">{{ t('editProfile') }}</h1>
     </div>
 
     <!-- Avatar Section -->
