@@ -766,9 +766,10 @@ const handleCartCheckout = (group) => {
   message += `Could you please let me know how we can proceed with the payment and delivery? 🚚\n\n`;
   message += `Best regards,\n${buyerName} ✍️`;
   
-  // Normalize Tanzania numbers
+  // Robust normalization for WhatsApp
   let phoneNumber = group.tailorPhone || '';
-  let normalized = phoneNumber.startsWith('0') ? '255' + phoneNumber.slice(1) : phoneNumber.replace('+', '');
+  const cleanNumber = phoneNumber.replace(/[^0-9]/g, '')
+  let normalized = cleanNumber.startsWith('0') ? '255' + cleanNumber.slice(1) : cleanNumber
   
   const url = `https://wa.me/${normalized}?text=${encodeURIComponent(message)}`;
   window.open(url, '_blank');

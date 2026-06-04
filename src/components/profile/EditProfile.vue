@@ -66,10 +66,9 @@ const validateForm = () => {
     errorMessage.value = props.t('errUsernameShort')
     return false
   }
-  // Basic phone validation (allows + and digits, min 7 chars)
-  const phoneRegex = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/im
-  // Simple check if regex is too strict for international:
-  if (tempUser.value.whatsapp.length < 7) {
+  // Basic phone validation (allows +, spaces, and digits, min 7 chars after cleaning)
+  const cleanedPhone = tempUser.value.whatsapp.replace(/[^0-9]/g, '')
+  if (cleanedPhone.length < 7) {
     errorMessage.value = props.t('errInvalidPhone')
     return false
   }

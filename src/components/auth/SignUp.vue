@@ -23,7 +23,7 @@ const errorMessage = ref('')
 const emit = defineEmits(['go-back', 'go-login', 'signup'])
 
 const validateForm = () => {
-  if (!username.value || !firstName.value || !lastName.value || !email.value || !password.value || !confirmPassword.value) {
+  if (!username.value || !firstName.value || !lastName.value || !email.value || !whatsapp.value || !password.value || !confirmPassword.value) {
     errorMessage.value = props.t('errFillFields')
     return false
   }
@@ -40,6 +40,14 @@ const validateForm = () => {
     errorMessage.value = props.t('errInvalidEmail')
     return false
   }
+
+  // Basic phone validation (allows +, spaces, and digits, min 7 chars after cleaning)
+  const cleanedPhone = whatsapp.value.replace(/[^0-9]/g, '')
+  if (cleanedPhone.length < 7) {
+    errorMessage.value = props.t('errInvalidPhone')
+    return false
+  }
+
   if (password.value.length < 6) {
     errorMessage.value = props.t('errPassLength')
     return false

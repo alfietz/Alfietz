@@ -276,8 +276,8 @@ const connectToWhatsApp = (withOffer = false) => {
     return
   }
   
-  // Normalize Tanzania numbers
-  let normalized = phoneNumber.startsWith('0') ? '255' + phoneNumber.slice(1) : phoneNumber.replace('+', '')
+  const cleanNumber = phoneNumber.replace(/[^0-9]/g, '')
+  let normalized = cleanNumber.startsWith('0') ? '255' + cleanNumber.slice(1) : cleanNumber
   
   const buyerName = props.userData.firstName || props.userData.username
   const sellerName = product.value.first_name || product.value.owner_username
@@ -351,6 +351,12 @@ const handleDelete = () => {
       emit('delete', product.value.id)
     }
   })
+}
+
+const shareToWhatsApp = () => {
+  const text = `Check out this incredible heritage piece: "${product.value.name}" on Alfietz! ✨\n\n${window.location.href}`
+  const url = `https://wa.me/?text=${encodeURIComponent(text)}`
+  window.open(url, '_blank')
 }
 
 const shareProduct = async () => {
@@ -618,10 +624,14 @@ const shareProduct = async () => {
             <button v-if="isOwner" class="icon-btn edit-btn-top" @click="$emit('go-edit', product)">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-amber)" stroke-width="2.5"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 9.5-9.5z"/></svg>
             </button>
-            <button v-if="isOwner" class="icon-btn delete-btn" @click="handleDelete">
+            <button class="icon-btn delete-btn" @click="handleDelete">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C62828" stroke-width="2.5"><path d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
             </button>
+            <button class="icon-btn wa-share-btn" @click="shareToWhatsApp" title="Share to WhatsApp">
+              <i class="fab fa-whatsapp"></i>
+            </button>
             <button class="icon-btn fav-btn" @click="$emit('toggle-favorite', product)">
+
               <svg v-if="product.liked" width="20" height="20" viewBox="0 0 24 24" fill="var(--accent-amber)" stroke="var(--accent-amber)" stroke-width="2" class="filled"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
               <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-amber)" stroke-width="2.5" class="unfilled"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
             </button>

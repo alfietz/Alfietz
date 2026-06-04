@@ -394,7 +394,8 @@ watch(() => route.params.username, loadTailorData)
 
 const connectToWhatsApp = () => {
   let phoneNumber = sellerData.value.whatsapp || "255700000000";
-  let normalized = phoneNumber.startsWith('0') ? '255' + phoneNumber.slice(1) : phoneNumber.replace('+', '')
+  const cleanNumber = phoneNumber.replace(/[^0-9]/g, '')
+  let normalized = cleanNumber.startsWith('0') ? '255' + cleanNumber.slice(1) : cleanNumber
   
   const buyerName = props.userData.firstName || props.userData.username
   const tailorName = sellerData.value.name || sellerData.value.username
@@ -410,6 +411,12 @@ const connectToWhatsApp = () => {
   const url = `https://wa.me/${normalized}?text=${encodeURIComponent(message)}`;
   window.open(url, '_blank');
   hasConnected.value = true
+}
+
+const shareToWhatsApp = () => {
+  const text = `Check out the incredible heritage work of ${sellerData.value.name || sellerData.value.username} on Alfietz! ✨✂️\n\n${window.location.href}`
+  const url = `https://wa.me/?text=${encodeURIComponent(text)}`
+  window.open(url, '_blank')
 }
 
 const makeCall = () => {
@@ -506,9 +513,14 @@ const makeCall = () => {
               <a href="#contact" class="hover:text-white transition">Contact</a>
           </div>
           
-          <button class="text-gray-400 hover:text-white transition" @click="$emit('go-reviews', sellerData.id)">
-              <i class="fas fa-star text-lg"></i>
-          </button>
+          <div class="flex gap-4 items-center">
+            <button class="text-gray-400 hover:text-alfie-accent transition" @click="shareToWhatsApp" title="Share Profile to WhatsApp">
+                <i class="fab fa-whatsapp text-xl"></i>
+            </button>
+            <button class="text-gray-400 hover:text-white transition" @click="$emit('go-reviews', sellerData.id)">
+                <i class="fas fa-star text-lg"></i>
+            </button>
+          </div>
       </nav>
 
       <!-- HERO SECTION -->
@@ -678,7 +690,7 @@ const makeCall = () => {
                                     <EditableText v-model="contact.value" :is-editable="isOwner" :placeholder="contact.type === 'email' ? 'your@email.com' : (contact.type === 'phone' || contact.type === 'whatsapp' ? '+255 700 000 000' : 'https://...')" class="text-xs font-medium" />
                                   </div>
                               </div>
-                              <a v-if="!isOwner && contact.value" :href="contact.type === 'email' ? 'mailto:'+contact.value : (contact.type === 'phone' ? 'tel:'+contact.value : (contact.type === 'whatsapp' ? 'https://wa.me/'+contact.value.replace(/[^0-9]/g, '') : contact.value))" target="_blank" class="w-8 h-8 flex items-center justify-center rounded-full bg-black/10 hover:bg-black/20 transition ml-4">
+                              <a v-if="!isOwner && contact.value" :href="contact.type === 'email' ? 'mailto:'+contact.value : (contact.type === 'phone' ? 'tel:'+contact.value : (contact.type === 'whatsapp' ? 'https://wa.me/' + (contact.value.replace(/[^0-9]/g, '').startsWith('0') ? '255' + contact.value.replace(/[^0-9]/g, '').slice(1) : contact.value.replace(/[^0-9]/g, '')) : contact.value))" target="_blank" class="w-8 h-8 flex items-center justify-center rounded-full bg-black/10 hover:bg-black/20 transition ml-4">
                                 <i class="fas fa-external-link-alt text-[10px]"></i>
                               </a>
                           </div>

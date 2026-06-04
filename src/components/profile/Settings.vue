@@ -36,7 +36,8 @@ const handleAction = (callback) => {
 const openWhatsAppSupport = () => {
   const userName = props.userData.firstName || props.userData.username
   const message = `Hello Alfietz Support! 👋\n\nMy name is ${userName}. I need assistance with the heritage platform. ✨\n\n[Describe issue here]\n\nUser ID: ${props.userData.id}`
-  const url = `https://wa.me/255700000000?text=${encodeURIComponent(message)}`
+  const supportNumber = "255700000000"
+  const url = `https://wa.me/${supportNumber}?text=${encodeURIComponent(message)}`
   window.open(url, '_blank')
 }
 </script>

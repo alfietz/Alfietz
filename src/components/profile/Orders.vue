@@ -96,7 +96,8 @@ const openWhatsApp = (order) => {
     })
     return;
   }
-  let normalized = order.tailorPhone.startsWith('0') ? '255' + order.tailorPhone.slice(1) : order.tailorPhone.replace('+', '')
+  const cleanNumber = order.tailorPhone.replace(/[^0-9]/g, '')
+  let normalized = cleanNumber.startsWith('0') ? '255' + cleanNumber.slice(1) : cleanNumber
   
   const buyerName = props.userData.firstName || props.userData.username
   const tailorName = order.tailorFirstName || order.tailor

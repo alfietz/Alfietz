@@ -186,7 +186,8 @@ const openWhatsApp = (customerData, orderOrNeg, type = 'order') => {
     })
     return;
   }
-  let normalized = phone.startsWith('0') ? '255' + phone.slice(1) : phone.replace('+', '')
+  const cleanNumber = phone.replace(/[^0-9]/g, '')
+  let normalized = cleanNumber.startsWith('0') ? '255' + cleanNumber.slice(1) : cleanNumber
   
   const tailorName = props.userData.firstName || props.userData.username
   const customerName = customerData.customerFirstName || customerData.customer
