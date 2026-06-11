@@ -213,15 +213,25 @@ watch(searchQuery, (newVal) => {
 
     <!-- Future Heritage / Teaser Section (Wooden Vibes) -->
     <section class="section future-heritage">
-      <div class="wood-banner">
+      <div class="wood-banner portfolio-updates">
         <div class="wood-content">
-          <span class="teaser-label">Something Beautiful is Coming</span>
-          <h2 class="teaser-title">Whispers of the Savannah</h2>
+          <span class="teaser-label">LIVE FROM THE TRIBE</span>
+          <h2 class="teaser-title">Portfolio Updates</h2>
           <p class="teaser-text">
-            We are weaving new stories into our heritage. Soon, discover exclusive handmade leathercraft and AR try-ons that bring the tribe to your doorstep.
+            See the latest masterpieces woven by our master tailors. Every stitch is a story of tradition meeting modernity.
           </p>
-          <div class="countdown-teaser">
-            <span>Coming Early June 2026</span>
+          
+          <!-- Simple Portfolio Feed -->
+          <div class="portfolio-feed">
+            <div class="update-item" v-for="n in 3" :key="n">
+              <div class="update-dot"></div>
+              <span class="update-text">New Kente Silhouette uploaded by @AminaTailors</span>
+              <span class="update-time">2h ago</span>
+            </div>
+          </div>
+
+          <div class="countdown-teaser" style="margin-top: 24px;">
+            <span @click="$emit('go-explore', 'Explore more')">Browse the Gallery →</span>
           </div>
         </div>
       </div>
@@ -673,6 +683,44 @@ watch(searchQuery, (newVal) => {
   max-width: 500px;
   margin: 0 auto 24px auto;
   opacity: 0.85;
+}
+
+.portfolio-feed {
+  max-width: 450px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+  background: rgba(0,0,0,0.2);
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.update-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.update-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--accent-amber);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+
+.update-text {
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.update-time {
+  color: var(--text-muted);
+  font-size: 11px;
 }
 
 .countdown-teaser {

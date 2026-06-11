@@ -122,10 +122,92 @@ export default async function handler(req, res) {
     await client.execute("CREATE TABLE IF NOT EXISTS rate_limits (key TEXT PRIMARY KEY, count INTEGER, expires_at INTEGER)");
     await client.execute("CREATE TABLE IF NOT EXISTS verification_codes (email TEXT PRIMARY KEY, code TEXT, expires_at INTEGER)");
     await client.execute("CREATE TABLE IF NOT EXISTS session_tokens (token TEXT PRIMARY KEY, user_id TEXT, expires_at INTEGER)");
+    await client.execute(`
+      CREATE TABLE IF NOT EXISTS login_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT,
+        ip_address TEXT,
+        user_agent TEXT,
+        device_name TEXT,
+        city TEXT,
+        region TEXT,
+        country TEXT,
+        latitude TEXT,
+        longitude TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
 
     // Add missing columns if they don't exist
     await client.execute("ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT 0").catch(() => {});
     await client.execute("ALTER TABLE reviews ADD COLUMN image TEXT").catch(() => {});
+    await client.execute("ALTER TABLE users ADD COLUMN last_city TEXT").catch(() => {});
+    await client.execute("ALTER TABLE users ADD COLUMN last_country TEXT").catch(() => {});
+    await client.execute("ALTER TABLE users ADD COLUMN last_lat TEXT").catch(() => {});
+    await client.execute("ALTER TABLE users ADD COLUMN last_long TEXT").catch(() => {});
+
+    // Session Tracking Helper
+    const trackSession = async (userId) => {
+      try {
+        const ua = req.headers['user-agent'] || '';
+        const city = req.headers['x-vercel-ip-city'] || 'Unknown';
+        const region = req.headers['x-vercel-ip-country-region'] || 'Unknown';
+        const country = req.headers['x-vercel-ip-country'] || 'Unknown';
+        const lat = req.headers['x-vercel-ip-latitude'] || '0';
+        const lon = req.headers['x-vercel-ip-longitude'] || '0';
+        
+        // Simple device detection
+        let device = 'Web Browser';
+        if (/android/i.test(ua)) device = 'Android Device';
+        else if (/iphone|ipad|ipod/i.test(ua)) device = 'iOS Device';
+        else if (/windows/i.test(ua)) device = 'Windows PC';
+        else if (/macintosh/i.test(ua)) device = 'Mac';
+        else if (/linux/i.test(ua)) device = 'Linux PC';
+
+        // Check if location changed compared to last known
+        const userLocRes = await client.execute({
+          sql: "SELECT last_city, last_country, user_type FROM users WHERE id = ?",
+          args: [userId]
+        });
+        
+        let locationChanged = false;
+        if (userLocRes.rows.length > 0) {
+          const uData = userLocRes.rows[0];
+          const lastCity = sanitize(uData[0]);
+          const lastCountry = sanitize(uData[1]);
+          const userType = sanitize(uData[2]);
+          
+          if (lastCity && lastCity !== 'Unknown' && lastCity !== city) {
+            locationChanged = true;
+          }
+        }
+
+        // Log to history
+        await client.execute({
+          sql: `
+            INSERT INTO login_history (user_id, ip_address, user_agent, device_name, city, region, country, latitude, longitude)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `,
+          args: [userId, ip, ua, device, city, region, country, lat, lon]
+        });
+
+        // For non-suppliers or first-time, update automatically. 
+        // Suppliers (tailors) will be asked if it's a significant change.
+        const shouldAutoUpdate = userLocRes.rows.length === 0 || sanitize(userLocRes.rows[0][2]) !== 'supplier';
+
+        if (shouldAutoUpdate && (city !== 'Unknown' || country !== 'Unknown')) {
+          await client.execute({
+            sql: "UPDATE users SET last_city = ?, last_country = ?, last_lat = ?, last_long = ? WHERE id = ?",
+            args: [city, country, lat, lon, userId]
+          });
+        }
+
+        return { locationChanged, city, country, lat, lon };
+      } catch (e) {
+        console.error('Session tracking failed:', e);
+        return { locationChanged: false };
+      }
+    };
 
     // Token Validation for Protected Actions
     const publicActions = ['login', 'signup', 'request_password_reset', 'verify_reset_code', 'reset_password', 'get_initial_data', 'search', 'get_product_details', 'get_tailor_details', 'get_reviews', 'get_similar_products'];
@@ -216,19 +298,25 @@ export default async function handler(req, res) {
     switch (action) {
       case 'get_initial_data':
         const userId = params.userId || 'guest';
+        const userCountry = req.headers['x-vercel-ip-country'] || 'Unknown';
+        const userCity = req.headers['x-vercel-ip-city'] || 'Unknown';
+
         const [cats, trending, all, appReviews, suppliers] = await Promise.all([
           client.execute("SELECT * FROM categories"),
           client.execute("SELECT p.*, c.name as categoryName FROM products p LEFT JOIN categories c ON p.category_id = c.id ORDER BY p.likes_count DESC LIMIT 4"),
           client.execute("SELECT p.*, c.name as categoryName FROM products p LEFT JOIN categories c ON p.category_id = c.id ORDER BY p.id DESC LIMIT 50"),
           client.execute("SELECT r.*, u.first_name, u.last_name, u.avatar FROM app_reviews r JOIN users u ON r.user_id = u.id ORDER BY r.created_at DESC LIMIT 5"),
-          client.execute(`
-            SELECT u.id, u.username, u.first_name, u.last_name, u.avatar, u.user_type, u.gives, u.profile_views, u.is_verified,
-                   (SELECT AVG(rating) FROM reviews WHERE product_id IN (SELECT id FROM products WHERE owner_id = u.id)) as avg_rating,
-                   (SELECT SUM(likes_count) FROM products WHERE owner_id = u.id) as total_likes
-            FROM users u 
-            WHERE u.user_type = 'supplier' 
-            ORDER BY profile_views DESC LIMIT 8
-          `)
+          client.execute({
+            sql: `
+              SELECT u.id, u.username, u.first_name, u.last_name, u.avatar, u.user_type, u.gives, u.profile_views, u.is_verified, u.last_country,
+                     (SELECT AVG(rating) FROM reviews WHERE product_id IN (SELECT id FROM products WHERE owner_id = u.id)) as avg_rating,
+                     (SELECT SUM(likes_count) FROM products WHERE owner_id = u.id) as total_likes
+              FROM users u 
+              WHERE u.user_type = 'supplier' 
+              ORDER BY (CASE WHEN u.last_country = ? THEN 1 ELSE 0 END) DESC, profile_views DESC LIMIT 8
+            `,
+            args: [userCountry]
+          })
         ]);
 
         let favorites = [];
@@ -236,6 +324,7 @@ export default async function handler(req, res) {
         let productCount = 0;
 
         if (userId !== 'guest') {
+          // ... (existing code for logged in user)
           const [favsRes, notifsRes, countRes, userStatsRes] = await Promise.all([
             client.execute({ sql: "SELECT product_id FROM favorites WHERE user_id = ?", args: [userId] }),
             client.execute({ sql: "SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC", args: [userId] }),
@@ -244,7 +333,8 @@ export default async function handler(req, res) {
               sql: `
                 SELECT 
                   (SELECT AVG(rating) FROM reviews WHERE product_id IN (SELECT id FROM products WHERE owner_id = u.id)) as avg_rating,
-                  (SELECT SUM(likes_count) FROM products WHERE owner_id = u.id) as total_likes
+                  (SELECT SUM(likes_count) FROM products WHERE owner_id = u.id) as total_likes,
+                  last_city, last_country
                 FROM users u WHERE u.id = ?
               `, 
               args: [userId] 
@@ -258,12 +348,14 @@ export default async function handler(req, res) {
           customResponse = {
             ...customResponse,
             userRating: uStats ? sanitize(uStats.avg_rating || 0) : 0,
-            userTotalLikes: uStats ? sanitize(uStats.total_likes || 0) : 0
+            userTotalLikes: uStats ? sanitize(uStats.total_likes || 0) : 0,
+            userLocation: uStats ? { city: sanitize(uStats.last_city), country: sanitize(uStats.last_country) } : null
           };
         }
 
         customResponse = {
           ...customResponse,
+          location: { city: userCity, country: userCountry },
           categories: mapRows(cats),
           trendingProducts: mapRows(trending),
           allProducts: mapRows(all),
@@ -429,7 +521,19 @@ export default async function handler(req, res) {
           args: [sessionToken, userObj.id, sessionExpires]
         });
 
-        customResponse = { user: userObj, token: sessionToken };
+        // Track session (IP, Device, Location)
+        const trackData = await trackSession(userObj.id);
+
+        customResponse = { 
+          user: userObj, 
+          token: sessionToken,
+          locationUpdate: trackData.locationChanged ? {
+            city: trackData.city,
+            country: trackData.country,
+            lat: trackData.lat,
+            lon: trackData.lon
+          } : null
+        };
         break;
 
       case 'signup':
@@ -467,7 +571,16 @@ export default async function handler(req, res) {
 
         // We need to return the token, so we override the standard execute flow
         await client.execute({ sql, args });
+
+        // Track session (IP, Device, Location)
+        await trackSession(params.id);
+
         customResponse = { success: true, token: stoken };
+        break;
+
+      case 'confirm_location_update':
+        sql = "UPDATE users SET last_city = ?, last_country = ?, last_lat = ?, last_long = ? WHERE id = ?";
+        args = [params.city, params.country, params.lat, params.lon, params.userId];
         break;
 
       case 'create_negotiation':
@@ -609,6 +722,9 @@ export default async function handler(req, res) {
           const email = userData.rows[0] ? sanitize(userData.rows[0][0]) : '';
           await initializeTailorProfile(params.id, params.whatsapp, email);
         }
+
+        // Refresh location and log activity
+        await trackSession(params.id);
         break;
       case 'delete_product':
         await client.execute({ sql: 'DELETE FROM favorites WHERE product_id = ?', args: [params.productId] });

@@ -282,6 +282,18 @@ const handleLogin = async (data) => {
       };
       userData.value = loggedUser;
       setStored('user_data', loggedUser);
+
+      // Tailor Location Update Confirmation
+      if (u.user_type === 'supplier' && res.locationUpdate) {
+        const confirm = window.confirm(`Ancestors notice you are in ${res.locationUpdate.city}, ${res.locationUpdate.country}. Would you like to update your shop location to this place?`);
+        if (confirm) {
+          await db.runAction('confirm_location_update', {
+            userId: u.id,
+            ...res.locationUpdate
+          });
+          showToast('Shop location updated successfully!', 'success');
+        }
+      }
       
       await fetchInitialData();
       showToast(`Welcome back, ${u.first_name}!`, 'success');
@@ -415,7 +427,8 @@ const fetchInitialData = async (force = false) => {
       avatar: s.avatar,
       rating: s.avg_rating ? parseFloat(s.avg_rating).toFixed(1) : '0.0',
       likesCount: s.total_likes || 0,
-      isVerified: s.is_verified === 1 || s.is_verified === true
+      isVerified: s.is_verified === 1 || s.is_verified === true,
+      isLocal: s.last_country === data.location.country
     }));
     if (JSON.stringify(newTrendingSellers) !== JSON.stringify(trendingSellers.value)) {
       trendingSellers.value = newTrendingSellers;

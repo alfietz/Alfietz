@@ -25,6 +25,7 @@ defineEmits(['select'])
     <div class="seller-info">
       <div class="name-badge-row">
         <h4 class="seller-name">{{ seller.name }}</h4>
+        <span v-if="seller.isLocal" class="local-tag">📍 Local</span>
       </div>
       <div v-if="seller.isVerified" class="shop-verified-tag">100+ Served • Physical Shop</div>
       <div class="seller-rating">
@@ -92,6 +93,17 @@ defineEmits(['select'])
   font-weight: 700;
   color: var(--text-primary);
   margin: 0;
+}
+
+.local-tag {
+  font-size: 10px;
+  font-weight: 800;
+  color: #10B981;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
+  white-space: nowrap;
 }
 
 .shop-verified-tag {
