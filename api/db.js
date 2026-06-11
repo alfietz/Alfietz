@@ -121,6 +121,23 @@ export default async function handler(req, res) {
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
 
     // Auto-migrate: Ensure required tables exist
+    await client.execute(`
+      CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY,
+        username TEXT UNIQUE,
+        first_name TEXT,
+        last_name TEXT,
+        email TEXT UNIQUE,
+        password TEXT,
+        whatsapp TEXT,
+        avatar TEXT,
+        user_type TEXT DEFAULT 'buyer',
+        needs TEXT,
+        gives TEXT,
+        theme TEXT DEFAULT 'dark',
+        profile_views INTEGER DEFAULT 0
+      )
+    `);
     await client.execute("CREATE TABLE IF NOT EXISTS rate_limits (key TEXT PRIMARY KEY, count INTEGER, expires_at INTEGER)");
     await client.execute("CREATE TABLE IF NOT EXISTS verification_codes (email TEXT PRIMARY KEY, code TEXT, expires_at INTEGER)");
     await client.execute("CREATE TABLE IF NOT EXISTS session_tokens (token TEXT PRIMARY KEY, user_id TEXT, expires_at INTEGER)");
@@ -169,7 +186,7 @@ export default async function handler(req, res) {
     const tableInfo = await client.execute("PRAGMA table_info(products)");
     const hasCreatedAt = tableInfo.rows.some(row => sanitize(row[1]) === 'created_at');
     if (!hasCreatedAt) {
-      await client.execute("ALTER TABLE products ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP").catch(e => console.error("Migration failed:", e));
+      await client.execute("ALTER TABLE products ADD COLUMN created_at DATETIME").catch(e => console.error("Migration failed:", e));
     }
 
     // Session Tracking Helper
@@ -601,13 +618,13 @@ export default async function handler(req, res) {
           args: [stoken, params.id, sexpires]
         });
 
+        // We need to return the token, so we override the standard execute flow
+        await client.execute({ sql, args });
+
         // Initialize tailor profile if they are a supplier
         if (params.userType === 'supplier') {
           await initializeTailorProfile(params.id, params.whatsapp, params.email);
         }
-
-        // We need to return the token, so we override the standard execute flow
-        await client.execute({ sql, args });
 
         // Track session (IP, Device, Location)
         await trackSession(params.id);
