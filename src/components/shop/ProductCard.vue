@@ -78,13 +78,15 @@ defineEmits(['toggle-like', 'select'])
 /* Horizontal variant */
 .horizontal-card {
   flex-direction: row-reverse;
-  height: 110px;
+  min-height: 110px;
+  height: auto;
   border-radius: var(--radius-md);
 }
 
 @media (min-width: 768px) {
   .horizontal-card {
-    height: 160px;
+    min-height: 160px;
+    height: auto;
   }
 }
 
@@ -144,10 +146,10 @@ defineEmits(['toggle-like', 'select'])
 
 .heart-btn {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 32px;
-  height: 32px; 
+  top: 4px;
+  right: 4px;
+  width: 44px;
+  height: 44px; 
   background: rgba(13, 8, 5, 0.6);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.15);
@@ -164,10 +166,10 @@ defineEmits(['toggle-like', 'select'])
 
 @media (min-width: 768px) {
   .heart-btn {
-    width: 40px;
-    height: 40px;
-    top: 12px;
-    right: 12px;
+    width: 48px;
+    height: 48px;
+    top: 8px;
+    right: 8px;
   }
 }
 
@@ -233,7 +235,7 @@ defineEmits(['toggle-like', 'select'])
   font-weight: 600;
   color: var(--text-amber);
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3; /* Increased from 2 for flexible height cards */
   -webkit-box-orient: vertical;
   overflow: hidden;
   transition: color 0.3s ease;
@@ -272,11 +274,11 @@ defineEmits(['toggle-like', 'select'])
 .add-btn {
   font-size: 11px;
   font-weight: 800;
-  color: var(--text-muted);
-  background: rgba(217, 119, 6, 0.1);
-  border: 1px solid rgba(217, 119, 6, 0.2);
-  padding: 6px 12px;
-  border-radius: 6px;
+  color: var(--text-primary);
+  background: rgba(217, 119, 6, 0.15);
+  border: 1px solid rgba(217, 119, 6, 0.3);
+  padding: 10px 16px;
+  border-radius: 8px;
   transition: all 0.3s ease;
   -webkit-tap-highlight-color: transparent;
 }
@@ -284,8 +286,8 @@ defineEmits(['toggle-like', 'select'])
 @media (min-width: 768px) {
   .add-btn {
     font-size: 12px;
-    padding: 8px 16px;
-    border-radius: 8px;
+    padding: 12px 20px;
+    border-radius: 10px;
   }
 }
 

@@ -95,8 +95,9 @@ const navItems = computed(() => {
   -webkit-tap-highlight-color: transparent;
   background: none;
   border: none;
-  padding: 0;
+  padding: 8px 0;
   font: inherit;
+  min-height: 48px;
 }
 
 .icon-container {

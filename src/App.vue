@@ -76,6 +76,13 @@ const userNotifications = ref([])
 const userProductCount = ref(0)
 const searchResults = ref([])
 const appReviews = ref([])
+const portfolioUpdates = ref([])
+
+const theme = computed(() => userData.value.theme || 'dark')
+
+watch(theme, (newTheme) => {
+  document.documentElement.className = newTheme === 'dark' ? 'dark-theme' : 'light-theme'
+}, { immediate: true })
 
 const t = (key) => {
   const lang = currentLanguage.value || 'en'
@@ -378,7 +385,6 @@ const fetchInitialData = async (force = false) => {
     const cachedCategories = getStored('categories_cache', []);
     if (cachedCategories.length > 0 && !force) {
       // If we have cache and it's not a forced refresh, we don't show the global spinner
-      // This makes the app feel "instant"
     } else {
       isGlobalLoading.value = true;
     }
@@ -394,7 +400,6 @@ const fetchInitialData = async (force = false) => {
       liked: favoriteIds.includes(p.id)
     }));
 
-    // Deep compare allProducts to avoid unnecessary re-renders
     if (JSON.stringify(newAllProducts) !== JSON.stringify(allProducts.value)) {
       allProducts.value = newAllProducts;
       setStored('all_products_cache', allProducts.value);
@@ -418,6 +423,13 @@ const fetchInitialData = async (force = false) => {
     if (JSON.stringify(data.categories) !== JSON.stringify(categories.value)) {
       categories.value = data.categories;
       setStored('categories_cache', categories.value);
+    }
+
+    if (data.recentUpdates) {
+      portfolioUpdates.value = data.recentUpdates.map(u => ({
+        text: `New ${u.name} uploaded by @${u.username}`,
+        time: u.created_at ? new Date(u.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'
+      }));
     }
     
     const newTrendingSellers = data.trendingSellers.map(s => ({
@@ -456,6 +468,10 @@ const fetchInitialData = async (force = false) => {
 
   } catch (e) {
     console.error('[InitialData] Sync failed:', e);
+    // If it's a 401 error, the session is invalid - logout to be safe
+    if (e.message && (e.message.includes('401') || e.message.includes('Authentication required'))) {
+      handleLogout();
+    }
   } finally {
     isGlobalLoading.value = false;
     isSyncing.value = false;
@@ -702,6 +718,20 @@ const handleGoChat = (userId) => {
   navigateTo('chat-detail', { userId })
 }
 
+const handleToggleTheme = async () => {
+  const newTheme = userData.value.theme === 'dark' ? 'light' : 'dark'
+  userData.value.theme = newTheme
+  setStored('user_data', userData.value)
+  
+  if (userData.value.id !== 'guest') {
+    try {
+      await db.runAction('update_profile', { ...userData.value, theme: newTheme });
+    } catch (e) {
+      console.error('Failed to sync theme to cloud:', e);
+    }
+  }
+}
+
 const handleSearch = async (query, navigate = true) => {
   // If query is empty, just navigate to search page
   if (!query && navigate) {
@@ -842,6 +872,7 @@ const showNavBar = computed(() => {
       @navigate="navigateTo"
       @go-notifications="navigateTo('notifications')"
       @go-cart="navigateTo('cart')"
+      @toggle-theme="handleToggleTheme"
     />
 
     <main :class="{ 'with-nav': showNavBar }">
@@ -871,6 +902,7 @@ const showNavBar = computed(() => {
           :cart-items="cartItems"
           :notifications="userNotifications"
           :app-reviews="appReviews"
+          :portfolio-updates="portfolioUpdates"
           :is-loading="isGlobalLoading"
           :editing-product="selectedEditProduct"
           @navigate="navigateTo"
@@ -922,6 +954,7 @@ const showNavBar = computed(() => {
           @update:user-data="handleUpdateProfile"
           @update:language="(val) => { currentLanguage = val; setStored('language', val); }"
           @update:role="handleUpdateRole"
+          @toggle-theme="handleToggleTheme"
           @go-help="navigateTo('help')"
           @go-privacy="navigateTo('privacy')"
           @go-terms="navigateTo('terms')"

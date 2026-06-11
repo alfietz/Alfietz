@@ -46,22 +46,6 @@ const handleSearch = (query, navigate = true) => {
     emit('search', q, navigate)
   }
 }
-
-// Live search as user types
-let searchTimeout = null
-watch(searchQuery, (newVal) => {
-  if (searchTimeout) clearTimeout(searchTimeout)
-  if (!newVal.trim()) {
-    isSearching.value = false
-    return
-  }
-  
-  isSearching.value = true
-  searchTimeout = setTimeout(() => {
-    emit('search', newVal, false) // Fetch but don't navigate
-    setTimeout(() => { isSearching.value = false }, 500)
-  }, 400) 
-})
 </script>
 
 <template>
@@ -72,7 +56,6 @@ watch(searchQuery, (newVal) => {
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>
       </button>
       <div class="search-input-box" :class="{ 'focused': isFocused, 'scanning': isSearching }">
-        <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
         <input 
           type="text" 
           v-model="searchQuery" 
@@ -84,6 +67,9 @@ watch(searchQuery, (newVal) => {
         />
         <button v-if="searchQuery" class="clear-btn" @click="searchQuery = ''">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+        <button class="search-submit-btn-mini" @click="handleSearch(null, true)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
         </button>
       </div>
       <!-- Non-blocking Progress Bar -->
@@ -281,9 +267,27 @@ watch(searchQuery, (newVal) => {
   border-radius: 12px;
   display: flex;
   align-items: center;
-  padding: 0 12px;
+  padding: 0 4px 0 12px;
   gap: 10px;
   transition: all 0.3s ease;
+}
+
+.search-submit-btn-mini {
+  background: var(--accent-amber);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.search-submit-btn-mini:active {
+  transform: scale(0.9);
 }
 
 .search-input-box.focused {

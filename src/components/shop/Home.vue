@@ -14,6 +14,7 @@ const props = defineProps({
   trendingSellers: { type: Array, default: () => [] },
   exploreItems: { type: Array, default: () => [] },
   appReviews: { type: Array, default: () => [] },
+  portfolioUpdates: { type: Array, default: () => [] },
   isLoading: { type: Boolean, default: false }
 })
 
@@ -26,17 +27,6 @@ const handleSearch = () => {
     emit('search', searchQuery.value)
   }
 }
-
-// Live search as user types
-let searchTimeout = null
-watch(searchQuery, (newVal) => {
-  if (searchTimeout) clearTimeout(searchTimeout)
-  searchTimeout = setTimeout(() => {
-    if (newVal.trim()) {
-      emit('search', newVal)
-    }
-  }, 500) // 500ms debounce
-})
 </script>
 
 <template>
@@ -44,13 +34,6 @@ watch(searchQuery, (newVal) => {
     <!-- Search Bar (Ancestral Tech Style) -->
     <div class="search-container">
       <div class="search-wrapper group">
-        <button 
-          class="search-icon-btn" 
-          @click="handleSearch"
-          aria-label="Search"
-        >
-          🔍
-        </button>
         <input 
           type="text" 
           v-model="searchQuery" 
@@ -59,6 +42,13 @@ watch(searchQuery, (newVal) => {
           @keyup.enter="handleSearch"
           aria-label="Search input"
         />
+        <button 
+          class="search-submit-btn" 
+          @click="handleSearch"
+          aria-label="Submit Search"
+        >
+          {{ t('search') || 'Search' }}
+        </button>
         <!-- Futuristic scanner line effect on focus -->
         <div class="scanner-line-effect"></div>
       </div>
@@ -223,10 +213,14 @@ watch(searchQuery, (newVal) => {
           
           <!-- Simple Portfolio Feed -->
           <div class="portfolio-feed">
-            <div class="update-item" v-for="n in 3" :key="n">
+            <div class="update-item" v-for="(update, idx) in portfolioUpdates" :key="idx">
               <div class="update-dot"></div>
-              <span class="update-text">New Kente Silhouette uploaded by @AminaTailors</span>
-              <span class="update-time">2h ago</span>
+              <span class="update-text">{{ update.text }}</span>
+              <span class="update-time">{{ update.time }}</span>
+            </div>
+            <div v-if="portfolioUpdates.length === 0" class="update-item">
+              <div class="update-dot"></div>
+              <span class="update-text">The ancestors are preparing new masterpieces...</span>
             </div>
           </div>
 
@@ -318,7 +312,7 @@ watch(searchQuery, (newVal) => {
   background: var(--input-bg);
   border: 1px solid var(--glass-border);
   border-radius: 20px;
-  padding: 16px 20px;
+  padding: 8px 8px 8px 20px;
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
   transition: all 0.3s ease;
 }
@@ -328,31 +322,36 @@ watch(searchQuery, (newVal) => {
   box-shadow: 0 0 15px var(--accent-glow);
 }
 
-.search-icon-btn {
-  margin-right: 14px;
-  background: none;
+.search-submit-btn {
+  background: var(--accent-amber);
+  color: white;
   border: none;
-  font-size: 18px;
+  border-radius: 12px;
+  padding: 8px 20px;
+  font-size: 13px;
+  font-weight: 700;
   cursor: pointer;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0.6;
-  transition: opacity 0.3s ease;
+  transition: all 0.2s;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
 }
 
-.search-icon-btn:hover {
-  opacity: 1;
+.search-submit-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 15px var(--accent-glow);
+}
+
+.search-submit-btn:active {
+  transform: translateY(0);
 }
 
 .search-input {
   background: transparent;
   border: none;
-  width: 100%;
+  flex: 1;
   font-size: 15px;
   color: var(--text-primary);
   outline: none;
+  padding-right: 12px;
 }
 
 .search-input::placeholder {

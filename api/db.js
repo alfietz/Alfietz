@@ -34,6 +34,16 @@ async function checkRateLimit(client, key, limit, windowSeconds) {
     args: [now]
   });
 
+  // Atomic increment or initialize
+  await client.execute({
+    sql: `
+      INSERT INTO rate_limits (key, count, expires_at) 
+      VALUES (?, 1, ?) 
+      ON CONFLICT(key) DO UPDATE SET count = count + 1
+    `,
+    args: [key, now + windowSeconds]
+  });
+
   const res = await client.execute({
     sql: "SELECT count, expires_at FROM rate_limits WHERE key = ?",
     args: [key]
@@ -41,25 +51,17 @@ async function checkRateLimit(client, key, limit, windowSeconds) {
 
   if (res.rows.length > 0) {
     const row = res.rows[0];
-    const count = parseInt(sanitize(row[0]));
-    const expiresAt = parseInt(sanitize(row[1]));
+    const count = parseInt(sanitize(row[0] !== undefined ? row[0] : row.count));
+    const expiresAt = parseInt(sanitize(row[1] !== undefined ? row[1] : row.expires_at));
 
-    if (count >= limit) {
+    if (count > limit) {
       return { allowed: false, remaining: 0, reset: expiresAt - now };
     }
 
-    await client.execute({
-      sql: "UPDATE rate_limits SET count = count + 1 WHERE key = ?",
-      args: [key]
-    });
-    return { allowed: true, remaining: limit - (count + 1) };
-  } else {
-    await client.execute({
-      sql: "INSERT INTO rate_limits (key, count, expires_at) VALUES (?, 1, ?)",
-      args: [key, now + windowSeconds]
-    });
-    return { allowed: true, remaining: limit - 1 };
+    return { allowed: true, remaining: limit - count };
   }
+  
+  return { allowed: true, remaining: limit - 1 };
 }
 
 export default async function handler(req, res) {
@@ -123,6 +125,21 @@ export default async function handler(req, res) {
     await client.execute("CREATE TABLE IF NOT EXISTS verification_codes (email TEXT PRIMARY KEY, code TEXT, expires_at INTEGER)");
     await client.execute("CREATE TABLE IF NOT EXISTS session_tokens (token TEXT PRIMARY KEY, user_id TEXT, expires_at INTEGER)");
     await client.execute(`
+      CREATE TABLE IF NOT EXISTS tailor_profiles (
+        user_id TEXT PRIMARY KEY,
+        quirk TEXT,
+        case_study_title TEXT,
+        case_study_quote TEXT,
+        case_study_challenge TEXT,
+        case_study_execution TEXT,
+        case_study_result TEXT,
+        case_study_image TEXT,
+        services_json TEXT,
+        contacts_json TEXT,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+    await client.execute(`
       CREATE TABLE IF NOT EXISTS login_history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id TEXT,
@@ -140,11 +157,20 @@ export default async function handler(req, res) {
 
     // Add missing columns if they don't exist
     await client.execute("ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT 0").catch(() => {});
-    await client.execute("ALTER TABLE reviews ADD COLUMN image TEXT").catch(() => {});
     await client.execute("ALTER TABLE users ADD COLUMN last_city TEXT").catch(() => {});
     await client.execute("ALTER TABLE users ADD COLUMN last_country TEXT").catch(() => {});
     await client.execute("ALTER TABLE users ADD COLUMN last_lat TEXT").catch(() => {});
     await client.execute("ALTER TABLE users ADD COLUMN last_long TEXT").catch(() => {});
+    await client.execute("ALTER TABLE users ADD COLUMN profile_views INTEGER DEFAULT 0").catch(() => {});
+    
+    await client.execute("ALTER TABLE reviews ADD COLUMN image TEXT").catch(() => {});
+    
+    // Robust column check for products.created_at
+    const tableInfo = await client.execute("PRAGMA table_info(products)");
+    const hasCreatedAt = tableInfo.rows.some(row => sanitize(row[1]) === 'created_at');
+    if (!hasCreatedAt) {
+      await client.execute("ALTER TABLE products ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP").catch(e => console.error("Migration failed:", e));
+    }
 
     // Session Tracking Helper
     const trackSession = async (userId) => {
@@ -209,38 +235,41 @@ export default async function handler(req, res) {
       }
     };
 
-    // Token Validation for Protected Actions
-    const publicActions = ['login', 'signup', 'request_password_reset', 'verify_reset_code', 'reset_password', 'get_initial_data', 'search', 'get_product_details', 'get_tailor_details', 'get_reviews', 'get_similar_products'];
+    // Token Validation Logic
     let currentUserId = 'guest';
-
-    if (!publicActions.includes(action)) {
-      const authHeader = req.headers['authorization'];
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ error: 'Authentication required for this action.' });
-      }
-
+    const authHeader = req.headers['authorization'];
+    if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.split(' ')[1];
       const sessionRes = await client.execute({
         sql: "SELECT user_id, expires_at FROM session_tokens WHERE token = ?",
         args: [token]
       });
 
-      if (sessionRes.rows.length === 0) {
-        return res.status(401).json({ error: 'Invalid or expired session.' });
-      }
+      if (sessionRes.rows.length > 0) {
+        const session = sessionRes.rows[0];
+        const now = Math.floor(Date.now() / 1000);
+        // Robust check: LibSQL might return column names as keys or array indices
+        const sessionUserId = sanitize(session.user_id || session[0]);
+        const sessionExpiresAt = parseInt(sanitize(session.expires_at || session[1]));
 
-      const session = sessionRes.rows[0];
-      const now = Math.floor(Date.now() / 1000);
-      if (parseInt(sanitize(session[1])) < now) {
-        await client.execute({ sql: "DELETE FROM session_tokens WHERE token = ?", args: [token] });
-        return res.status(401).json({ error: 'Session expired. Please log in again.' });
+        if (sessionExpiresAt >= now) {
+          currentUserId = sessionUserId;
+        } else {
+          // Token expired, cleanup
+          await client.execute({ sql: "DELETE FROM session_tokens WHERE token = ?", args: [token] });
+        }
       }
+    }
 
-      currentUserId = sanitize(session[0]);
-      // Ensure the params.userId matches the token's user_id if provided
-      if (params.userId && params.userId !== currentUserId) {
-        return res.status(403).json({ error: 'Unauthorized access to this user data.' });
-      }
+    // Require authentication for protected actions
+    const publicActions = ['login', 'signup', 'request_password_reset', 'verify_reset_code', 'reset_password', 'get_initial_data', 'search', 'get_product_details', 'get_tailor_details', 'get_reviews', 'get_similar_products'];
+    if (!publicActions.includes(action) && currentUserId === 'guest') {
+      return res.status(401).json({ error: 'Authentication required for this action.' });
+    }
+
+    // Ensure the params.userId matches the token's user_id if provided (legacy check, but safer with currentUserId)
+    if (params.userId && currentUserId !== 'guest' && params.userId !== currentUserId) {
+      // Allow it if it's just a query param, but for updates we use currentUserId
     }
 
     // Global Rate Limit: 100 requests per minute per IP
@@ -301,7 +330,7 @@ export default async function handler(req, res) {
         const userCountry = req.headers['x-vercel-ip-country'] || 'Unknown';
         const userCity = req.headers['x-vercel-ip-city'] || 'Unknown';
 
-        const [cats, trending, all, appReviews, suppliers] = await Promise.all([
+        const [cats, trending, all, appReviews, suppliers, recent] = await Promise.all([
           client.execute("SELECT * FROM categories"),
           client.execute("SELECT p.*, c.name as categoryName FROM products p LEFT JOIN categories c ON p.category_id = c.id ORDER BY p.likes_count DESC LIMIT 4"),
           client.execute("SELECT p.*, c.name as categoryName FROM products p LEFT JOIN categories c ON p.category_id = c.id ORDER BY p.id DESC LIMIT 50"),
@@ -316,7 +345,14 @@ export default async function handler(req, res) {
               ORDER BY (CASE WHEN u.last_country = ? THEN 1 ELSE 0 END) DESC, profile_views DESC LIMIT 8
             `,
             args: [userCountry]
-          })
+          }),
+          client.execute(`
+            SELECT p.id, p.name, u.username, u.first_name
+            FROM products p
+            JOIN users u ON p.owner_id = u.id
+            ORDER BY p.id DESC
+            LIMIT 5
+          `)
         ]);
 
         let favorites = [];
@@ -361,6 +397,7 @@ export default async function handler(req, res) {
           allProducts: mapRows(all),
           appReviews: mapRows(appReviews),
           trendingSellers: mapRows(suppliers),
+          recentUpdates: mapRows(recent),
           favorites,
           notifications,
           productCount
@@ -554,7 +591,7 @@ export default async function handler(req, res) {
 
         const hashedPassword = await bcrypt.hash(params.password, 10);
         sql = 'INSERT INTO users (id, username, first_name, last_name, email, password, whatsapp, avatar, user_type, needs, gives, theme) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        args = [params.id, params.username, params.firstName, params.lastName, params.email, hashedPassword, params.whatsapp, params.avatar, params.userType, params.needs, params.gives, 'dark'];
+        args = [params.id, params.username, params.firstName, params.lastName, params.email, hashedPassword, params.whatsapp, params.avatar, params.userType, params.needs, params.gives, params.theme || 'dark'];
         
         // Generate Token for Signup too
         const stoken = Math.random().toString(36).substring(2) + Date.now().toString(36);
@@ -645,31 +682,39 @@ export default async function handler(req, res) {
         break;
 
       case 'get_tailor_console_data':
+        if (currentUserId === 'guest') {
+          return res.status(401).json({ error: 'Authentication required to access the Tailor Command Center.' });
+        }
         const [cOrders, cNegs, cProducts, cRevs] = await Promise.all([
           client.execute({ 
             sql: `
-              SELECT o.*, u.first_name, u.last_name, u.username, u.whatsapp as customer_phone
+              SELECT o.*, u.first_name as customer_first_name, u.last_name as customer_last_name, u.username, u.whatsapp as customer_phone
               FROM orders o
               JOIN users u ON o.customer_id = u.id
               WHERE o.tailor_id = ? 
               ORDER BY o.created_at DESC
             `, 
-            args: [params.userId] 
+            args: [currentUserId] 
           }),
           client.execute({ 
             sql: `
-              SELECT n.*, u.first_name, u.last_name, u.username, u.whatsapp as customer_phone
+              SELECT n.*, u.first_name as customer_first_name, u.last_name as customer_last_name, u.username, u.whatsapp as customer_phone
               FROM negotiations n
               JOIN users u ON n.customer_id = u.id
               WHERE n.tailor_id = ? 
               ORDER BY n.created_at DESC
             `, 
-            args: [params.userId] 
+            args: [currentUserId] 
           }),
-          client.execute({ sql: "SELECT p.*, c.name as categoryName FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE p.owner_id = ? ORDER BY p.id DESC", args: [params.userId] }),
-          client.execute({ sql: "SELECT r.*, u.first_name, u.last_name, u.username, u.avatar as author_avatar FROM reviews r JOIN users u ON r.user_id = u.id WHERE r.product_id IN (SELECT id FROM products WHERE owner_id = ?) ORDER BY r.created_at DESC LIMIT 5", args: [params.userId] })
+          client.execute({ sql: "SELECT p.*, c.name as categoryName FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE p.owner_id = ? ORDER BY p.id DESC", args: [currentUserId] }),
+          client.execute({ sql: "SELECT r.*, u.first_name, u.last_name, u.username, u.avatar as author_avatar FROM reviews r JOIN users u ON r.user_id = u.id WHERE r.product_id IN (SELECT id FROM products WHERE owner_id = ?) ORDER BY r.created_at DESC LIMIT 5", args: [currentUserId] })
         ]);
-        customResponse = { orders: mapRows(cOrders), negotiations: mapRows(cNegs), products: mapRows(cProducts), reviews: mapRows(cRevs) };
+        customResponse = { 
+          orders: mapRows(cOrders), 
+          negotiations: mapRows(cNegs), 
+          products: mapRows(cProducts), 
+          reviews: mapRows(cRevs) 
+        };
         break;
 
       case 'get_similar_products':
@@ -695,7 +740,7 @@ export default async function handler(req, res) {
         // Check if new username is already taken by ANOTHER user
         const usernameCheck = await client.execute({
           sql: "SELECT id FROM users WHERE username = ? AND id != ?",
-          args: [params.username, params.id]
+          args: [params.username, currentUserId]
         });
         if (usernameCheck.rows.length > 0) {
           return res.status(400).json({ error: 'Username is already taken by another member of the tribe.' });
@@ -711,20 +756,20 @@ export default async function handler(req, res) {
           sanitize(params.userType), 
           sanitize(params.needs || ''), 
           sanitize(params.gives || ''), 
-          sanitize(params.id)
+          currentUserId
         ];
 
         // If user becomes a supplier, ensure profile exists
         if (params.userType === 'supplier') {
           // We need email for initialization, let's fetch it if not provided (though params should have what's needed or we can fetch)
           // Actually, we can fetch the current user data to be sure
-          const userData = await client.execute({ sql: "SELECT email FROM users WHERE id = ?", args: [params.id] });
+          const userData = await client.execute({ sql: "SELECT email FROM users WHERE id = ?", args: [currentUserId] });
           const email = userData.rows[0] ? sanitize(userData.rows[0][0]) : '';
-          await initializeTailorProfile(params.id, params.whatsapp, email);
+          await initializeTailorProfile(currentUserId, params.whatsapp, email);
         }
 
         // Refresh location and log activity
-        await trackSession(params.id);
+        await trackSession(currentUserId);
         break;
       case 'delete_product':
         await client.execute({ sql: 'DELETE FROM favorites WHERE product_id = ?', args: [params.productId] });
@@ -742,14 +787,14 @@ export default async function handler(req, res) {
         break;
       case 'update_role':
         sql = 'UPDATE users SET user_type = ? WHERE id = ?';
-        args = [params.role, params.id];
+        args = [params.role, currentUserId];
 
         // If user becomes a supplier, ensure profile exists
         if (params.role === 'supplier') {
-          const userData = await client.execute({ sql: "SELECT email, whatsapp FROM users WHERE id = ?", args: [params.id] });
+          const userData = await client.execute({ sql: "SELECT email, whatsapp FROM users WHERE id = ?", args: [currentUserId] });
           const email = userData.rows[0] ? sanitize(userData.rows[0][0]) : '';
           const whatsapp = userData.rows[0] ? sanitize(userData.rows[0][1]) : '';
-          await initializeTailorProfile(params.id, whatsapp, email);
+          await initializeTailorProfile(currentUserId, whatsapp, email);
         }
         break;
       case 'update_order_status':
@@ -889,12 +934,12 @@ export default async function handler(req, res) {
 
       case 'create_product':
         sql = 'INSERT INTO products (name, price, description, material, image, category_id, owner_id, status, variants_json, gallery_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        args = [params.name, params.price, params.description, params.material, params.image, params.category_id, params.owner_id, params.status, JSON.stringify(params.colors), JSON.stringify(params.gallery)];
+        args = [params.name, params.price, params.description, params.material, params.image, params.category_id, currentUserId, params.status, JSON.stringify(params.colors), JSON.stringify(params.gallery)];
         break;
 
       case 'update_product':
         sql = 'UPDATE products SET name = ?, price = ?, description = ?, material = ?, image = ?, category_id = ?, status = ?, variants_json = ?, gallery_json = ? WHERE id = ? AND owner_id = ?';
-        args = [params.name, params.price, params.description, params.material, params.image, params.category_id, params.status, JSON.stringify(params.colors), JSON.stringify(params.gallery), params.id, params.owner_id];
+        args = [params.name, params.price, params.description, params.material, params.image, params.category_id, params.status, JSON.stringify(params.colors), JSON.stringify(params.gallery), params.id, currentUserId];
         break;
 
       case 'create_order':

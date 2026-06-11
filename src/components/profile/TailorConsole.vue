@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { db } from '../../db/client'
 import BaseDialog from '../layout/BaseDialog.vue'
+import LoadingSpinner from '../layout/LoadingSpinner.vue'
 
 const props = defineProps({
   userData: {
@@ -14,7 +15,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['go-back', 'go-orders', 'go-negotiations', 'go-edit', 'go-upload', 'go-chat', 'update-status'])
+const emit = defineEmits(['go-back', 'go-orders', 'go-negotiations', 'go-edit', 'go-upload', 'go-chat', 'update-status', 'logout'])
 
 const stats = ref({
   revenue: 'TSh 0',
@@ -31,6 +32,8 @@ const negotiations = ref([])
 const myProducts = ref([])
 const activeTab = ref('dashboard')
 const recentActivity = ref([])
+const isLoading = ref(false)
+const loadingMessage = ref('')
 
 // Dialog State
 const dialog = ref({
@@ -54,15 +57,18 @@ onMounted(async () => {
 })
 
 const fetchData = async () => {
+  isLoading.value = true
+  loadingMessage.value = 'Syncing your heritage empire...'
   try {
-    const data = await db.runAction('get_tailor_console_data', { userId: props.userData.id });
+    const data = await db.runAction('get_tailor_console_data');
     
+    loadingMessage.value = 'Organizing your active orders...'
     activeOrders.value = data.orders.map(o => ({
       id: o.id,
       item: o.item_name,
-      customer: (o.first_name || o.last_name) ? `${o.first_name || ''} ${o.last_name || ''}`.trim() : o.username,
+      customer: (o.customer_first_name || o.customer_last_name) ? `${o.customer_first_name || ''} ${o.customer_last_name || ''}`.trim() : o.username,
       customer_id: o.customer_id,
-      customerFirstName: o.first_name,
+      customerFirstName: o.customer_first_name,
       customerPhone: o.customer_phone,
       date: new Date(o.created_at).toLocaleDateString(),
       price: o.price,
@@ -73,11 +79,12 @@ const fetchData = async () => {
       image: o.image
     }))
 
+    loadingMessage.value = 'Syncing negotiations with the tribe...'
     negotiations.value = data.negotiations.map(n => ({
       id: n.id,
-      customer: (n.first_name || n.last_name) ? `${n.first_name || ''} ${n.last_name || ''}`.trim() : n.username,
+      customer: (n.customer_first_name || n.customer_last_name) ? `${n.customer_first_name || ''} ${n.customer_last_name || ''}`.trim() : n.username,
       customer_id: n.customer_id,
-      customerFirstName: n.first_name,
+      customerFirstName: n.customer_first_name,
       customerPhone: n.customer_phone,
       item: n.item_name,
       offer: n.proposed_price,
@@ -90,6 +97,7 @@ const fetchData = async () => {
 
     myProducts.value = data.products
 
+    loadingMessage.value = 'Calculating your revenue growth...'
     // Calculate Stats
     const now = new Date()
     const currentMonth = now.getMonth()
@@ -133,7 +141,29 @@ const fetchData = async () => {
     
     // Total Likes and Reviews for the empire
     stats.value.totalLikes = myProducts.value.reduce((sum, p) => sum + (p.likes_count || 0), 0)
-    stats.value.totalReviews = data.reviewsCount || 0
+    stats.value.totalReviews = data.reviews ? data.reviews.length : 0
+    
+    // Populate Recent Activity
+    const activity = []
+    data.orders.slice(0, 3).forEach(o => {
+      activity.push({
+        id: `o-${o.id}`,
+        icon: '📦',
+        title: 'New Order',
+        desc: `${o.item_name} from ${o.first_name || o.username}`,
+        time: new Date(o.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      })
+    })
+    data.negotiations.slice(0, 2).forEach(n => {
+      activity.push({
+        id: `n-${n.id}`,
+        icon: '🤝',
+        title: 'New Offer',
+        desc: `${n.proposed_price} for ${n.item_name}`,
+        time: new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      })
+    })
+    recentActivity.value = activity.sort((a, b) => b.id.localeCompare(a.id))
     
     // Use real profile views from userData
     const views = props.userData.profileViews || 0
@@ -145,6 +175,11 @@ const fetchData = async () => {
     
   } catch (e) {
     console.error("Error fetching console data:", e)
+    if (e.message && (e.message.includes('401') || e.message.includes('Authentication required'))) {
+      emit('logout')
+    }
+  } finally {
+    isLoading.value = false
   }
 }
 
@@ -265,7 +300,10 @@ const handleDeclineNegotiation = async (neg) => {
       </button>
       <div>
         <h1 class="title">Tailor Command Center</h1>
-        <p class="subtitle">Manage your heritage empire, orders, and negotiations.</p>
+        <div class="subtitle-row">
+          <p class="subtitle">Manage your heritage empire, orders, and negotiations.</p>
+          <button class="view-shop-link" @click="$emit('go-tailor', userData)">View My Shop →</button>
+        </div>
       </div>
     </div>
 
@@ -319,6 +357,13 @@ const handleDeclineNegotiation = async (neg) => {
       >
         My Inventory
       </button>
+      <button 
+        class="tab-btn" 
+        :class="{ active: activeTab === 'community' }"
+        @click="activeTab = 'community'"
+      >
+        Community
+      </button>
     </div>
 
     <div class="console-layout">
@@ -337,14 +382,67 @@ const handleDeclineNegotiation = async (neg) => {
         </div>
       </aside>
 
-      <!-- Orders Table -->
+      <!-- Orders Section -->
       <div v-show="activeTab === 'dashboard'" class="orders-section animate-fade">
         <div class="section-header">
           <h2 class="section-title">Active Orders</h2>
           <button class="view-all" @click="$emit('go-orders')">View All</button>
         </div>
-        <div class="table-container">
+
+        <!-- Mobile Card Layout -->
+        <div class="mobile-orders-list">
+          <div v-for="order in activeOrders" :key="order.id" class="order-mobile-card">
+            <div class="order-card-header">
+              <div class="table-img-box">
+                <img :src="order.image" alt="Item" />
+              </div>
+              <div class="order-card-title">
+                <span class="order-item">{{ order.item }}</span>
+                <span class="order-meta">#{{ order.id }} • {{ order.date }}</span>
+              </div>
+              <div class="order-card-price">{{ order.price }}</div>
+            </div>
+
+            <div class="order-card-body">
+              <div class="order-detail-row">
+                <span class="detail-label">Customer:</span>
+                <span class="detail-value">{{ order.customer }}</span>
+              </div>
+              <div class="order-detail-row">
+                <span class="detail-label">Size/Color:</span>
+                <span class="detail-value">{{ order.size }} / {{ order.color || 'Default' }}</span>
+              </div>
+            </div>
+
+            <div class="order-card-actions">
+              <div class="status-manage">
+                <span class="status-badge" :class="getStatusClass(order.status)">
+                  {{ order.status }}
+                </span>
+                <select 
+                  class="status-select" 
+                  :value="order.status"
+                  @change="(e) => handleStatusChange(order, e.target.value)"
+                >
+                  <option value="Pending">Pending</option>
+                  <option value="Stitching">Stitching</option>
+                  <option value="Shipped">Shipped</option>
+                  <option value="Delivered">Delivered</option>
+                  <option value="Cancelled">Cancelled</option>
+                </select>
+              </div>
+              <div class="action-group">
+                <button class="action-btn wa" @click="openWhatsApp(order, order, 'order')">WA</button>
+                <button class="action-btn" @click="$emit('go-chat', order.customer_id)">Chat</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Desktop Table Container -->
+        <div class="table-container desktop-only">
           <table class="orders-table">
+
             <thead>
               <tr>
                 <th>Item</th>
@@ -409,6 +507,54 @@ const handleDeclineNegotiation = async (neg) => {
               </tr>
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- Community Presence Section -->
+      <div v-show="activeTab === 'community'" class="community-section animate-fade">
+        <div class="section-header">
+          <h2 class="section-title">Community Presence</h2>
+          <p class="section-hint">How the tribe sees your masterpieces.</p>
+        </div>
+        
+        <div class="community-grid">
+          <!-- Live Feed Preview -->
+          <div class="community-card">
+            <h3 class="card-title">Live from the Tribe</h3>
+            <p class="card-desc">Your recent appearances in the community feed.</p>
+            <div class="mini-portfolio-feed">
+              <div v-for="(update, idx) in recentActivity.filter(a => a.icon === '📦')" :key="idx" class="mini-update-item">
+                <div class="update-dot"></div>
+                <span class="update-text">New {{ update.desc.split(' from ')[0] }} uploaded by @{{ userData.username }}</span>
+                <span class="update-time">{{ update.time }}</span>
+              </div>
+              <div v-if="myProducts.length === 0" class="mini-update-item">
+                <span class="update-text opacity-50">Upload your first piece to appear in the tribe feed!</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Social Proof -->
+          <div class="community-card">
+            <h3 class="card-title">Artisan Stats</h3>
+            <div class="social-proof-list">
+              <div class="social-stat">
+                <span class="stat-num">{{ stats.totalLikes }}</span>
+                <span class="stat-label">Community Likes</span>
+              </div>
+              <div class="social-stat">
+                <span class="stat-num">{{ stats.totalReviews }}</span>
+                <span class="stat-label">Masterpiece Reviews</span>
+              </div>
+              <div class="social-stat">
+                <span class="stat-num">{{ stats.profileViews }}</span>
+                <span class="stat-label">Shop Visitors</span>
+              </div>
+            </div>
+            <button class="primary-btn-small outline mt-4" @click="$emit('go-tailor', userData)">
+              Preview Public Portfolio
+            </button>
+          </div>
         </div>
       </div>
 
@@ -492,6 +638,8 @@ const handleDeclineNegotiation = async (neg) => {
       </div>
     </div>
 
+    <LoadingSpinner v-if="isLoading" :message="loadingMessage" />
+
     <!-- Custom Dialog -->
     <BaseDialog 
       :show="dialog.show"
@@ -530,6 +678,104 @@ const handleDeclineNegotiation = async (neg) => {
   font-size: 14px;
   color: var(--text-muted);
   margin: 4px 0 0 0;
+}
+
+.subtitle-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.view-shop-link {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent-amber);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  border-bottom: 1px solid transparent;
+  transition: all 0.2s;
+}
+
+.view-shop-link:hover {
+  border-bottom-color: var(--accent-amber);
+  opacity: 0.8;
+}
+
+.community-section {
+  width: 100%;
+}
+
+.community-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.community-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  padding: 24px;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0 0 8px 0;
+}
+
+.card-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+}
+
+.mini-portfolio-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mini-update-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.social-proof-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.social-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-num {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--accent-amber);
+}
+
+.primary-btn-small.outline {
+  background: transparent;
+  border: 1px solid var(--accent-amber);
+  color: var(--accent-amber);
+}
+
+.section-hint {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: -20px 0 24px 0;
 }
 
 .stats-grid {
@@ -835,6 +1081,78 @@ const handleDeclineNegotiation = async (neg) => {
   background: none;
   border: none;
   cursor: pointer;
+}
+
+.mobile-orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.order-mobile-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.order-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.order-card-title {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.order-card-price {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800;
+  color: var(--price-text);
+  font-size: 14px;
+}
+
+.order-card-body {
+  padding: 8px 0;
+  border-top: 1px solid var(--glass-border);
+  border-bottom: 1px solid var(--glass-border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.order-detail-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.detail-label { color: var(--text-muted); }
+.detail-value { color: var(--text-primary); font-weight: 600; }
+
+.order-card-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.desktop-only {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .mobile-orders-list {
+    display: none;
+  }
+  .desktop-only {
+    display: block;
+  }
 }
 
 .table-container {
