@@ -1,60 +1,21 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-
-const deferredPrompt = ref(null)
-const showPrompt = ref(false)
-const isStandalone = ref(window.matchMedia('(display-mode: standalone)').matches)
-
-const handleBeforeInstallPrompt = (e) => {
-  // If already installed/standalone, don't show anything
-  if (isStandalone.value) return
-  
-  // Prevent the mini-infobar from appearing on mobile
-  e.preventDefault()
-  // Stash the event so it can be triggered later.
-  deferredPrompt.value = e
-  // Update UI notify the user they can install the PWA
-  showPrompt.value = true
-}
-
-const installPWA = async () => {
-  if (!deferredPrompt.value) return
-  
-  // Show the install prompt
-  deferredPrompt.value.prompt()
-  
-  // Wait for the user to respond to the prompt
-  const { outcome } = await deferredPrompt.value.userChoice
-  console.log(`User response to the install prompt: ${outcome}`)
-  
-  // We've used the prompt, and can't use it again, throw it away
-  deferredPrompt.value = null
-  showPrompt.value = false
-}
-
-const dismissPrompt = () => {
-  showPrompt.value = false
-}
-
-onMounted(() => {
-  window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
-  
-  window.addEventListener('appinstalled', () => {
-    // Log install to analytics or hide the prompt
-    console.log('PWA was installed')
-    showPrompt.value = false
-    deferredPrompt.value = null
-  })
+const props = defineProps({
+  show: {
+    type: Boolean,
+    default: false
+  },
+  isStandalone: {
+    type: Boolean,
+    default: false
+  }
 })
 
-onUnmounted(() => {
-  window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
-})
+const emit = defineEmits(['install', 'close'])
 </script>
 
 <template>
   <Transition name="slide-in">
-    <div v-if="showPrompt" class="pwa-install-banner">
+    <div v-if="show && !isStandalone" class="pwa-install-banner">
       <div class="banner-content">
         <div class="banner-icon">
           <img src="/favicon.png" alt="Alfie Logo" class="app-logo" />
@@ -64,8 +25,8 @@ onUnmounted(() => {
           <p>Tap to download Alfie for instant access to premium fits and direct artisan messaging.</p>
         </div>
         <div class="banner-actions">
-          <button @click="installPWA" class="btn-install">Install Alfie</button>
-          <button @click="dismissPrompt" class="btn-close">
+          <button @click="$emit('install')" class="btn-install">Install Alfie</button>
+          <button @click="$emit('close')" class="btn-close">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M18 6L6 18M6 6l12 12"/>
             </svg>

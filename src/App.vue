@@ -68,6 +68,30 @@ const searchHistory = ref(getStored('search_history', []))
 const cartItems = ref(getStored('cart_items', []))
 
 // ==========================================
+// PWA INSTALLATION STATE
+// ==========================================
+const deferredPrompt = ref(null)
+const isInstallable = ref(false)
+const isStandalone = ref(window.matchMedia('(display-mode: standalone)').matches)
+
+const handleBeforeInstallPrompt = (e) => {
+  if (isStandalone.value) return
+  e.preventDefault()
+  deferredPrompt.value = e
+  isInstallable.value = true
+}
+
+const handleInstallApp = async () => {
+  if (!deferredPrompt.value) return
+  deferredPrompt.value.prompt()
+  const { outcome } = await deferredPrompt.value.userChoice
+  if (outcome === 'accepted') {
+    isInstallable.value = false
+    deferredPrompt.value = null
+  }
+}
+
+// ==========================================
 // DATA STATE
 // ==========================================
 const allProducts = ref(getStored('all_products_cache', []))
@@ -838,6 +862,12 @@ const handleRemoveFromCart = (cartId) => {
 // Lifecycle
 onMounted(() => {
   fetchInitialData()
+  
+  window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+  window.addEventListener('appinstalled', () => {
+    isInstallable.value = false
+    deferredPrompt.value = null
+  })
 })
 
 const showNavBar = computed(() => {
@@ -855,11 +885,13 @@ const showNavBar = computed(() => {
       v-if="showNavBar" 
       :active-tab="route.name"
       :is-guest="userData.id === 'guest'"
+      :can-install="isInstallable && !isStandalone"
       :t="t"
       :cart-count="cartItems.length"
       @navigate="navigateTo"
       @go-notifications="navigateTo('notifications')"
       @go-cart="navigateTo('cart')"
+      @install-app="handleInstallApp"
     />
 
     <main :class="{ 'with-nav': showNavBar }">
@@ -980,7 +1012,12 @@ const showNavBar = computed(() => {
       <span class="toast-message">{{ toast.message }}</span>
     </div>
 
-    <PWAInstallPrompt />
+    <PWAInstallPrompt 
+      :show="isInstallable" 
+      :is-standalone="isStandalone"
+      @install="handleInstallApp"
+      @close="isInstallable = false"
+    />
     <SpeedInsights />
     <Analytics />
     </template>
