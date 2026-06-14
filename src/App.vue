@@ -13,6 +13,7 @@ import NavigationBar from './components/layout/NavigationBar.vue'
 import WebHeader from './components/layout/WebHeader.vue'
 import LoadingSpinner from './components/layout/LoadingSpinner.vue'
 import Splash from './components/layout/Splash.vue'
+import PWAInstallPrompt from './components/layout/PWAInstallPrompt.vue'
 import Cart from './components/shop/Cart.vue'
 import { SpeedInsights } from "@vercel/speed-insights/vue"
 import { Analytics } from "@vercel/analytics/vue"
@@ -995,6 +996,7 @@ const showNavBar = computed(() => {
       <span class="toast-message">{{ toast.message }}</span>
     </div>
 
+    <PWAInstallPrompt />
     <SpeedInsights />
     <Analytics />
   </div>

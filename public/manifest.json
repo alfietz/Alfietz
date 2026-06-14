@@ -1,0 +1,23 @@
+{
+  "name": "Alfietz - African Heritage Crafts",
+  "short_name": "Alfie",
+  "description": "Discover the Soul of African Craftsmanship. Connect with master artisans and bespoke fashion.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#2A1810",
+  "theme_color": "#2A1810",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
