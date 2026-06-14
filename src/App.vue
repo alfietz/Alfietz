@@ -79,12 +79,6 @@ const searchResults = ref([])
 const appReviews = ref([])
 const portfolioUpdates = ref([])
 
-const theme = computed(() => userData.value.theme || 'dark')
-
-watch(theme, (newTheme) => {
-  document.documentElement.className = newTheme === 'dark' ? 'dark-theme' : 'light-theme'
-}, { immediate: true })
-
 const t = (key) => {
   const lang = currentLanguage.value || 'en'
   return translations[lang][key] || key
@@ -719,20 +713,6 @@ const handleGoChat = (userId) => {
   navigateTo('chat-detail', { userId })
 }
 
-const handleToggleTheme = async () => {
-  const newTheme = userData.value.theme === 'dark' ? 'light' : 'dark'
-  userData.value.theme = newTheme
-  setStored('user_data', userData.value)
-  
-  if (userData.value.id !== 'guest') {
-    try {
-      await db.runAction('update_profile', { ...userData.value, theme: newTheme });
-    } catch (e) {
-      console.error('Failed to sync theme to cloud:', e);
-    }
-  }
-}
-
 const handleSearch = async (query, navigate = true) => {
   // If query is empty, just navigate to search page
   if (!query && navigate) {
@@ -868,12 +848,12 @@ const showNavBar = computed(() => {
     <WebHeader 
       v-if="showNavBar" 
       :active-tab="route.name"
+      :is-guest="userData.id === 'guest'"
       :t="t"
       :cart-count="cartItems.length"
       @navigate="navigateTo"
       @go-notifications="navigateTo('notifications')"
       @go-cart="navigateTo('cart')"
-      @toggle-theme="handleToggleTheme"
     />
 
     <main :class="{ 'with-nav': showNavBar }">
@@ -883,7 +863,6 @@ const showNavBar = computed(() => {
           :is="Component" 
           :t="t"
           :user-data="userData"
-          :theme="theme"
           :language="currentLanguage"
           :categories="categories"
           :trending-products="trendingProducts"
@@ -955,7 +934,6 @@ const showNavBar = computed(() => {
           @update:user-data="handleUpdateProfile"
           @update:language="(val) => { currentLanguage = val; setStored('language', val); }"
           @update:role="handleUpdateRole"
-          @toggle-theme="handleToggleTheme"
           @go-help="navigateTo('help')"
           @go-privacy="navigateTo('privacy')"
           @go-terms="navigateTo('terms')"
@@ -1007,26 +985,26 @@ const showNavBar = computed(() => {
 /* Toast Notification */
 .toast-notification {
   position: fixed;
-  bottom: 100px;
+  bottom: 6.25rem;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 20px;
-  border-radius: 100px;
+  gap: var(--spacing-sm);
+  padding: 0.875rem var(--spacing-lg);
+  border-radius: var(--radius-full);
   background: var(--wood-deep);
   border: 1px solid var(--glass-border);
   box-shadow: 0 10px 30px rgba(0,0,0,0.5);
   z-index: 9999;
-  min-width: 280px;
+  min-width: 17.5rem;
   max-width: 90vw;
 }
 .toast-notification.success { border-color: #10B981; }
 .toast-notification.error { border-color: #EF4444; }
 .toast-notification.success .toast-icon { color: #10B981; }
 .toast-notification.error .toast-icon { color: #EF4444; }
-.toast-message { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.toast-message { font-size: var(--font-sm); font-weight: 600; color: var(--text-primary); }
 
 @keyframes fadeUp {
   from { opacity: 0; transform: translate(-50%, 20px); }
@@ -1046,13 +1024,13 @@ const showNavBar = computed(() => {
 }
 
 .with-nav {
-  padding-top: 60px;
-  padding-bottom: 100px;
+  padding-top: 3.75rem;
+  padding-bottom: 6.25rem;
 }
 
 @media (min-width: 768px) {
   .with-nav {
-    padding-top: 80px;
+    padding-top: 5rem;
     padding-bottom: 0;
   }
 }

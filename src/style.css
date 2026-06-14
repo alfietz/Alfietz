@@ -38,11 +38,21 @@
   --radius-sm: 12px;
   --radius-full: 9999px;
 
-  --spacing-xs: 8px;
-  --spacing-sm: 12px;
-  --spacing-md: 16px;
-  --spacing-lg: 24px;
-  --spacing-xl: 32px;
+  --spacing-xs: 0.5rem;
+  --spacing-sm: 0.75rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+
+  /* Fluid Typography - Scales smoothly from mobile to desktop */
+  --font-xs: clamp(0.7rem, 0.65rem + 0.25vw, 0.75rem);
+  --font-sm: clamp(0.8rem, 0.75rem + 0.25vw, 0.875rem);
+  --font-base: clamp(0.9375rem, 0.9rem + 0.2vw, 1rem);
+  --font-md: clamp(1.1rem, 1.05rem + 0.3vw, 1.25rem);
+  --font-lg: clamp(1.25rem, 1.2rem + 0.5vw, 1.5rem);
+  --font-xl: clamp(1.75rem, 1.6rem + 1vw, 2.25rem);
+  --font-2xl: clamp(2.25rem, 2rem + 1.5vw, 3rem);
 
   /* Pattern Color */
   --pattern-color: #D97706;
@@ -86,21 +96,15 @@
 /* Base Styles */
 *, *::before, *::after {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 html, body {
   height: 100%;
-  margin: 0;
-  padding: 0;
-  font-size: 16px; /* Optimized for mobile readability and to prevent iOS input zoom */
-  -webkit-text-size-adjust: 100%; /* Prevent automatic font resizing */
-  overscroll-behavior-y: none; /* App-like feel, prevent pull-to-refresh bounce */
-}
-
-@media (min-width: 768px) {
-  html, body {
-    font-size: 16px; 
-  }
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior-y: none;
 }
 
 body {
@@ -110,11 +114,11 @@ body {
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  line-height: 1.6; /* Improved legibility */
+  line-height: 1.4; /* Tightened for a more app-like feel, removes vertical ghost space */
   overflow-x: hidden;
   transition: background 0.5s ease, color 0.5s ease;
   width: 100%;
-  position: fixed; /* Lock scroll on body to prevent rubber banding on iOS */
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
@@ -159,7 +163,7 @@ body::before {
 /* Global Mobile Optimizations */
 input, button, select, textarea {
   font-family: inherit;
-  font-size: 1rem;
+  font-size: var(--font-base);
 }
 
 /* Fix browser autofill "black spots" and ensure consistent background */
@@ -174,12 +178,13 @@ input:-webkit-autofill:active {
 
 button {
   -webkit-tap-highlight-color: transparent;
+  line-height: 1; /* Center text vertically better */
 }
 
 h1, h2, h3 {
-  margin: 0;
   font-weight: 700;
   color: var(--text-primary);
+  line-height: 1.2; /* Tight headers */
 }
 
 a {
@@ -196,7 +201,6 @@ button {
   border: none;
   background: none;
   cursor: pointer;
-  padding: 0;
   font-family: inherit;
   transition: all 0.2s;
 }
@@ -227,9 +231,9 @@ input {
   background: linear-gradient(135deg, var(--accent-amber) 0%, #B45309 100%);
   color: white;
   border-radius: var(--radius-md);
-  padding: 16px;
-  min-height: 45px; /* User requested 45px */
-  font-size: 16px;
+  padding: var(--spacing-md);
+  min-height: 2.8rem;
+  font-size: var(--font-base);
   font-weight: 700;
   width: 100%;
   display: flex;
@@ -237,15 +241,15 @@ input {
   justify-content: center;
   text-align: center;
   box-shadow: 0 0 15px rgba(217, 119, 6, 0.3);
-  letter-spacing: 1px;
+  letter-spacing: 0.05rem;
 }
 
 .icon-btn, .back-btn {
   background-color: var(--wood-walnut);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-full);
-  width: 45px; /* User requested 45px */
-  height: 45px; /* User requested 45px */
+  width: 2.8rem;
+  height: 2.8rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -257,32 +261,32 @@ input {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-lg);
-  margin-top: 32px;
+  margin-top: var(--spacing-xl);
 }
 
 .input-group {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--spacing-xs);
 }
 
 .input-group label {
-  font-size: 12px; /* Slightly larger for readability */
+  font-size: var(--font-xs);
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 1.5px;
+  letter-spacing: 0.1rem;
   color: var(--text-muted);
-  margin-left: 4px;
+  margin-left: 0.25rem;
 }
 
 .input-group input {
   background-color: var(--input-bg);
   border: 2px solid var(--input-border);
   border-radius: var(--radius-md);
-  padding: 16px 20px; /* Refined padding */
-  min-height: 56px; /* Better touch area and alignment */
-  font-size: 16px; /* Prevent iOS zoom */
+  padding: var(--spacing-md) var(--spacing-lg);
+  min-height: 3.5rem;
+  font-size: var(--font-base);
   color: var(--input-text);
   transition: all 0.3s ease;
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
@@ -318,7 +322,7 @@ input {
 
 /* Page Layouts */
 .auth-page, .profile-page, .content-page {
-  padding: var(--spacing-lg) 20px;
+  padding: var(--spacing-lg) var(--spacing-md);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -327,7 +331,7 @@ input {
 }
 
 .page-title {
-  font-size: 28px;
+  font-size: var(--font-xl);
   margin-bottom: var(--spacing-xl);
   color: var(--text-primary);
 }
@@ -340,7 +344,7 @@ input {
 }
 
 .section-header h3 {
-  font-size: 18px;
+  font-size: var(--font-md);
   color: var(--text-primary);
 }
 
@@ -367,50 +371,4 @@ input {
   object-fit: contain;
 }
 
-/* Dark Theme Overrides - Alfietz Night */
-.dark-theme {
-  --primary-green: #81C784;    /* Vibrant accent green */
-  --accent-orange: #FF9800;
-  --bg-pattern: #2D1B16;
-  --text-light: #A1887F;
-  --border-light: #3E2723;
-  --border-active: var(--accent-orange);
-  
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
-}
-
-/* Light Theme Overrides - Birch/Warm Sand */
-.light-theme {
-  --wood-deep: #FDFBF7;
-  --wood-walnut: #F4EBE1;
-  --wood-polished: #EADECF;
-  --accent-amber: #D97706;
-  --accent-glow: rgba(217, 119, 6, 0.2);
-  
-  --bg-radial: radial-gradient(ellipse at top, #FDFBF7 0%, #EADECF 100%);
-  --glass-bg: rgba(255, 255, 255, 0.8);
-  --glass-border: rgba(184, 115, 51, 0.2);
-  
-  --text-primary: #2A1810;
-  --text-muted: #5A3D2B;
-  --text-amber: #B45309;
-  
-  --input-bg: #FFFFFF;
-  --input-border: #EADECF;
-  --input-text: #2A1810;
-  --input-placeholder: #A88876;
-  
-  --card-bg: #FFFFFF;
-  --card-border: #EADECF;
-  --card-hover-border: var(--accent-amber);
-  --card-hover-bg: #FDFBF7;
-
-  --price-bg: rgba(16, 185, 129, 0.1);
-  --price-text: #059669;
-  --price-border: #10B981;
-  
-  --border-tech: #EADECF;
-  --shadow-glow: 0 0 15px var(--accent-glow);
-}
 

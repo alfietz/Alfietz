@@ -75,15 +75,15 @@ onUnmounted(() => {
 <style scoped>
 .pwa-install-banner {
   position: fixed;
-  bottom: 24px;
-  right: 24px;
+  bottom: var(--spacing-lg);
+  right: var(--spacing-lg);
   z-index: 10000;
   max-width: 400px;
-  width: calc(100% - 48px);
-  background: var(--wood-deep, #2A1810);
-  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
-  border-radius: 20px;
-  padding: 16px;
+  width: calc(100% - (var(--spacing-lg) * 2));
+  background: var(--wood-deep);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(10px);
 }
@@ -91,13 +91,13 @@ onUnmounted(() => {
 .banner-content {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--spacing-md);
 }
 
 .app-logo {
-  width: 52px;
-  height: 52px;
-  border-radius: 12px;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: var(--radius-sm);
   object-fit: cover;
   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
@@ -107,38 +107,38 @@ onUnmounted(() => {
 }
 
 .banner-text h3 {
-  margin: 0;
-  font-size: 16px;
+  font-size: var(--font-base);
   font-weight: 700;
-  color: var(--text-primary, #FFFFFF);
+  color: var(--text-primary);
   font-family: 'Playfair Display', serif;
 }
 
 .banner-text p {
-  margin: 4px 0 0;
-  font-size: 13px;
-  color: var(--text-secondary, rgba(255, 255, 255, 0.7));
-  line-height: 1.4;
+  margin-top: 0.25rem;
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+  line-height: 1.3;
 }
 
 .banner-actions {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--spacing-xs);
   align-items: flex-end;
 }
 
 .btn-install {
-  background: var(--accent-gold, #C5A059);
+  background: var(--accent-gold);
   color: #2A1810;
   border: none;
-  padding: 8px 16px;
-  border-radius: 100px;
-  font-size: 13px;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-full);
+  font-size: var(--font-xs);
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
   transition: transform 0.2s;
+  line-height: 1;
 }
 
 .btn-install:hover {
@@ -148,9 +148,9 @@ onUnmounted(() => {
 .btn-close {
   background: transparent;
   border: none;
-  color: var(--text-secondary, rgba(255, 255, 255, 0.5));
+  color: var(--text-muted);
   cursor: pointer;
-  padding: 4px;
+  padding: 0.25rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -170,9 +170,9 @@ onUnmounted(() => {
 
 @media (max-width: 600px) {
   .pwa-install-banner {
-    bottom: 80px; /* Above the navigation bar */
-    left: 12px;
-    right: 12px;
+    bottom: 5rem; /* Above the navigation bar */
+    left: var(--spacing-sm);
+    right: var(--spacing-sm);
     width: auto;
     max-width: none;
   }

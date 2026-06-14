@@ -1,6 +1,6 @@
 <!-------- (WebHeader.vue) ./src/components/layout/WebHeader.vue ------------>
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 const props = defineProps({
   activeTab: {
@@ -11,9 +11,9 @@ const props = defineProps({
     type: Number,
     default: 0
   },
-  theme: {
-    type: String,
-    default: 'dark'
+  isGuest: {
+    type: Boolean,
+    default: true
   },
   t: {
     type: Function,
@@ -21,7 +21,14 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['navigate', 'go-notifications', 'go-cart', 'toggle-theme'])
+const emit = defineEmits(['navigate', 'go-notifications', 'go-cart'])
+
+const navItems = computed(() => {
+  if (props.isGuest) {
+    return ['home', 'login']
+  }
+  return ['home', 'favorites', 'chats', 'profile']
+})
 
 const isScrolled = ref(false)
 
@@ -55,10 +62,13 @@ onUnmounted(() => {
       <!-- Navigation Links -->
       <nav class="desktop-nav">
         <button 
-          v-for="item in ['home', 'favorites', 'profile']"
+          v-for="item in navItems"
           :key="item"
           class="nav-link" 
-          :class="{ active: activeTab === item }" 
+          :class="{ 
+            active: activeTab === item,
+            'login-link': item === 'login'
+          }" 
           @click="$emit('navigate', item)"
         >
           {{ t(item) }}
@@ -68,14 +78,6 @@ onUnmounted(() => {
 
       <!-- Actions -->
       <div class="header-actions">
-        <button class="action-btn group pc-only" @click="$emit('toggle-theme')" aria-label="Toggle Theme">
-          <svg v-if="theme === 'dark'" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-11.314l.707.707m11.314 11.314l.707.707M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/>
-          </svg>
-          <svg v-else class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-          </svg>
-        </button>
         <button class="action-btn group" aria-label="Cart" @click="$emit('go-cart')">
           <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>
@@ -224,8 +226,21 @@ onUnmounted(() => {
   transition: color 0.3s ease;
 }
 
-.nav-link:hover, .nav-link.active {
+.nav-link.active {
   color: var(--text-amber);
+}
+
+.login-link {
+  color: var(--text-amber) !important;
+  background: rgba(217, 119, 6, 0.1);
+  padding: 8px 16px !important;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--glass-border);
+}
+
+.login-link:hover {
+  background: var(--accent-glow);
+  border-color: var(--accent-amber);
 }
 
 .active-glow {
