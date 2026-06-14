@@ -69,7 +69,7 @@ const navItems = computed(() => {
   backdrop-filter: blur(25px);
   display: flex;
   justify-content: space-around;
-  padding: 12px 10px 32px 10px; /* Extra bottom padding for modern mobile home indicators */
+  padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
   border-top: 1px solid var(--glass-border);
   z-index: 1000;
   box-shadow: 0 -10px 25px rgba(0,0,0,0.5);
@@ -94,9 +94,9 @@ const navItems = computed(() => {
   -webkit-tap-highlight-color: transparent;
   background: none;
   border: none;
-  padding: 8px 0;
+  padding: 4px 0;
   font: inherit;
-  min-height: 48px;
+  min-height: 44px;
 }
 
 .icon-container {
@@ -104,22 +104,22 @@ const navItems = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  margin-bottom: 4px;
+  width: 24px;
+  height: 24px;
+  margin-bottom: 2px;
 }
 
 .nav-item.active {
   color: var(--text-amber);
-  transform: translateY(-4px);
+  transform: translateY(-2px);
 }
 
 .nav-label {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  opacity: 0.8;
+  opacity: 0.7;
 }
 
 .nav-item.active .nav-label {
@@ -131,16 +131,21 @@ const navItems = computed(() => {
 }
 
 .tribe-icon-box {
-  width: 36px;
-  height: 36px;
+  width: 28px;
+  height: 28px;
   background: linear-gradient(135deg, var(--wood-walnut), var(--wood-deep));
   border: 1px solid var(--accent-amber);
-  border-radius: 12px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 2px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.tribe-icon-box svg {
+  width: 16px;
+  height: 16px;
 }
 
 .fav-icon {
