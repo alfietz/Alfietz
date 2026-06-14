@@ -3,8 +3,12 @@ import { ref, onMounted, onUnmounted } from 'vue'
 
 const deferredPrompt = ref(null)
 const showPrompt = ref(false)
+const isStandalone = ref(window.matchMedia('(display-mode: standalone)').matches)
 
 const handleBeforeInstallPrompt = (e) => {
+  // If already installed/standalone, don't show anything
+  if (isStandalone.value) return
+  
   // Prevent the mini-infobar from appearing on mobile
   e.preventDefault()
   // Stash the event so it can be triggered later.
@@ -86,6 +90,13 @@ onUnmounted(() => {
   padding: var(--spacing-md);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(10px);
+}
+
+/* Fail-safe: Hide if display mode is standalone */
+@media (display-mode: standalone) {
+  .pwa-install-banner {
+    display: none !important;
+  }
 }
 
 .banner-content {

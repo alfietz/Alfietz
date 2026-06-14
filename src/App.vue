@@ -14,6 +14,7 @@ import WebHeader from './components/layout/WebHeader.vue'
 import LoadingSpinner from './components/layout/LoadingSpinner.vue'
 import Splash from './components/layout/Splash.vue'
 import PWAInstallPrompt from './components/layout/PWAInstallPrompt.vue'
+import SkeletonLoader from './components/layout/SkeletonLoader.vue'
 import Cart from './components/shop/Cart.vue'
 import { SpeedInsights } from "@vercel/speed-insights/vue"
 import { Analytics } from "@vercel/analytics/vue"
@@ -50,6 +51,7 @@ const userData = ref(getStored('user_data', {
 
 const currentLanguage = ref(getStored('language', 'en'))
 const isGlobalLoading = ref(false)
+const isInitialLoading = ref(true)
 const loadingMessage = ref('Summoning Heritage...')
 const toast = ref({ show: false, message: '', type: 'info' })
 const isDeepLoading = ref(false)
@@ -469,6 +471,7 @@ const fetchInitialData = async (force = false) => {
     }
   } finally {
     isGlobalLoading.value = false;
+    isInitialLoading.value = false;
     isSyncing.value = false;
   }
 }
@@ -844,6 +847,9 @@ const showNavBar = computed(() => {
 
 <template>
   <div class="app-wrapper">
+    <SkeletonLoader v-if="isInitialLoading" :t="t" />
+    
+    <template v-else>
     <!-- DESKTOP HEADER (WEB MODE) -->
     <WebHeader 
       v-if="showNavBar" 
@@ -977,6 +983,7 @@ const showNavBar = computed(() => {
     <PWAInstallPrompt />
     <SpeedInsights />
     <Analytics />
+    </template>
   </div>
 </template>
 
