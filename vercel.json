@@ -1,11 +1,35 @@
 {
+  "headers": [
+    {
+      "source": "/sw.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        },
+        {
+          "key": "Service-Worker-Allowed",
+          "value": "/"
+        }
+      ]
+    },
+    {
+      "source": "/manifest.json",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/manifest+json"
+        }
+      ]
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/(.*)",
       "destination": "/api/$1"
     },
     {
-      "source": "/((?!api|@vite|@fs|@id|src|node_modules|assets|favicon|.*\\.).*)",
+      "source": "/((?!api|@vite|@fs|@id|src|node_modules|assets|favicon|sw.js|manifest.json|.*\\.).*)",
       "destination": "/index.html"
     }
   ]
