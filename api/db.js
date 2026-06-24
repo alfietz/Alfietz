@@ -343,7 +343,7 @@ export default async function handler(req, res) {
 
     switch (action) {
       case 'get_initial_data':
-        const userId = params.userId || 'guest';
+        const userId = currentUserId !== 'guest' ? currentUserId : 'guest';
         const userCountry = req.headers['x-vercel-ip-country'] || 'Unknown';
         const userCity = req.headers['x-vercel-ip-city'] || 'Unknown';
 
@@ -643,7 +643,7 @@ export default async function handler(req, res) {
 
       case 'confirm_location_update':
         sql = "UPDATE users SET last_city = ?, last_country = ?, last_lat = ?, last_long = ? WHERE id = ?";
-        args = [params.city, params.country, params.lat, params.lon, params.userId];
+        args = [params.city, params.country, params.lat, params.lon, currentUserId];
         break;
 
       case 'create_negotiation':
@@ -653,11 +653,14 @@ export default async function handler(req, res) {
         break;
 
       case 'toggle_like':
+        if (currentUserId === 'guest') {
+          return res.status(401).json({ error: 'Authentication required' });
+        }
         if (params.isAdding) {
-          await client.execute({ sql: 'INSERT OR IGNORE INTO favorites (user_id, product_id) VALUES (?, ?)', args: [params.userId, params.productId] });
+          await client.execute({ sql: 'INSERT OR IGNORE INTO favorites (user_id, product_id) VALUES (?, ?)', args: [currentUserId, params.productId] });
           await client.execute({ sql: 'UPDATE products SET likes_count = likes_count + 1 WHERE id = ?', args: [params.productId] });
         } else {
-          await client.execute({ sql: 'DELETE FROM favorites WHERE user_id = ? AND product_id = ?', args: [params.userId, params.productId] });
+          await client.execute({ sql: 'DELETE FROM favorites WHERE user_id = ? AND product_id = ?', args: [currentUserId, params.productId] });
           await client.execute({ sql: 'UPDATE products SET likes_count = MAX(0, likes_count - 1) WHERE id = ?', args: [params.productId] });
         }
         customResponse = { success: true };
@@ -685,12 +688,12 @@ export default async function handler(req, res) {
             SELECT DISTINCT tailor_id FROM negotiations WHERE customer_id = ?
           )
         `;
-        args = [params.userId, params.userId, params.userId, params.userId, params.userId, params.userId, params.userId, params.userId, params.userId];
+        args = [currentUserId, currentUserId, currentUserId, currentUserId, currentUserId, currentUserId, currentUserId, currentUserId, currentUserId];
         break;
 
       case 'get_messages':
         sql = 'SELECT * FROM messages WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?) ORDER BY created_at ASC';
-        args = [params.userId, params.otherId, params.otherId, params.userId];
+        args = [currentUserId, params.otherId, params.otherId, currentUserId];
         break;
 
       case 'get_orders':
@@ -704,7 +707,7 @@ export default async function handler(req, res) {
           WHERE o.customer_id = ? OR o.tailor_id = ? 
           ORDER BY o.created_at DESC
         `;
-        args = [params.userId, params.userId];
+        args = [currentUserId, currentUserId];
         break;
 
       case 'get_tailor_console_data':
@@ -804,18 +807,27 @@ export default async function handler(req, res) {
         await trackSession(currentUserId);
         break;
       case 'delete_product':
+        if (!params.productId) {
+          return res.status(400).json({ error: 'productId is required' });
+        }
         await client.execute({ sql: 'DELETE FROM favorites WHERE product_id = ?', args: [params.productId] });
         await client.execute({ sql: 'DELETE FROM reviews WHERE product_id = ?', args: [params.productId] });
         sql = 'DELETE FROM products WHERE id = ? AND owner_id = ?';
-        args = [params.productId, params.userId];
+        args = [params.productId, currentUserId];
         break;
       case 'write_review':
+        if (currentUserId === 'guest') {
+          return res.status(401).json({ error: 'Authentication required' });
+        }
         sql = 'INSERT INTO reviews (product_id, user_id, rating, text, image) VALUES (?, ?, ?, ?, ?)';
-        args = [params.productId, params.userId, params.rating, params.text, params.image];
+        args = [params.productId, currentUserId, params.rating, params.text, params.image];
         break;
       case 'submit_app_review':
+        if (currentUserId === 'guest') {
+          return res.status(401).json({ error: 'Authentication required' });
+        }
         sql = 'INSERT INTO app_reviews (user_id, rating, text, image) VALUES (?, ?, ?, ?)';
-        args = [params.userId, params.rating, params.text, params.image];
+        args = [currentUserId, params.rating, params.text, params.image];
         break;
       case 'update_role':
         sql = 'UPDATE users SET user_type = ? WHERE id = ?';
@@ -1007,7 +1019,7 @@ export default async function handler(req, res) {
 
       case 'submit_feedback':
         sql = 'INSERT INTO feedback (user_id, message) VALUES (?, ?)';
-        args = [params.userId, params.message];
+        args = [currentUserId, params.message];
         break;
 
       case 'get_reviews':

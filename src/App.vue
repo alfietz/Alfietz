@@ -314,10 +314,7 @@ const handleLogin = async (data) => {
       if (u.user_type === 'supplier' && res.locationUpdate) {
         const confirm = window.confirm(`Ancestors notice you are in ${res.locationUpdate.city}, ${res.locationUpdate.country}. Would you like to update your shop location to this place?`);
         if (confirm) {
-          await db.runAction('confirm_location_update', {
-            userId: u.id,
-            ...res.locationUpdate
-          });
+          await db.runAction('confirm_location_update', res.locationUpdate);
           showToast('Shop location updated successfully!', 'success');
         }
       }
@@ -516,7 +513,6 @@ const toggleLike = async (product) => {
 
   try {
     await db.runAction('toggle_like', { 
-      userId: userData.value.id, 
       productId: product.id, 
       isAdding: product.liked 
     });
@@ -651,7 +647,6 @@ const handleWriteReview = async (data) => {
   try {
     await db.runAction('write_review', {
       productId: selectedProduct.value.id,
-      userId: userData.value.id,
       rating: data.rating,
       text: data.text,
       image: data.image || null
@@ -671,7 +666,6 @@ const handleAppExperienceSubmit = async (data) => {
   loadingMessage.value = 'Sharing your journey with the Tribe...';
   try {
     await db.runAction('submit_app_review', {
-      userId: userData.value.id,
       rating: data.rating,
       text: data.text,
       image: data.image
@@ -690,7 +684,7 @@ const handleFeedbackSubmit = async (message) => {
   isGlobalLoading.value = true
   loadingMessage.value = 'Sending feedback...'
   try {
-    await db.runAction('submit_feedback', { userId: userData.value.id, message })
+    await db.runAction('submit_feedback', { message })
     showToast('Feedback sent! Thank you.', 'success')
     navigateTo('home')
   } catch (e) {
@@ -704,7 +698,7 @@ const handleProductDelete = async (productId) => {
   isGlobalLoading.value = true;
   loadingMessage.value = 'Removing heritage item...';
   try {
-    await db.runAction('delete_product', { productId, userId: userData.value.id });
+    await db.runAction('delete_product', { productId });
     showToast('Item removed successfully.', 'success')
     await fetchInitialData()
     navigateTo('home')

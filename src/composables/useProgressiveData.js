@@ -44,6 +44,11 @@ export function useProgressiveData(action, params = {}, { cacheKey = null, ttl =
   }
 
   const fetchData = async () => {
+    if (Object.values(currentParams).some(v => v === undefined)) {
+      console.warn(`[useProgressiveData] Skipping ${action}: params contain undefined`)
+      isFresh.value = false
+      return null
+    }
     try {
       error.value = null
       const result = await db.runAction(action, currentParams)
