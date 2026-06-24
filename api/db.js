@@ -422,6 +422,9 @@ export default async function handler(req, res) {
         break;
 
       case 'search':
+        if (!params.query) {
+          return res.status(400).json({ error: 'Query is required' });
+        }
         const q = `%${params.query.toLowerCase()}%`;
         const catFilter = params.category ? params.category : null;
 
@@ -459,6 +462,9 @@ export default async function handler(req, res) {
         break;
 
       case 'get_product_details':
+        if (!params.productId) {
+          return res.status(400).json({ error: 'Product ID is required' });
+        }
         const prodRes = await client.execute({
           sql: `
             SELECT p.*, u.username as owner_username, u.first_name, u.last_name, u.avatar as owner_avatar, u.whatsapp as sellerPhone, c.name as categoryName
@@ -477,6 +483,9 @@ export default async function handler(req, res) {
         break;
 
       case 'get_tailor_details':
+        if (!params.username) {
+          return res.status(400).json({ error: 'Username is required' });
+        }
         const tailorRes = await client.execute({ 
           sql: `
             SELECT u.id, u.username, u.first_name, u.last_name, u.avatar, u.gives, u.whatsapp, u.email, u.profile_views, u.is_verified,
@@ -735,6 +744,9 @@ export default async function handler(req, res) {
         break;
 
       case 'get_similar_products':
+        if (!params.categoryId || !params.productId) {
+          return res.status(400).json({ error: 'categoryId and productId are required' });
+        }
         const simRes = await client.execute({
           sql: "SELECT p.*, c.name as categoryName FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE p.category_id = ? AND p.id != ? LIMIT 4",
           args: [params.categoryId, params.productId]
@@ -743,6 +755,9 @@ export default async function handler(req, res) {
         break;
 
       case 'get_user_by_id':
+        if (!params.userId) {
+          return res.status(400).json({ error: 'userId is required' });
+        }
         sql = 'SELECT id, username, first_name, last_name, avatar, user_type FROM users WHERE id = ?';
         args = [params.userId];
         break;
@@ -1022,6 +1037,8 @@ export default async function handler(req, res) {
             ORDER BY r.created_at DESC
           `;
           args = [params.tailorId];
+        } else {
+          return res.status(400).json({ error: 'isApp, productId, or tailorId is required' });
         }
         break;
 
