@@ -4,6 +4,7 @@ import ProductCard from './ProductCard.vue'
 import SectionHeader from '../layout/SectionHeader.vue'
 import BaseDialog from '../layout/BaseDialog.vue'
 import { useRoute } from 'vue-router'
+import { db } from '../../db/client'
 import { useProgressiveData } from '../../composables/useProgressiveData'
 
 const props = defineProps({
@@ -40,41 +41,41 @@ const productData = useProgressiveData('get_product_details', { productId: activ
   ttl: 2 * 60 * 1000
 })
 
-const reviewsData = useProgressiveData('get_reviews', { productId: activeId.value }, {
-  cacheKey: `reviews_${activeId.value}`,
-  ttl: 2 * 60 * 1000,
-  defer: true
-})
-
-const similarData = useProgressiveData('get_similar_products', { productId: activeId.value }, {
-  cacheKey: `similar_${activeId.value}`,
-  ttl: 2 * 60 * 1000,
-  defer: true
-})
-
 const product = computed(() => {
   const raw = productData.data.value
   if (!raw) return null
-  const isLiked = props.favoriteItems.some(fav => fav.id === raw.id)
-  return { ...raw, liked: isLiked, isFavorite: isLiked }
+  const p = raw.product || raw
+  const isLiked = props.favoriteItems.some(fav => fav.id === p.id)
+  return { ...p, liked: isLiked, isFavorite: isLiked }
 })
 const productError = computed(() => {
   const e = productData.error.value
   if (!e) return null
   return typeof e === 'string' ? e : (e?.message || 'Failed to load heritage item')
 })
-const reviews = computed(() => reviewsData.data.value || [])
-const similarProducts = computed(() => similarData.data.value || [])
+const reviews = computed(() => (productData.data.value?.reviews) || [])
+const similarProducts = ref([])
 
 watch(activeId, (id) => {
   if (!id) return
   productData.setParams({ productId: id })
   productData.refresh()
-  reviewsData.setParams({ productId: id })
-  reviewsData.refresh()
-  similarData.setParams({ productId: id })
-  similarData.refresh()
 }, { immediate: true })
+
+watch(() => productData.data.value, (raw) => {
+  if (!raw) return
+  const p = raw.product || raw
+  if (p && p.category_id && p.id) {
+    db.runAction('get_similar_products', {
+      categoryId: p.category_id,
+      productId: p.id
+    }).then(data => {
+      similarProducts.value = data.rows || []
+    }).catch(e => {
+      console.error('Failed to load similar products:', e)
+    })
+  }
+})
 
 // Dialog State
 const dialog = ref({
