@@ -113,8 +113,8 @@ watch(() => props.modelValue, (newVal) => {
 .is-editable .display-text {
   cursor: pointer;
   transition: all 0.2s ease;
-  padding: 2px 4px;
-  border-radius: 4px;
+  padding: var(--space-1) var(--space-1);
+  border-radius: var(--radius-sm);
   border: 1px solid transparent;
 }
 
@@ -139,9 +139,9 @@ watch(() => props.modelValue, (newVal) => {
   width: 100%;
   background: var(--wood-walnut);
   border: 1px solid var(--accent-amber);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   color: var(--text-primary);
-  padding: 4px 8px;
+  padding: var(--space-1) var(--space-2);
   font-family: inherit;
   font-size: inherit;
   font-weight: inherit;

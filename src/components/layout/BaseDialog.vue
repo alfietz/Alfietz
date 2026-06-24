@@ -61,14 +61,14 @@ defineEmits(['close', 'confirm', 'cancel'])
   align-items: center;
   justify-content: center;
   z-index: 9999;
-  padding: 20px;
+  padding: var(--space-5);
 }
 
 .dialog-card {
   background: var(--wood-deep);
   border: 1px solid var(--glass-border);
-  border-radius: 24px;
-  padding: 32px;
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
   width: 100%;
   max-width: 400px;
   text-align: center;
@@ -76,7 +76,7 @@ defineEmits(['close', 'confirm', 'cancel'])
 }
 
 .dialog-icon {
-  margin-bottom: 20px;
+  margin-bottom: var(--space-5);
   display: flex;
   justify-content: center;
 }
@@ -86,30 +86,30 @@ defineEmits(['close', 'confirm', 'cancel'])
 .warning .dialog-icon { color: #F59E0B; }
 
 .dialog-title {
-  margin: 0 0 12px 0;
-  font-size: 22px;
+  margin: 0 0 var(--space-3) 0;
+  font-size: var(--text-h1);
   font-weight: 800;
   color: var(--text-primary);
   letter-spacing: -0.5px;
 }
 
 .dialog-text {
-  margin: 0 0 32px 0;
-  font-size: 15px;
-  line-height: 1.6;
+  margin: 0 0 var(--space-8) 0;
+  font-size: var(--text-body-lg);
+  line-height: var(--leading-relaxed);
   color: var(--text-muted);
 }
 
 .dialog-actions {
   display: flex;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .btn-cancel, .btn-confirm {
   flex: 1;
-  padding: 16px;
-  border-radius: 16px;
-  font-size: 15px;
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--text-body-lg);
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;

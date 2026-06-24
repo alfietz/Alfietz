@@ -186,11 +186,11 @@ const saveChanges = () => {
 </template>
 
 <style scoped>
-.error-message { color: #E53935; font-size: 13px; font-weight: 500; margin: 12px 0; text-align: center; }
+.error-message { color: #E53935; font-size: var(--text-body); font-weight: 500; margin: var(--space-3) 0; text-align: center; }
 .profile-page {
   background-color: var(--wood-deep);
   min-height: 100vh;
-  padding: 24px 20px;
+  padding: var(--space-6) var(--space-5);
   display: flex;
   flex-direction: column;
 }
@@ -198,8 +198,8 @@ const saveChanges = () => {
 .header-row {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 32px;
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
 }
 
 .back-btn {
@@ -215,7 +215,7 @@ const saveChanges = () => {
 }
 
 .title {
-  font-size: 22px;
+  font-size: var(--text-h1);
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
@@ -225,8 +225,8 @@ const saveChanges = () => {
 .avatar-section {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 32px;
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
 }
 
 .avatar-wrapper {
@@ -285,15 +285,15 @@ const saveChanges = () => {
 }
 
 .user-name {
-  margin: 0 0 4px 0;
-  font-size: 16px;
+  margin: 0 0 var(--space-1) 0;
+  font-size: var(--text-body-lg);
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .user-email {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--text-body);
   color: var(--text-muted);
 }
 
@@ -301,7 +301,7 @@ const saveChanges = () => {
 .form-container {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--space-5);
   flex: 1;
 }
 
@@ -316,17 +316,17 @@ const saveChanges = () => {
   top: -8px;
   left: 12px;
   background: var(--wood-deep);
-  padding: 0 4px;
-  font-size: 11px;
+  padding: 0 var(--space-1);
+  font-size: var(--text-caption);
   color: var(--text-light);
   z-index: 1;
 }
 
 .input-group input {
   border: 1px solid var(--glass-border);
-  border-radius: 12px;
-  padding: 16px;
-  font-size: 15px;
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  font-size: var(--text-body-lg);
   color: var(--text-primary);
   background: transparent;
   outline: none;
@@ -340,28 +340,28 @@ const saveChanges = () => {
 .user-type-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .group-label {
-  font-size: 13px;
+  font-size: var(--text-body);
   color: var(--text-muted);
   font-weight: 500;
 }
 
 .type-options {
   display: flex;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .type-btn {
   flex: 1;
-  padding: 12px;
+  padding: var(--space-3);
   border-radius: var(--radius-md);
   border: 1px solid var(--glass-border);
   background: var(--wood-deep);
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: var(--text-body);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
@@ -374,14 +374,14 @@ const saveChanges = () => {
 }
 
 .textarea-group {
-  margin-top: 12px;
+  margin-top: var(--space-3);
 }
 
 .bio-textarea {
   border: 1px solid var(--glass-border);
-  border-radius: 12px;
-  padding: 16px;
-  font-size: 15px;
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  font-size: var(--text-body-lg);
   color: var(--text-primary);
   background: transparent;
   outline: none;
@@ -396,7 +396,7 @@ const saveChanges = () => {
 
 /* Disabled Input Specifics */
 .disabled-group {
-  margin-top: 8px; /* space because there's no floating label */
+  margin-top: var(--space-2); /* space because there's no floating label */
 }
 
 .disabled-input {
@@ -407,8 +407,8 @@ const saveChanges = () => {
 
 /* Bottom Action */
 .bottom-action {
-  padding-top: 24px;
-  padding-bottom: 24px;
+  padding-top: var(--space-6);
+  padding-bottom: var(--space-6);
 }
 
 .primary-btn {
@@ -416,9 +416,9 @@ const saveChanges = () => {
   background: var(--accent-amber);
   color: white;
   border: none;
-  border-radius: 12px;
-  padding: 16px;
-  font-size: 16px;
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  font-size: var(--text-body-lg);
   font-weight: 600;
   cursor: pointer;
 }

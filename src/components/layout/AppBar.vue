@@ -26,14 +26,14 @@ defineEmits(['go-back'])
   background-color: var(--wood-deep);
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 16px 20px;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
   width: 100%;
   box-sizing: border-box;
 }
 
 .title {
-  font-size: 20px;
+  font-size: var(--text-h2);
   font-weight: 600;
   margin: 0;
   color: var(--text-primary);

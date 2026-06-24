@@ -1,6 +1,6 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import { db } from '../../db/client'
+import { computed } from 'vue'
+import { useProgressiveData } from '../../composables/useProgressiveData'
 
 const props = defineProps({
   userData: {
@@ -15,51 +15,28 @@ const props = defineProps({
 
 const emit = defineEmits(['go-back', 'go-chat'])
 
-const STORAGE_KEY = 'alfie_chats_cache'
-
-const conversations = ref([])
-const loading = ref(true)
-
-onMounted(async () => {
-  // 1. Instant Cache Load
-  const cached = localStorage.getItem(STORAGE_KEY)
-  if (cached) {
-    try {
-      conversations.value = JSON.parse(cached)
-      loading.value = false // Skip loading state if we have a cache
-    } catch (e) {
-      console.warn("Failed to parse chat cache")
-    }
-  }
-  
-  // 2. Background Refresh
-  await fetchConversations()
+const chatsQuery = useProgressiveData('get_chats', { userId: props.userData?.id }, {
+  cacheKey: `chats_${props.userData?.id}`,
+  ttl: 2 * 60 * 1000
 })
 
-const fetchConversations = async () => {
-  try {
-    const res = await db.runAction('get_chats', { userId: props.userData.id })
-    
-    const newConversations = res.rows.map(r => ({
-      id: r.id,
-      name: (r.first_name || r.last_name) ? `${r.first_name || ''} ${r.last_name || ''}`.trim() : r.username,
-      avatar: r.avatar,
-      lastMessage: r.last_message || props.t('noMessages'),
-      time: r.last_message_time ? formatTime(r.last_message_time) : '',
-      unread: r.unread_count > 0
-    }))
+const loading = computed(() => !chatsQuery.data.value && !chatsQuery.error.value)
 
-    // 3. Smart Update (Only update and cache if data changed)
-    if (JSON.stringify(newConversations) !== JSON.stringify(conversations.value)) {
-      conversations.value = newConversations
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(newConversations))
-    }
-  } catch (e) {
-    console.error("Error fetching conversations:", e)
-  } finally {
-    loading.value = false
-  }
-}
+const conversations = computed(() => {
+  const raw = chatsQuery.data.value
+  if (!raw) return []
+  const rows = raw.rows || []
+  return rows.map(r => ({
+    id: r.id,
+    name: (r.first_name || r.last_name) ? `${r.first_name || ''} ${r.last_name || ''}`.trim() : r.username,
+    avatar: r.avatar,
+    lastMessage: r.last_message || props.t('noMessages'),
+    time: r.last_message_time ? formatTime(r.last_message_time) : '',
+    unread: r.unread_count > 0
+  }))
+})
+
+const fetchConversations = () => chatsQuery.refresh()
 
 function formatTime(dateStr) {
   const date = new Date(dateStr)
@@ -126,7 +103,7 @@ function formatTime(dateStr) {
   border: none;
   color: var(--text-muted);
   cursor: pointer;
-  padding: 8px;
+  padding: var(--space-2);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -152,7 +129,7 @@ function formatTime(dateStr) {
 }
 
 .chat-list-page {
-  padding: 40px 24px;
+  padding: var(--space-10) var(--space-6);
   max-width: 800px;
   margin: 0 auto;
   min-height: 100vh;
@@ -162,8 +139,8 @@ function formatTime(dateStr) {
 .header-row {
   display: flex;
   align-items: center;
-  gap: 20px;
-  margin-bottom: 40px;
+  gap: var(--space-5);
+  margin-bottom: var(--space-10);
 }
 
 .header-text {
@@ -172,7 +149,7 @@ function formatTime(dateStr) {
 }
 
 .title {
-  font-size: 24px;
+  font-size: var(--text-h1);
   font-weight: 800;
   color: var(--text-primary);
   margin: 0;
@@ -181,26 +158,26 @@ function formatTime(dateStr) {
 
 .subtitle {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
+  font-size: var(--text-caption);
   color: var(--text-amber);
   text-transform: uppercase;
   letter-spacing: 2px;
-  margin: 2px 0 0 0;
+  margin: var(--space-1) 0 0 0;
 }
 
 .loading-state {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .skeleton-convo {
   display: flex;
-  gap: 16px;
-  padding: 16px;
+  gap: var(--space-4);
+  padding: var(--space-4);
   background: var(--wood-walnut);
   border: 1px solid var(--glass-border);
-  border-radius: 16px;
+  border-radius: var(--radius-md);
   align-items: center;
 }
 
@@ -217,7 +194,7 @@ function formatTime(dateStr) {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .skeleton-line {
@@ -255,25 +232,25 @@ function formatTime(dateStr) {
 
 .empty-state {
   text-align: center;
-  padding: 80px 20px;
+  padding: var(--space-12) var(--space-5);
   color: var(--text-muted);
 }
 
-.empty-icon { font-size: 48px; margin-bottom: 20px; }
+.empty-icon { font-size: var(--text-display); margin-bottom: var(--space-5); }
 
 .conversations-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .convo-card {
   display: flex;
-  gap: 16px;
-  padding: 16px;
+  gap: var(--space-4);
+  padding: var(--space-4);
   background: var(--wood-walnut);
   border: 1px solid var(--glass-border);
-  border-radius: 16px;
+  border-radius: var(--radius-md);
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -318,23 +295,23 @@ function formatTime(dateStr) {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
 }
 
 .convo-name {
-  font-size: 16px;
+  font-size: var(--text-body-lg);
   font-weight: 700;
   color: var(--text-primary);
   margin: 0;
 }
 
 .convo-time {
-  font-size: 12px;
+  font-size: var(--text-caption);
   color: var(--text-muted);
 }
 
 .last-message {
-  font-size: 14px;
+  font-size: var(--text-body);
   color: var(--text-muted);
   margin: 0;
   white-space: nowrap;

@@ -92,7 +92,7 @@ const handleLogin = () => {
 
 <style scoped>
 .auth-page {
-  padding: 40px 24px;
+  padding: var(--space-10) var(--space-6);
   max-width: 500px;
   margin: 0 auto;
   position: relative;
@@ -100,13 +100,13 @@ const handleLogin = () => {
 }
 
 .top-nav {
-  margin-bottom: 40px;
+  margin-bottom: var(--space-10);
 }
 
 .logo-hero {
   display: flex;
   justify-content: center;
-  margin-bottom: 32px;
+  margin-bottom: var(--space-8);
 }
 
 .logo-circle-large {
@@ -118,7 +118,7 @@ const handleLogin = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  padding: var(--space-4);
   box-shadow: 0 4px 20px rgba(0,0,0,0.15);
   border: 4px solid var(--accent-amber);
 }
@@ -132,20 +132,21 @@ const handleLogin = () => {
 
 .welcome-text {
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: var(--space-10);
 }
 
 .tribe-title {
-  font-size: 24px;
+  font-size: var(--text-h1);
   font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 4px;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
+  line-height: var(--leading-tight);
 }
 
 .tribe-highlight {
-  font-size: 48px;
+  font-size: var(--text-display);
   font-weight: 800;
   background: linear-gradient(to right, var(--text-primary), var(--accent-amber));
   -webkit-background-clip: text;
@@ -173,7 +174,7 @@ const handleLogin = () => {
 
 .error-message {
   color: #EF4444;
-  font-size: 13px;
+  font-size: var(--text-body);
   font-weight: 600;
   text-align: center;
 }
@@ -185,7 +186,7 @@ const handleLogin = () => {
 
 .forgot-link a {
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--text-body);
   text-decoration: none;
   font-weight: 500;
   transition: color 0.3s;
@@ -197,16 +198,16 @@ const handleLogin = () => {
 
 .bottom-text {
   text-align: center;
-  font-size: 14px;
+  font-size: var(--text-body);
   color: var(--text-muted);
-  margin-top: 24px;
+  margin-top: var(--space-6);
 }
 
 .join-link {
   color: var(--text-amber);
   text-decoration: none;
   font-weight: 700;
-  margin-left: 4px;
+  margin-left: var(--space-1);
   border-bottom: 1px solid transparent;
   transition: all 0.3s;
 }

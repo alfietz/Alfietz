@@ -96,12 +96,12 @@ const emit = defineEmits(['go-back', 'go-search-details', 'toggle-search-favorit
 .results-header-glass {
   position: sticky;
   top: 0;
-  padding: 16px;
+  padding: var(--space-4);
   background: var(--glass-bg);
   backdrop-filter: blur(15px);
   z-index: 100;
   display: flex;
-  gap: 16px;
+  gap: var(--space-4);
   align-items: center;
   border-bottom: 1px solid var(--glass-border);
 }
@@ -112,32 +112,32 @@ const emit = defineEmits(['go-back', 'go-search-details', 'toggle-search-favorit
 }
 
 .results-title {
-  font-size: 16px;
+  font-size: var(--text-body-lg);
   font-weight: 800;
   margin: 0;
 }
 
 .results-count {
-  font-size: 11px;
+  font-size: var(--text-caption);
   color: var(--text-muted);
   font-weight: 600;
 }
 
 .filter-bar {
   display: flex;
-  gap: 8px;
-  padding: 12px 16px;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
   overflow-x: auto;
   white-space: nowrap;
 }
 
 .filter-chip {
-  padding: 6px 14px;
-  border-radius: 20px;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
   background: var(--wood-walnut);
   border: 1px solid var(--glass-border);
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--text-caption);
   font-weight: 700;
   transition: all 0.2s;
 }
@@ -149,55 +149,55 @@ const emit = defineEmits(['go-back', 'go-search-details', 'toggle-search-favorit
 }
 
 .results-content {
-  padding: 0 16px 40px;
+  padding: 0 var(--space-4) var(--space-10);
 }
 
 .results-section {
-  margin-top: 24px;
+  margin-top: var(--space-6);
 }
 
 .section-label {
-  font-size: 12px;
+  font-size: var(--text-caption);
   text-transform: uppercase;
   letter-spacing: 1px;
   color: var(--text-amber);
   font-weight: 800;
-  margin-bottom: 16px;
+  margin-bottom: var(--space-4);
 }
 
 .tailors-scroll {
   display: flex;
-  gap: 12px;
+  gap: var(--space-3);
   overflow-x: auto;
-  padding-bottom: 8px;
+  padding-bottom: var(--space-2);
 }
 
 .results-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .no-results {
-  padding: 80px 20px;
+  padding: var(--space-12) var(--space-5);
   text-align: center;
 }
 
 .no-results-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
+  font-size: var(--text-display);
+  margin-bottom: var(--space-4);
 }
 
 .no-results h2 {
-  font-size: 20px;
+  font-size: var(--text-h2);
   font-weight: 800;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
 }
 
 .no-results p {
-  font-size: 14px;
+  font-size: var(--text-body);
   color: var(--text-muted);
-  margin-bottom: 24px;
+  margin-bottom: var(--space-6);
 }
 
 .back-btn {
@@ -215,7 +215,7 @@ const emit = defineEmits(['go-back', 'go-search-details', 'toggle-search-favorit
 @media (min-width: 768px) {
   .results-grid {
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 20px;
+    gap: var(--space-5);
   }
 }
 </style>

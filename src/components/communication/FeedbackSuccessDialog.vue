@@ -33,15 +33,15 @@ defineEmits(['close'])
   align-items: center;
   justify-content: center;
   z-index: 999;
-  padding: 20px;
+  padding: var(--space-5);
   font-family: 'Inter', -apple-system, sans-serif;
   backdrop-filter: blur(8px);
 }
 
 .dialog-card {
   background: var(--wood-deep);
-  border-radius: 20px;
-  padding: 32px 24px;
+  border-radius: var(--radius-lg);
+  padding: var(--space-8) var(--space-6);
   width: 100%;
   max-width: 320px;
   text-align: center;
@@ -59,28 +59,28 @@ defineEmits(['close'])
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 24px;
+  margin-bottom: var(--space-6);
 }
 
 .dialog-title {
-  margin: 0 0 12px 0;
-  font-size: 18px;
+  margin: 0 0 var(--space-3) 0;
+  font-size: var(--text-h2);
   font-weight: 700;
   color: var(--text-primary);
 }
 
 .dialog-text {
-  margin: 0 0 32px 0;
-  font-size: 13px;
+  margin: 0 0 var(--space-8) 0;
+  font-size: var(--text-body);
   color: var(--text-muted);
-  line-height: 1.5;
+  line-height: var(--leading-snug);
 }
 
 .btn-primary {
   width: 100%;
-  padding: 14px;
-  border-radius: 12px;
-  font-size: 15px;
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--text-body-lg);
   font-weight: 600;
   cursor: pointer;
   background: var(--accent-amber);

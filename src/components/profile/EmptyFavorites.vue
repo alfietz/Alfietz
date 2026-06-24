@@ -28,7 +28,7 @@
   align-items: center;
   justify-content: center;
   font-family: 'Inter', -apple-system, sans-serif;
-  padding: 20px;
+  padding: var(--space-5);
 }
 
 .content-wrapper {
@@ -47,20 +47,20 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 24px;
+  margin-bottom: var(--space-6);
 }
 
 .title {
-  font-size: 18px;
+  font-size: var(--text-h2);
   font-weight: 700;
   color: var(--text-primary);
-  margin: 0 0 12px 0;
+  margin: 0 0 var(--space-3) 0;
 }
 
 .subtitle {
-  font-size: 13px;
+  font-size: var(--text-body);
   color: var(--text-muted);
-  line-height: 1.5;
+  line-height: var(--leading-snug);
   margin: 0;
 }
 </style>

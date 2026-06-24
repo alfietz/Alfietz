@@ -71,18 +71,18 @@ const stories = ref([
 </template>
 
 <style scoped>
-.stories-page { background-color: var(--wood-deep); min-height: 100vh; padding: 24px 20px; display: flex; flex-direction: column; }
-.header-row { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; flex-shrink: 0; }
-.title { font-size: 22px; font-weight: 600; color: var(--text-primary); margin: 0; }
+.stories-page { background-color: var(--wood-deep); min-height: 100vh; padding: var(--space-6) var(--space-5); display: flex; flex-direction: column; }
+.header-row { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-6); flex-shrink: 0; }
+.title { font-size: var(--text-h1); font-weight: 600; color: var(--text-primary); margin: 0; }
 
-.content-scroll { flex: 1; overflow-y: auto; padding-bottom: 40px; }
-.section-intro { font-size: 14px; color: var(--text-muted); line-height: 1.6; margin-bottom: 32px; }
+.content-scroll { flex: 1; overflow-y: auto; padding-bottom: var(--space-10); }
+.section-intro { font-size: var(--text-body); color: var(--text-muted); line-height: var(--leading-relaxed); margin-bottom: var(--space-8); }
 
-.stories-list { display: flex; flex-direction: column; gap: 32px; }
+.stories-list { display: flex; flex-direction: column; gap: var(--space-8); }
 
 .story-card { 
   background: var(--wood-walnut); 
-  border-radius: 20px; 
+  border-radius: var(--radius-lg); 
   overflow: hidden; 
   border: 1px solid var(--glass-border);
   transition: transform 0.3s ease;
@@ -93,31 +93,31 @@ const stories = ref([
 .story-tag { 
   position: absolute; top: 16px; left: 16px; 
   background: var(--accent-amber); color: white; 
-  padding: 4px 12px; border-radius: 20px; 
-  font-size: 11px; font-weight: 700; text-transform: uppercase; 
+  padding: var(--space-1) var(--space-3); border-radius: var(--radius-md); 
+  font-size: var(--text-caption); font-weight: 700; text-transform: uppercase; 
 }
 
-.story-info { padding: 20px; }
-.story-date { font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 8px; }
-.story-title { font-size: 18px; font-weight: 700; color: var(--text-primary); margin-bottom: 12px; line-height: 1.3; }
-.story-excerpt { font-size: 14px; color: var(--text-muted); line-height: 1.6; margin-bottom: 20px; }
+.story-info { padding: var(--space-5); }
+.story-date { font-size: var(--text-caption); color: var(--text-muted); display: block; margin-bottom: var(--space-2); }
+.story-title { font-size: var(--text-h2); font-weight: 700; color: var(--text-primary); margin-bottom: var(--space-3); line-height: var(--leading-tight); }
+.story-excerpt { font-size: var(--text-body); color: var(--text-muted); line-height: var(--leading-relaxed); margin-bottom: var(--space-5); }
 
 .read-more-btn { 
   background: none; border: none; 
   color: var(--text-amber); font-weight: 700; 
-  padding: 0; cursor: pointer; font-size: 14px; 
+  padding: 0; cursor: pointer; font-size: var(--text-body); 
 }
 
 .community-callout { 
-  margin-top: 48px; padding: 24px; 
+  margin-top: var(--space-12); padding: var(--space-6); 
   background: linear-gradient(135deg, var(--wood-polished), var(--wood-deep)); 
-  border-radius: 20px; border: 1px solid var(--accent-amber); text-align: center;
+  border-radius: var(--radius-lg); border: 1px solid var(--accent-amber); text-align: center;
 }
-.community-callout h3 { font-size: 18px; font-weight: 700; color: var(--text-amber); margin-bottom: 12px; }
-.community-callout p { font-size: 14px; color: var(--text-primary); line-height: 1.5; margin-bottom: 20px; }
+.community-callout h3 { font-size: var(--text-h2); font-weight: 700; color: var(--text-amber); margin-bottom: var(--space-3); }
+.community-callout p { font-size: var(--text-body); color: var(--text-primary); line-height: var(--leading-snug); margin-bottom: var(--space-5); }
 .feedback-link-btn { 
   background: var(--accent-amber); color: white; 
-  border: none; padding: 12px 24px; border-radius: 12px; 
+  border: none; padding: var(--space-3) var(--space-6); border-radius: var(--radius-md); 
   font-weight: 700; cursor: pointer; 
 }
 

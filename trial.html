@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alfietz API Test Bench</title>
+    <style>
+        body { font-family: monospace; background: #121212; color: #00ff00; padding: 20px; }
+        button { padding: 10px 20px; background: #00ff00; color: #121212; border: none; cursor: pointer; font-weight: bold; }
+        pre { background: #1e1e1e; padding: 15px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+
+    <h2>Alfietz /api/db Logic Analyzer</h2>
+    <button onclick="fetchInitialData()">Trigger get_initial_data</button>
+    
+    <h3>JSON Payload:</h3>
+    <pre id="output">Waiting for signal...</pre>
+
+    <script>
+        async function fetchInitialData() {
+            const output = document.getElementById('output');
+            output.innerText = "Fetching...";
+
+            try {
+                // Change this to http://localhost:3000/api/db if running on a different port
+                const response = await fetch('http:/localhost:3000/api/db', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Heritage-Platform': 'web',
+                        'X-Heritage-App-Key': 'heritage_web_public_v1' // Bypasses your security check
+                    },
+                    body: JSON.stringify({
+                        action: "get_initial_data",
+                        params: { userId: "guest" }
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                output.innerText = JSON.stringify(data, null, 2);
+            }  catch (error) {
+                console.error('Database Proxy Error:', error); // <--- THIS RIGHT HERE
+                return res.status(500).json({ error: error.message || 'Internal Server Error' });
+            }
+        }
+    </script>
+</body>
+</html>

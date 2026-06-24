@@ -52,7 +52,7 @@ const handleSubmit = () => {
 .feedback-page {
   background-color: var(--wood-deep);
   min-height: 100vh;
-  padding: 24px 20px;
+  padding: var(--space-6) var(--space-5);
   display: flex;
   flex-direction: column;
 }
@@ -60,12 +60,12 @@ const handleSubmit = () => {
 .header-row {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 32px;
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
 }
 
 .title {
-  font-size: 22px;
+  font-size: var(--text-h1);
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
@@ -79,9 +79,9 @@ const handleSubmit = () => {
   width: 100%;
   height: 200px;
   border: 1px solid var(--glass-border);
-  border-radius: 12px;
-  padding: 16px;
-  font-size: 15px;
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  font-size: var(--text-body-lg);
   color: var(--text-primary);
   background: transparent;
   outline: none;
@@ -98,8 +98,8 @@ const handleSubmit = () => {
 }
 
 .bottom-action {
-  padding-top: 24px;
-  padding-bottom: 24px;
+  padding-top: var(--space-6);
+  padding-bottom: var(--space-6);
 }
 
 .primary-btn {
@@ -107,9 +107,9 @@ const handleSubmit = () => {
   background: var(--accent-amber);
   color: white;
   border: none;
-  border-radius: 12px;
-  padding: 16px;
-  font-size: 16px;
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  font-size: var(--text-body-lg);
   font-weight: 600;
   cursor: pointer;
   transition: opacity 0.2s;

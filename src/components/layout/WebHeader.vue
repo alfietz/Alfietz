@@ -121,10 +121,10 @@ onUnmounted(() => {
 }
 
 .web-header.scrolled {
-  margin: 12px auto;
+  margin: var(--space-3) auto;
   width: calc(100% - 24px);
   max-width: 1400px;
-  border-radius: 24px;
+  border-radius: var(--radius-lg);
   background-color: var(--glass-bg);
   border: 1px solid var(--glass-border);
   box-shadow: 0 10px 30px rgba(0,0,0,0.4);
@@ -134,7 +134,7 @@ onUnmounted(() => {
 .header-content {
   max-width: 1440px;
   margin: 0 auto;
-  padding: 0 12px; 
+  padding: 0 var(--space-3); 
   height: 60px;
   display: flex;
   align-items: center;
@@ -148,7 +148,7 @@ onUnmounted(() => {
 
 @media (min-width: 768px) {
   .header-content {
-    padding: 0 24px;
+    padding: 0 var(--space-6);
     height: 80px;
   }
   .web-header.scrolled .header-content {
@@ -159,7 +159,7 @@ onUnmounted(() => {
 .logo-wrapper {
   display: flex;
   align-items: center;
-  gap: 8px; /* Tighter gap */
+  gap: var(--space-2);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
@@ -202,7 +202,7 @@ onUnmounted(() => {
 }
 
 .brand-name {
-  font-size: 18px; /* Smaller for mobile */
+  font-size: var(--text-h2);
   font-weight: 800;
   letter-spacing: 0.5px;
   background: linear-gradient(to right, var(--text-primary), var(--accent-amber));
@@ -212,14 +212,14 @@ onUnmounted(() => {
 
 @media (min-width: 768px) {
   .brand-name {
-    font-size: 24px;
+    font-size: var(--text-h1);
     letter-spacing: 1px;
   }
 }
 
 .desktop-nav {
   display: none;
-  gap: 40px;
+  gap: var(--space-10);
 }
 
 @media (min-width: 1024px) { 
@@ -229,13 +229,13 @@ onUnmounted(() => {
 }
 
 .nav-link {
-  font-size: 13px;
+  font-size: var(--text-body);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1.5px;
   color: var(--text-muted);
   position: relative;
-  padding: 8px 0;
+  padding: var(--space-2) 0;
   transition: color 0.3s ease;
 }
 
@@ -246,7 +246,7 @@ onUnmounted(() => {
 .login-link {
   color: var(--text-amber) !important;
   background: rgba(217, 119, 6, 0.1);
-  padding: 8px 16px !important;
+  padding: var(--space-2) var(--space-4) !important;
   border-radius: var(--radius-sm);
   border: 1px solid var(--glass-border);
 }
@@ -269,7 +269,7 @@ onUnmounted(() => {
 
 .header-actions {
   display: flex;
-  gap: 8px; /* Tighter gap */
+  gap: var(--space-2);
 }
 
 .action-btn {

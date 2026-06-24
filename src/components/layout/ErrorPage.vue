@@ -73,7 +73,7 @@ const errorData = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: var(--space-6);
   position: relative;
   overflow: hidden;
   text-align: center;
@@ -88,7 +88,7 @@ const errorData = computed(() => {
   align-items: center;
   background: var(--glass-bg);
   backdrop-filter: blur(20px);
-  padding: 40px 24px;
+  padding: var(--space-10) var(--space-6);
   border-radius: var(--radius-lg);
   border: 1px solid var(--glass-border);
   box-shadow: 0 20px 50px rgba(0,0,0,0.5);
@@ -97,12 +97,12 @@ const errorData = computed(() => {
 .error-badge {
   background: var(--wood-walnut);
   color: var(--accent-amber);
-  font-size: 14px;
+  font-size: var(--text-body);
   font-weight: 800;
-  padding: 6px 16px;
+  padding: var(--space-2) var(--space-4);
   border-radius: 100px;
   border: 1px solid var(--accent-amber);
-  margin-bottom: 32px;
+  margin-bottom: var(--space-8);
   letter-spacing: 2px;
 }
 
@@ -113,7 +113,7 @@ const errorData = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 32px;
+  margin-bottom: var(--space-8);
 }
 
 .vibe-icon-glow {
@@ -133,27 +133,27 @@ const errorData = computed(() => {
 }
 
 .vibe-icon {
-  font-size: 64px;
-  line-height: 1;
+  font-size: var(--text-display);
+  line-height: var(--leading-tight);
   z-index: 1;
 }
 
 .error-title {
-  font-size: 28px;
-  margin-bottom: 16px;
+  font-size: var(--text-display);
+  margin-bottom: var(--space-4);
   color: var(--text-primary);
   font-weight: 800;
 }
 
 .error-message {
-  font-size: 16px;
+  font-size: var(--text-body-lg);
   color: var(--text-muted);
-  margin-bottom: 40px;
-  line-height: 1.6;
+  margin-bottom: var(--space-10);
+  line-height: var(--leading-relaxed);
 }
 
 .back-home-btn {
-  gap: 12px;
+  gap: var(--space-3);
   max-width: 240px;
 }
 
@@ -189,10 +189,10 @@ const errorData = computed(() => {
 
 @media (max-width: 480px) {
   .error-title {
-    font-size: 24px;
+    font-size: var(--text-h1);
   }
   .error-message {
-    font-size: 14px;
+    font-size: var(--text-body);
   }
 }
 </style>

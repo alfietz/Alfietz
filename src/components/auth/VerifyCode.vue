@@ -112,7 +112,7 @@ onMounted(() => {
 
 <style scoped>
 .auth-page {
-  padding: 40px 24px;
+  padding: var(--space-10) var(--space-6);
   max-width: 500px;
   margin: 0 auto;
   position: relative;
@@ -120,25 +120,25 @@ onMounted(() => {
 }
 
 .top-nav {
-  margin-bottom: 40px;
+  margin-bottom: var(--space-10);
 }
 
 .welcome-text {
   text-align: center;
-  margin-bottom: 24px;
+  margin-bottom: var(--space-6);
 }
 
 .tribe-title {
-  font-size: 24px;
+  font-size: var(--text-h1);
   font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 4px;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
 }
 
 .tribe-highlight {
-  font-size: 48px;
+  font-size: var(--text-display);
   font-weight: 800;
   background: linear-gradient(to right, var(--text-primary), var(--accent-amber));
   -webkit-background-clip: text;
@@ -148,10 +148,10 @@ onMounted(() => {
 
 .subtitle {
   color: var(--text-muted);
-  font-size: 15px;
-  line-height: 1.6;
+  font-size: var(--text-body-lg);
+  line-height: var(--leading-relaxed);
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: var(--space-10);
 }
 
 .email-highlight {
@@ -163,8 +163,8 @@ onMounted(() => {
   position: relative;
   border: 2px solid var(--accent-amber);
   border-radius: var(--radius-md);
-  padding: 32px 16px 20px 16px;
-  margin-top: 10px;
+  padding: var(--space-8) var(--space-4) var(--space-5) var(--space-4);
+  margin-top: var(--space-3);
   background: var(--input-bg);
   box-shadow: 0 4px 15px var(--accent-glow);
 }
@@ -175,8 +175,8 @@ onMounted(() => {
   left: 20px;
   background: var(--accent-amber);
   color: white;
-  padding: 4px 12px;
-  font-size: 11px;
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-caption);
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -186,7 +186,7 @@ onMounted(() => {
 .pin-inputs {
   display: flex;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .pin-box {
@@ -197,7 +197,7 @@ onMounted(() => {
   border-radius: var(--radius-sm);
   background: var(--wood-walnut);
   text-align: center;
-  font-size: 20px;
+  font-size: var(--text-h2);
   font-weight: 800;
   color: var(--text-primary);
   outline: none;
@@ -212,14 +212,14 @@ onMounted(() => {
 
 .error-message {
   color: #EF4444;
-  font-size: 13px;
+  font-size: var(--text-body);
   font-weight: 600;
   text-align: center;
 }
 
 .resend-text {
   text-align: center;
-  font-size: 14px;
+  font-size: var(--text-body);
   color: var(--text-muted);
 }
 
@@ -227,7 +227,7 @@ onMounted(() => {
   color: var(--accent-amber);
   text-decoration: none;
   font-weight: 700;
-  margin-left: 4px;
+  margin-left: var(--space-1);
 }
 
 .resend-text .link:hover {

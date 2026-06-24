@@ -1,11 +1,11 @@
 <!-------- (TailorDetails.vue) ./src/components/shop/TailorDetails.vue ------------>
 <script setup>
-import { ref, onMounted, computed, watch, reactive } from 'vue'
+import { ref, computed, watch, reactive } from 'vue'
 import SectionHeader from '../layout/SectionHeader.vue'
 import EditableText from '../layout/EditableText.vue'
 import EditableImage from '../layout/EditableImage.vue'
-import { db } from '../../db/client'
 import { useRoute } from 'vue-router'
+import { useProgressiveData } from '../../composables/useProgressiveData'
 
 const props = defineProps({
   seller: {
@@ -26,16 +26,26 @@ const props = defineProps({
 const emit = defineEmits(['go-back', 'go-reviews', 'go-feedback', 'go-details'])
 const route = useRoute()
 
-const loading = ref(true)
 const hasConnected = ref(false)
 const products = ref([])
 const reviews = ref([])
-const activeFilter = ref('all') // 'all', 'process', 'fabrics'
+const activeFilter = ref('all')
 const tailorStats = ref({
   likes: 0,
   clients: 0
 })
 const sellerData = ref({ ...props.seller })
+
+const activeUsername = computed(() => {
+  const u = route.params.username
+  if (!u) return props.seller?.username || ''
+  return u.startsWith('@') ? u.slice(1) : u
+})
+
+const tailorQuery = useProgressiveData('get_tailor_details', { username: activeUsername.value }, {
+  cacheKey: `tailor_${activeUsername.value}`,
+  ttl: 2 * 60 * 1000
+})
 
 // Watch for prop changes to update local state
 watch(() => props.seller, (newSeller) => {
@@ -261,136 +271,118 @@ const highlights = computed(() => {
   }
 })
 
-const loadTailorData = async () => {
-  const username = route.params.username
+watch(activeUsername, (username) => {
   if (!username) return
+  tailorQuery.setParams({ username })
+  tailorQuery.refresh()
+}, { immediate: true })
 
-  // Clean the username (remove leading @)
-  const cleanUsername = username.startsWith('@') ? username.slice(1) : username;
-
-  try {
-    loading.value = true
-    
-    // Reset products and reviews to avoid showing old data
-    products.value = []
-    reviews.value = []
-    
-    const data = await db.runAction('get_tailor_details', { username: cleanUsername });
-    
-    const s = data.tailor;
-    if (!s) {
-      loading.value = false
-      return
-    }
-
-    sellerData.value = {
-      ...sellerData.value,
-      id: s.id,
-      owner_id: s.id,
-      name: (s.first_name || s.last_name) ? `${s.first_name || ''} ${s.last_name || ''}`.trim() : s.username,
-      username: s.username,
-      avatar: s.avatar,
-      bio: s.gives,
-      whatsapp: s.whatsapp,
-      email: s.email,
-      isVerified: true,
-      quirk: s.quirk,
-      case_study_title: s.case_study_title,
-      case_study_quote: s.case_study_quote,
-      case_study_challenge: s.case_study_challenge,
-      case_study_execution: s.case_study_execution,
-      case_study_result: s.case_study_result,
-      case_study_image: s.case_study_image,
-      services_json: s.services_json,
-      contacts_json: s.contacts_json
-    }
-
-    products.value = data.products.map(p => ({
-      ...p,
-      liked: props.favoriteItems.some(fav => fav.id === p.id)
-    }))
-    
-    if (data.stats) {
-      tailorStats.value.likes = data.stats.total_likes || 0
-      tailorStats.value.clients = data.stats.total_clients || 0
-    }
-
-    reviews.value = data.reviews.map(r => ({
-      ...r,
-      author_name: (r.first_name || r.last_name) ? `${r.first_name || ''} ${r.last_name || ''}`.trim() : r.username
-    }))
-
-    // Update SEO Meta Tags
-    const pageTitle = `${sellerData.value.name} | Alfietz Artisan Portfolio`;
-    const pageDesc = sellerData.value.bio || `Explore the heritage portfolio of ${sellerData.value.name} on Alfietz. Discover bespoke African craftsmanship and custom-tailored fashion.`;
-    
-    document.title = pageTitle;
-    
-    const updateMeta = (name, content, attr = 'name') => {
-      let meta = document.querySelector(`meta[${attr}="${name}"]`);
-      if (!meta) {
-        meta = document.createElement('meta');
-        meta.setAttribute(attr, name);
-        document.head.appendChild(meta);
-      }
-      meta.setAttribute('content', content);
-    };
-
-    updateMeta('description', pageDesc);
-    updateMeta('og:title', pageTitle, 'property');
-    updateMeta('og:description', pageDesc, 'property');
-    updateMeta('og:image', sellerData.value.avatar, 'property');
-    updateMeta('twitter:title', pageTitle);
-    updateMeta('twitter:description', pageDesc);
-    updateMeta('twitter:image', sellerData.value.avatar);
-
-    // Update JSON-LD Schema
-    const updateSchema = () => {
-      let schemaScript = document.querySelector('script[type="application/ld+json"]#tailor-schema');
-      if (!schemaScript) {
-        schemaScript = document.createElement('script');
-        schemaScript.setAttribute('type', 'application/ld+json');
-        schemaScript.setAttribute('id', 'tailor-schema');
-        document.head.appendChild(schemaScript);
-      }
-      
-      const schemaData = {
-        "@context": "https://schema.org",
-        "@type": "ProfessionalService",
-        "name": sellerData.value.name,
-        "image": sellerData.value.avatar,
-        "@id": window.location.href,
-        "url": window.location.href,
-        "telephone": sellerData.value.whatsapp,
-        "address": {
-          "@type": "PostalAddress",
-          "addressLocality": "Nairobi",
-          "addressCountry": "KE"
-        },
-        "description": pageDesc,
-        "priceRange": "TSh",
-        "aggregateRating": {
-          "@type": "AggregateRating",
-          "ratingValue": tailorStats.value.likes > 0 ? "4.9" : "0",
-          "reviewCount": reviews.value.length || "0"
-        }
-      };
-      
-      schemaScript.textContent = JSON.stringify(schemaData);
-    };
-
-    updateSchema();
-
-    initializeDraft()
-  } catch (e) {
-    console.error("Error fetching tailor details:", e)
-  } finally {
-    loading.value = false
+watch(() => tailorQuery.data.value, (data) => {
+  if (!data) return
+  
+  const s = data.tailor
+  if (!s) return
+  
+  products.value = data.products?.map(p => ({
+    ...p,
+    liked: props.favoriteItems.some(fav => fav.id === p.id)
+  })) || []
+  
+  if (data.stats) {
+    tailorStats.value.likes = data.stats.total_likes || 0
+    tailorStats.value.clients = data.stats.total_clients || 0
   }
-}
-
-onMounted(loadTailorData)
-watch(() => route.params.username, loadTailorData)
+  
+  reviews.value = data.reviews?.map(r => ({
+    ...r,
+    author_name: (r.first_name || r.last_name) ? `${r.first_name || ''} ${r.last_name || ''}`.trim() : r.username
+  })) || []
+  
+  sellerData.value = {
+    ...sellerData.value,
+    id: s.id,
+    owner_id: s.id,
+    name: (s.first_name || s.last_name) ? `${s.first_name || ''} ${s.last_name || ''}`.trim() : s.username,
+    username: s.username,
+    avatar: s.avatar,
+    bio: s.gives,
+    whatsapp: s.whatsapp,
+    email: s.email,
+    isVerified: true,
+    quirk: s.quirk,
+    case_study_title: s.case_study_title,
+    case_study_quote: s.case_study_quote,
+    case_study_challenge: s.case_study_challenge,
+    case_study_execution: s.case_study_execution,
+    case_study_result: s.case_study_result,
+    case_study_image: s.case_study_image,
+    services_json: s.services_json,
+    contacts_json: s.contacts_json
+  }
+  
+  // SEO Meta Tags
+  const pageTitle = `${sellerData.value.name} | Alfietz Artisan Portfolio`
+  const pageDesc = sellerData.value.bio || `Explore the heritage portfolio of ${sellerData.value.name} on Alfietz. Discover bespoke African craftsmanship and custom-tailored fashion.`
+  
+  document.title = pageTitle
+  
+  const updateMeta = (name, content, attr = 'name') => {
+    let meta = document.querySelector(`meta[${attr}="${name}"]`)
+    if (!meta) {
+      meta = document.createElement('meta')
+      meta.setAttribute(attr, name)
+      document.head.appendChild(meta)
+    }
+    meta.setAttribute('content', content)
+  }
+  
+  updateMeta('description', pageDesc)
+  updateMeta('og:title', pageTitle, 'property')
+  updateMeta('og:description', pageDesc, 'property')
+  updateMeta('og:image', sellerData.value.avatar, 'property')
+  updateMeta('twitter:title', pageTitle)
+  updateMeta('twitter:description', pageDesc)
+  updateMeta('twitter:image', sellerData.value.avatar)
+  
+  // JSON-LD Schema
+  const updateSchema = () => {
+    let schemaScript = document.querySelector('script[type="application/ld+json"]#tailor-schema')
+    if (!schemaScript) {
+      schemaScript = document.createElement('script')
+      schemaScript.setAttribute('type', 'application/ld+json')
+      schemaScript.setAttribute('id', 'tailor-schema')
+      document.head.appendChild(schemaScript)
+    }
+    
+    const schemaData = {
+      "@context": "https://schema.org",
+      "@type": "ProfessionalService",
+      "name": sellerData.value.name,
+      "image": sellerData.value.avatar,
+      "@id": window.location.href,
+      "url": window.location.href,
+      "telephone": sellerData.value.whatsapp,
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Nairobi",
+        "addressCountry": "KE"
+      },
+      "description": pageDesc,
+      "priceRange": "TSh",
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": tailorStats.value.likes > 0 ? "4.9" : "0",
+        "reviewCount": reviews.value.length || "0"
+      }
+    }
+    
+    schemaScript.textContent = JSON.stringify(schemaData)
+  }
+  
+  updateSchema()
+  
+  initializeDraft()
+}, { immediate: true })
 
 const connectToWhatsApp = () => {
   let phoneNumber = sellerData.value.whatsapp || "255700000000";
@@ -442,7 +434,7 @@ const makeCall = () => {
 </script>
 
 <template>
-  <div v-if="loading" class="tailor-page skeleton-mode">
+  <div v-if="!tailorQuery.data.value" class="tailor-page skeleton-mode">
     <!-- Floating Heritage Status -->
     <div class="heritage-status-overlay">
       <div class="status-badge">
@@ -667,16 +659,16 @@ const makeCall = () => {
                       <!-- In-App Chat Inquiry -->
                       <button 
                         v-if="!isOwner" 
-                        :disabled="!sellerData.id || loading"
+                        :disabled="!sellerData.id || !tailorQuery.data.value"
                         @click="sellerData.id && $emit('go-chat', sellerData.id)" 
                         class="group flex items-center justify-between p-4 bg-wood-walnut border border-glass-border hover:border-alfie-accent/50 transition rounded-sm shadow-lg mb-4 w-full"
-                        :class="{ 'opacity-50 cursor-not-allowed': !sellerData.id || loading }"
+                        :class="{ 'opacity-50 cursor-not-allowed': !sellerData.id || !tailorQuery.data.value }"
                       >
                           <div class="flex items-center gap-3">
                               <i class="fas fa-comment-dots text-xl text-alfie-accent"></i>
                               <span class="text-sm font-bold tracking-wide text-white">In-App Chat</span>
                           </div>
-                          <i v-if="!loading" class="fas fa-chevron-right text-xs text-gray-500"></i>
+                          <i v-if="tailorQuery.data.value" class="fas fa-chevron-right text-xs text-gray-500"></i>
                           <div v-else class="w-4 h-4 border-2 border-alfie-accent border-t-transparent rounded-full animate-spin"></div>
                       </button>
 
@@ -1020,24 +1012,24 @@ const makeCall = () => {
 .status-badge {
   background: rgba(13, 8, 5, 0.8);
   backdrop-filter: blur(12px);
-  padding: 16px 24px;
-  border-radius: 100px;
+  padding: var(--space-4) var(--space-6);
+  border-radius: var(--radius-full);
   border: 1px solid var(--accent-amber);
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
   box-shadow: 0 10px 40px rgba(0,0,0,0.5), 0 0 20px var(--accent-glow);
   animation: badgePop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .status-icon-pulse {
-  font-size: 20px;
+  font-size: var(--text-h2);
   animation: iconPulse 1.5s ease-in-out infinite;
 }
 
 .status-text {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 14px;
+  font-size: var(--text-body);
   font-weight: 700;
   color: var(--text-amber);
   letter-spacing: 1px;
@@ -1061,12 +1053,12 @@ const makeCall = () => {
 
 .skeleton-nav {
   justify-content: space-between;
-  padding: 0 16px;
+  padding: 0 var(--space-4);
 }
 
 .skeleton-back-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--wood-walnut); }
-.skeleton-text-short { width: 100px; height: 16px; background: var(--wood-walnut); border-radius: 4px; }
-.skeleton-icon { width: 24px; height: 24px; background: var(--wood-walnut); border-radius: 4px; }
+.skeleton-text-short { width: 100px; height: 16px; background: var(--wood-walnut);   border-radius: var(--radius-sm); }
+.skeleton-icon { width: 24px; height: 24px; background: var(--wood-walnut);   border-radius: var(--radius-sm); }
 
 .skeleton-avatar {
   width: 86px;
@@ -1079,23 +1071,23 @@ const makeCall = () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
-.skeleton-num { width: 30px; height: 18px; background: var(--wood-walnut); border-radius: 4px; }
-.skeleton-label { width: 50px; height: 12px; background: var(--wood-walnut); border-radius: 4px; }
+.skeleton-num { width: 30px; height: 18px; background: var(--wood-walnut);   border-radius: var(--radius-sm); }
+.skeleton-label { width: 50px; height: 12px; background: var(--wood-walnut);   border-radius: var(--radius-sm); }
 
-.skeleton-title { width: 180px; height: 20px; background: var(--wood-walnut); border-radius: 4px; margin-bottom: 8px; }
-.skeleton-tag { width: 120px; height: 14px; background: var(--wood-walnut); border-radius: 4px; margin-bottom: 12px; }
-.skeleton-bio-line { width: 100%; height: 14px; background: var(--wood-walnut); border-radius: 4px; margin-bottom: 6px; }
+.skeleton-title { width: 180px; height: 20px; background: var(--wood-walnut);   border-radius: var(--radius-sm);   margin-bottom: var(--space-2); }
+.skeleton-tag { width: 120px; height: 14px; background: var(--wood-walnut);   border-radius: var(--radius-sm); margin-bottom: var(--space-3); }
+.skeleton-bio-line { width: 100%; height: 14px; background: var(--wood-walnut);   border-radius: var(--radius-sm);   margin-bottom: var(--space-2); }
 .skeleton-bio-line.short { width: 60%; }
 
-.skeleton-action-btn { flex: 1; height: 36px; background: var(--wood-walnut); border-radius: 8px; }
+.skeleton-action-btn { flex: 1; height: 36px; background: var(--wood-walnut);   border-radius: var(--radius-sm); }
 
 .skeleton-circle { width: 60px; height: 60px; border-radius: 50%; background: var(--wood-walnut); }
-.skeleton-label-mini { width: 40px; height: 10px; background: var(--wood-walnut); border-radius: 4px; margin-top: 6px; }
+.skeleton-label-mini { width: 40px; height: 10px; background: var(--wood-walnut);   border-radius: var(--radius-sm);   margin-top: var(--space-2); }
 
-.skeleton-icon-mini { width: 20px; height: 20px; background: var(--wood-walnut); border-radius: 4px; }
+.skeleton-icon-mini { width: 20px; height: 20px; background: var(--wood-walnut);   border-radius: var(--radius-sm); }
 
 .skeleton-grid-post {
   aspect-ratio: 1;
@@ -1140,7 +1132,7 @@ const makeCall = () => {
   justify-content: center;
   background: var(--wood-deep);
   color: var(--text-muted);
-  gap: 20px;
+  gap: var(--space-5);
 }
 
 .spinner {
@@ -1157,7 +1149,7 @@ const makeCall = () => {
 }
 
 .error-icon {
-  font-size: 64px;
+  font-size: var(--text-display);
   opacity: 0.5;
 }
 
@@ -1165,8 +1157,8 @@ const makeCall = () => {
   background: var(--accent-amber);
   color: white;
   border: none;
-  padding: 10px 24px;
-  border-radius: 12px;
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-md);
   font-weight: 700;
   cursor: pointer;
 }
@@ -1193,7 +1185,7 @@ const makeCall = () => {
 }
 
 .empty-grid-cta {
-  padding: 60px 20px;
+  padding: var(--space-12) var(--space-5);
   text-align: center;
   background: var(--wood-walnut);
   border-top: 1px solid var(--glass-border);
@@ -1201,8 +1193,8 @@ const makeCall = () => {
 
 .empty-grid-cta p {
   color: var(--text-muted);
-  font-size: 14px;
-  margin-bottom: 12px;
+  font-size: var(--text-body);
+  margin-bottom: var(--space-3);
 }
 
 .top-nav-glass {
@@ -1214,33 +1206,33 @@ const makeCall = () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 16px;
+  padding: 0 var(--space-4);
   z-index: 100;
   border-bottom: 1px solid var(--glass-border);
 }
 
 .header-username {
   font-weight: 800;
-  font-size: 16px;
+  font-size: var(--text-body-lg);
   letter-spacing: -0.5px;
 }
 
 .ig-hero {
-  padding: 20px 16px;
+  padding: var(--space-5) var(--space-4);
 }
 
 .hero-main {
   display: flex;
   align-items: center;
-  gap: 32px;
-  margin-bottom: 16px;
+  gap: var(--space-8);
+  margin-bottom: var(--space-4);
 }
 
 .avatar-ring {
   position: relative;
   width: 86px;
   height: 86px;
-  padding: 4px;
+  padding: var(--space-1);
   border-radius: 50%;
   background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
 }
@@ -1273,7 +1265,7 @@ const makeCall = () => {
 
 .hero-stats {
   display: flex;
-  gap: 24px;
+  gap: var(--space-6);
   flex: 1;
   justify-content: center;
 }
@@ -1285,12 +1277,12 @@ const makeCall = () => {
 }
 
 .stat-num {
-  font-size: 18px;
+  font-size: var(--text-h2);
   font-weight: 800;
 }
 
 .stat-label {
-  font-size: 12px;
+  font-size: var(--text-caption);
   color: var(--text-muted);
 }
 

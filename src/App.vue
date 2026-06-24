@@ -14,7 +14,7 @@ import WebHeader from './components/layout/WebHeader.vue'
 import LoadingSpinner from './components/layout/LoadingSpinner.vue'
 import Splash from './components/layout/Splash.vue'
 import PWAInstallPrompt from './components/layout/PWAInstallPrompt.vue'
-import SkeletonLoader from './components/layout/SkeletonLoader.vue'
+
 import Cart from './components/shop/Cart.vue'
 import { SpeedInsights } from "@vercel/speed-insights/vue"
 import { Analytics } from "@vercel/analytics/vue"
@@ -51,7 +51,6 @@ const userData = ref(getStored('user_data', {
 
 const currentLanguage = ref(getStored('language', 'en'))
 const isGlobalLoading = ref(false)
-const isInitialLoading = ref(true)
 const loadingMessage = ref('Summoning Heritage...')
 const toast = ref({ show: false, message: '', type: 'info' })
 const isDeepLoading = ref(false)
@@ -495,7 +494,6 @@ const fetchInitialData = async (force = false) => {
     }
   } finally {
     isGlobalLoading.value = false;
-    isInitialLoading.value = false;
     isSyncing.value = false;
   }
 }
@@ -877,9 +875,6 @@ const showNavBar = computed(() => {
 
 <template>
   <div class="app-wrapper">
-    <SkeletonLoader v-if="isInitialLoading" :t="t" />
-    
-    <template v-else>
     <!-- DESKTOP HEADER (WEB MODE) -->
     <WebHeader 
       v-if="showNavBar" 
@@ -1020,7 +1015,6 @@ const showNavBar = computed(() => {
     />
     <SpeedInsights />
     <Analytics />
-    </template>
   </div>
 </template>
 
@@ -1034,12 +1028,12 @@ const showNavBar = computed(() => {
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  padding: 0.875rem var(--spacing-lg);
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-6);
   border-radius: var(--radius-full);
   background: var(--wood-deep);
   border: 1px solid var(--glass-border);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  box-shadow: var(--shadow-lg);
   z-index: 9999;
   min-width: 17.5rem;
   max-width: 90vw;
@@ -1048,7 +1042,7 @@ const showNavBar = computed(() => {
 .toast-notification.error { border-color: #EF4444; }
 .toast-notification.success .toast-icon { color: #10B981; }
 .toast-notification.error .toast-icon { color: #EF4444; }
-.toast-message { font-size: var(--font-sm); font-weight: 600; color: var(--text-primary); }
+.toast-message { font-size: var(--text-body); font-weight: 600; color: var(--text-primary); }
 
 @keyframes fadeUp {
   from { opacity: 0; transform: translate(-50%, 20px); }

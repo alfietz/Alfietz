@@ -40,7 +40,7 @@ defineProps({
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: var(--space-4);
 }
 
 .thread-container {
@@ -74,7 +74,7 @@ defineProps({
 }
 
 .loading-text {
-  font-size: 14px;
+  font-size: var(--text-body);
   font-weight: 600;
   color: var(--text-primary); /* --secondary-brown */
   margin: 0;

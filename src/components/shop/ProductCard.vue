@@ -128,14 +128,14 @@ defineEmits(['toggle-like', 'select'])
 
 .oos-badge {
   position: absolute;
-  top: 8px;
-  left: 8px;
+  top: var(--space-2);
+  left: var(--space-2);
   background: #EF4444;
   color: white;
-  font-size: 8px;
+  font-size: var(--text-micro);
   font-weight: 800;
-  padding: 3px 6px;
-  border-radius: 4px;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
   z-index: 5;
   box-shadow: 0 2px 10px rgba(0,0,0,0.3);
 }
@@ -211,35 +211,35 @@ defineEmits(['toggle-like', 'select'])
 }
 
 .product-details {
-  padding: 12px;
+  padding: var(--space-3);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
   flex: 1;
 }
 
 .horizontal-card .product-details {
   justify-content: center;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 @media (min-width: 768px) {
   .product-details {
-    padding: 16px;
+    padding: var(--space-4);
   }
 }
 
 .product-name {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--text-h3);
   font-weight: 600;
   color: var(--text-amber);
   display: -webkit-box;
-  -webkit-line-clamp: 3; /* Increased from 2 for flexible height cards */
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
   transition: color 0.3s ease;
-  line-height: 1.3;
+  line-height: var(--leading-tight);
 }
 
 .product-card:hover .product-name {
@@ -254,41 +254,27 @@ defineEmits(['toggle-like', 'select'])
 }
 
 .horizontal-card .price-row {
-  margin-top: 4px;
+  margin-top: var(--space-1);
 }
 
 .product-price {
   font-family: 'JetBrains Mono', 'Courier New', monospace;
-  font-size: 14px;
+  font-size: var(--text-body-lg);
   font-weight: 700;
   color: var(--accent-amber);
   letter-spacing: -0.5px;
 }
 
-@media (min-width: 768px) {
-  .product-price {
-    font-size: 15px;
-  }
-}
-
 .add-btn {
-  font-size: 11px;
+  font-size: var(--text-caption);
   font-weight: 800;
   color: var(--text-primary);
   background: rgba(217, 119, 6, 0.15);
   border: 1px solid rgba(217, 119, 6, 0.3);
-  padding: 10px 16px;
-  border-radius: 8px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
   transition: all 0.3s ease;
   -webkit-tap-highlight-color: transparent;
-}
-
-@media (min-width: 768px) {
-  .add-btn {
-    font-size: 12px;
-    padding: 12px 20px;
-    border-radius: 10px;
-  }
 }
 
 .add-btn:active {

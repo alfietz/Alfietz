@@ -184,7 +184,7 @@ const handleSignUp = () => {
 
 <style scoped>
 .auth-page {
-  padding: 40px 24px;
+  padding: var(--space-10) var(--space-6);
   max-width: 600px;
   margin: 0 auto;
   position: relative;
@@ -192,13 +192,13 @@ const handleSignUp = () => {
 }
 
 .top-nav {
-  margin-bottom: 40px;
+  margin-bottom: var(--space-10);
 }
 
 .logo-hero {
   display: flex;
   justify-content: center;
-  margin-bottom: 32px;
+  margin-bottom: var(--space-8);
 }
 
 .logo-circle-large {
@@ -210,7 +210,7 @@ const handleSignUp = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  padding: var(--space-4);
   box-shadow: 0 4px 20px rgba(0,0,0,0.15);
   border: 4px solid var(--accent-amber);
 }
@@ -230,20 +230,21 @@ const handleSignUp = () => {
 
 .welcome-text {
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: var(--space-10);
 }
 
 .tribe-title {
-  font-size: 24px;
+  font-size: var(--text-h1);
   font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 4px;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
+  line-height: var(--leading-tight);
 }
 
 .tribe-highlight {
-  font-size: 48px;
+  font-size: var(--text-display);
   font-weight: 800;
   background: linear-gradient(to right, var(--text-primary), var(--accent-amber));
   -webkit-background-clip: text;
@@ -254,7 +255,7 @@ const handleSignUp = () => {
 .input-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: var(--space-4);
 }
 
 @media (max-width: 480px) {
@@ -266,31 +267,31 @@ const handleSignUp = () => {
 .user-type-group {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .group-label {
-  font-size: 11px;
+  font-size: var(--text-caption);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1.5px;
   color: var(--text-muted);
-  margin-left: 4px;
+  margin-left: var(--space-1);
 }
 
 .type-options {
   display: flex;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .type-btn {
   flex: 1;
-  padding: 16px;
+  padding: var(--space-4);
   border-radius: var(--radius-md);
   border: 2px solid var(--input-border);
   background: var(--input-bg);
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: var(--text-body);
   font-weight: 700;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -319,23 +320,23 @@ const handleSignUp = () => {
 
 .error-message {
   color: #EF4444;
-  font-size: 13px;
+  font-size: var(--text-body);
   font-weight: 600;
   text-align: center;
 }
 
 .bottom-text {
   text-align: center;
-  font-size: 14px;
+  font-size: var(--text-body);
   color: var(--text-muted);
-  margin-top: 24px;
+  margin-top: var(--space-6);
 }
 
 .login-link {
   color: var(--text-amber);
   text-decoration: none;
   font-weight: 700;
-  margin-left: 4px;
+  margin-left: var(--space-1);
   border-bottom: 1px solid transparent;
   transition: all 0.3s;
 }

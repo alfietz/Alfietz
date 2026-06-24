@@ -31,6 +31,9 @@
   --price-border: #2D5A40;
   
   --border-tech: #2D1B11;
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.2);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.3);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.4);
   --shadow-glow: 0 0 20px var(--accent-glow);
   
   --radius-lg: 32px;
@@ -46,13 +49,39 @@
   --spacing-2xl: 3rem;
 
   /* Fluid Typography - Scales smoothly from mobile to desktop */
-  --font-xs: clamp(0.7rem, 0.65rem + 0.25vw, 0.75rem);
-  --font-sm: clamp(0.8rem, 0.75rem + 0.25vw, 0.875rem);
-  --font-base: clamp(0.9375rem, 0.9rem + 0.2vw, 1rem);
-  --font-md: clamp(1.1rem, 1.05rem + 0.3vw, 1.25rem);
-  --font-lg: clamp(1.25rem, 1.2rem + 0.5vw, 1.5rem);
-  --font-xl: clamp(1.75rem, 1.6rem + 1vw, 2.25rem);
-  --font-2xl: clamp(2.25rem, 2rem + 1.5vw, 3rem);
+  --font-xs: clamp(0.6rem, 0.55rem + 0.2vw, 0.65rem);
+  --font-sm: clamp(0.72rem, 0.65rem + 0.2vw, 0.78rem);
+  --font-base: clamp(0.84rem, 0.78rem + 0.15vw, 0.9rem);
+  --font-md: clamp(0.96rem, 0.9rem + 0.25vw, 1.08rem);
+  --font-lg: clamp(1.26rem, 1.14rem + 0.35vw, 1.44rem);
+  --font-xl: clamp(1.8rem, 1.56rem + 0.7vw, 2.22rem);
+  --font-2xl: clamp(2.22rem, 1.92rem + 1vw, 2.88rem);
+
+  /* Semantic Type Scale - Single source of truth */
+  --text-display: var(--font-2xl);
+  --text-h1: var(--font-xl);
+  --text-h2: var(--font-lg);
+  --text-h3: var(--font-md);
+  --text-body-lg: var(--font-base);
+  --text-body: var(--font-sm);
+  --text-caption: var(--font-xs);
+  --text-micro: clamp(0.54rem, 0.48rem + 0.15vw, 0.6rem);
+
+  /* Unified line-heights */
+  --leading-tight: 1.15;
+  --leading-snug: 1.35;
+  --leading-relaxed: 1.55;
+
+  /* Unified spacing rhythm (8px base) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
 
   /* Pattern Color */
   --pattern-color: #D97706;
@@ -114,7 +143,7 @@ body {
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  line-height: 1.4; /* Tightened for a more app-like feel, removes vertical ghost space */
+  line-height: var(--leading-snug);
   overflow-x: hidden;
   transition: background 0.5s ease, color 0.5s ease;
   width: 100%;
@@ -163,7 +192,7 @@ body::before {
 /* Global Mobile Optimizations */
 input, button, select, textarea {
   font-family: inherit;
-  font-size: var(--font-base);
+  font-size: var(--text-body-lg);
 }
 
 /* Fix browser autofill "black spots" and ensure consistent background */
@@ -184,7 +213,7 @@ button {
 h1, h2, h3 {
   font-weight: 700;
   color: var(--text-primary);
-  line-height: 1.2; /* Tight headers */
+  line-height: var(--leading-tight);
 }
 
 a {
@@ -231,9 +260,9 @@ input {
   background: linear-gradient(135deg, var(--accent-amber) 0%, #B45309 100%);
   color: white;
   border-radius: var(--radius-md);
-  padding: var(--spacing-md);
+  padding: var(--space-4);
   min-height: 2.8rem;
-  font-size: var(--font-base);
+  font-size: var(--text-body-lg);
   font-weight: 700;
   width: 100%;
   display: flex;
@@ -260,19 +289,19 @@ input {
 .form-container {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-lg);
-  margin-top: var(--spacing-xl);
+  gap: var(--space-6);
+  margin-top: var(--space-10);
 }
 
 .input-group {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs);
+  gap: var(--space-2);
 }
 
 .input-group label {
-  font-size: var(--font-xs);
+  font-size: var(--text-caption);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1rem;
@@ -284,9 +313,9 @@ input {
   background-color: var(--input-bg);
   border: 2px solid var(--input-border);
   border-radius: var(--radius-md);
-  padding: var(--spacing-md) var(--spacing-lg);
+  padding: var(--space-4) var(--space-6);
   min-height: 3.5rem;
-  font-size: var(--font-base);
+  font-size: var(--text-body-lg);
   color: var(--input-text);
   transition: all 0.3s ease;
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
@@ -322,7 +351,7 @@ input {
 
 /* Page Layouts */
 .auth-page, .profile-page, .content-page {
-  padding: var(--spacing-lg) var(--spacing-md);
+  padding: var(--space-6) var(--space-4);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -331,8 +360,8 @@ input {
 }
 
 .page-title {
-  font-size: var(--font-xl);
-  margin-bottom: var(--spacing-xl);
+  font-size: var(--text-h1);
+  margin-bottom: var(--space-10);
   color: var(--text-primary);
 }
 
@@ -340,11 +369,11 @@ input {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--spacing-md);
+  margin-bottom: var(--space-4);
 }
 
 .section-header h3 {
-  font-size: var(--font-md);
+  font-size: var(--text-h3);
   color: var(--text-primary);
 }
 
@@ -353,7 +382,7 @@ input {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--space-6);
   background-color: white;
   width: 80px;
   height: 80px;
@@ -371,4 +400,15 @@ input {
   object-fit: contain;
 }
 
+/* Shared skeleton shimmer animation */
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
 
+.sk-shimmer {
+  background: linear-gradient(90deg, var(--wood-walnut) 25%, var(--wood-polished) 50%, var(--wood-walnut) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+  border-radius: var(--radius-sm);
+}

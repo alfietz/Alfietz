@@ -51,7 +51,7 @@ defineEmits(['go-back'])
 .about-page {
   background-color: var(--wood-deep);
   min-height: 100vh;
-  padding: 40px 24px;
+  padding: var(--space-10) var(--space-6);
   max-width: 800px;
   margin: 0 auto;
 }
@@ -59,8 +59,8 @@ defineEmits(['go-back'])
 .header-row {
   display: flex;
   align-items: center;
-  gap: 20px;
-  margin-bottom: 40px;
+  gap: var(--space-5);
+  margin-bottom: var(--space-10);
 }
 
 .back-btn {
@@ -83,7 +83,7 @@ defineEmits(['go-back'])
 }
 
 .title {
-  font-size: 24px;
+  font-size: var(--text-h1);
   font-weight: 800;
   color: var(--text-primary);
   margin: 0;
@@ -100,19 +100,19 @@ defineEmits(['go-back'])
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 60px;
-  margin-top: 20px;
+  margin-bottom: var(--space-12);
+  margin-top: var(--space-5);
 }
 
 .logo-img {
   width: 120px;
   height: auto;
-  margin-bottom: 16px;
+  margin-bottom: var(--space-4);
   filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.2));
 }
 
 .company-name {
-  font-size: 14px;
+  font-size: var(--text-body);
   font-weight: 800;
   color: var(--text-muted);
   text-transform: uppercase;
@@ -123,25 +123,25 @@ defineEmits(['go-back'])
 .mission-card {
   background: var(--wood-walnut);
   border: 1px solid var(--glass-border);
-  border-radius: 24px;
-  padding: 32px;
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
   width: 100%;
-  margin-bottom: 60px;
+  margin-bottom: var(--space-12);
 }
 
 .mission-card h3 {
-  font-size: 20px;
+  font-size: var(--text-h2);
   font-weight: 800;
   color: var(--text-amber);
-  margin: 0 0 16px 0;
+  margin: 0 0 var(--space-4) 0;
   text-transform: uppercase;
 }
 
 .mission-card p {
-  font-size: 15px;
+  font-size: var(--text-body-lg);
   color: var(--text-muted);
-  line-height: 1.7;
-  margin: 0 0 20px 0;
+  line-height: var(--leading-relaxed);
+  margin: 0 0 var(--space-5) 0;
 }
 
 .mission-card p:last-child {
@@ -151,13 +151,13 @@ defineEmits(['go-back'])
 .version-info {
   text-align: center;
   margin-top: auto;
-  padding-bottom: 40px;
+  padding-bottom: var(--space-10);
 }
 
 .version-info p {
-  font-size: 12px;
+  font-size: var(--text-caption);
   color: var(--text-muted);
-  margin: 4px 0;
+  margin: var(--space-1) 0;
   font-weight: 600;
 }
 

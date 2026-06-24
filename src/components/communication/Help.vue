@@ -119,7 +119,7 @@ const navigateTo = (routeName) => {
 .help-page {
   background-color: var(--wood-deep);
   min-height: 100vh;
-  padding: 40px 24px;
+  padding: var(--space-10) var(--space-6);
   max-width: 800px;
   margin: 0 auto;
 }
@@ -127,8 +127,8 @@ const navigateTo = (routeName) => {
 .header-row {
   display: flex;
   align-items: center;
-  gap: 20px;
-  margin-bottom: 40px;
+  gap: var(--space-5);
+  margin-bottom: var(--space-10);
 }
 
 .back-btn {
@@ -151,40 +151,40 @@ const navigateTo = (routeName) => {
 }
 
 .title {
-  font-size: 24px;
+  font-size: var(--text-h1);
   font-weight: 800;
   color: var(--text-primary);
   margin: 0;
 }
 
 .content-scroll {
-  padding-bottom: 40px;
+  padding-bottom: var(--space-10);
 }
 
 .legal-section {
-  margin-bottom: 40px;
+  margin-bottom: var(--space-10);
 }
 
 h3 {
-  font-size: 18px;
+  font-size: var(--text-h2);
   font-weight: 800;
   color: var(--text-amber);
-  margin: 0 0 12px 0;
+  margin: 0 0 var(--space-3) 0;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
 
 .section-desc {
-  font-size: 14px;
+  font-size: var(--text-body);
   color: var(--text-muted);
-  margin: 0 0 20px 0;
-  line-height: 1.6;
+  margin: 0 0 var(--space-5) 0;
+  line-height: var(--leading-relaxed);
 }
 
 .legal-links {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .legal-link-btn { 
@@ -193,10 +193,10 @@ h3 {
   align-items: center; 
   background: var(--wood-walnut);
   border: 1px solid var(--glass-border); 
-  padding: 16px;
-  border-radius: 12px;
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
   color: var(--text-primary); 
-  font-size: 15px;
+  font-size: var(--text-body-lg);
   font-weight: 700;
   cursor: pointer;
   transition: all 0.3s;
@@ -213,28 +213,28 @@ h3 {
 }
 
 .faq-section {
-  margin-top: 20px;
+  margin-top: var(--space-5);
 }
 
 .faq-item {
   background: var(--wood-walnut);
-  padding: 20px;
-  border-radius: 16px;
-  margin-bottom: 16px;
+  padding: var(--space-5);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-4);
   border: 1px solid var(--glass-border);
 }
 
 .faq-item h4 {
-  font-size: 15px;
+  font-size: var(--text-body-lg);
   font-weight: 800;
   color: var(--text-primary);
-  margin: 0 0 8px 0;
+  margin: 0 0 var(--space-2) 0;
 }
 
 .faq-item p {
-  font-size: 14px;
+  font-size: var(--text-body);
   color: var(--text-muted);
   margin: 0;
-  line-height: 1.6;
+  line-height: var(--leading-relaxed);
 }
 </style>

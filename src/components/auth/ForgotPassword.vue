@@ -52,7 +52,7 @@ const handleSubmit = () => {
 
 <style scoped>
 .auth-page {
-  padding: 40px 24px;
+  padding: var(--space-10) var(--space-6);
   max-width: 500px;
   margin: 0 auto;
   position: relative;
@@ -60,25 +60,25 @@ const handleSubmit = () => {
 }
 
 .top-nav {
-  margin-bottom: 40px;
+  margin-bottom: var(--space-10);
 }
 
 .welcome-text {
   text-align: center;
-  margin-bottom: 24px;
+  margin-bottom: var(--space-6);
 }
 
 .tribe-title {
-  font-size: 24px;
+  font-size: var(--text-h1);
   font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 4px;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
 }
 
 .tribe-highlight {
-  font-size: 48px;
+  font-size: var(--text-display);
   font-weight: 800;
   background: linear-gradient(to right, var(--text-primary), var(--accent-amber));
   -webkit-background-clip: text;
@@ -88,10 +88,10 @@ const handleSubmit = () => {
 
 .subtitle {
   color: var(--text-muted);
-  font-size: 15px;
-  line-height: 1.6;
+  font-size: var(--text-body-lg);
+  line-height: var(--leading-relaxed);
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: var(--space-10);
   max-width: 300px;
   margin-left: auto;
   margin-right: auto;
@@ -99,7 +99,7 @@ const handleSubmit = () => {
 
 .error-message {
   color: #EF4444;
-  font-size: 13px;
+  font-size: var(--text-body);
   font-weight: 600;
   text-align: center;
 }

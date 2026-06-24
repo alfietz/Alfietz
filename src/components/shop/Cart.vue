@@ -96,7 +96,7 @@ const cartByTailor = computed(() => {
 .cart-page {
   background-color: var(--wood-deep);
   min-height: 100vh;
-  padding: 40px 24px 100px;
+  padding: var(--space-10) var(--space-6) 100px;
   max-width: 800px;
   margin: 0 auto;
 }
@@ -104,8 +104,8 @@ const cartByTailor = computed(() => {
 .header-row {
   display: flex;
   align-items: center;
-  gap: 20px;
-  margin-bottom: 32px;
+  gap: var(--space-5);
+  margin-bottom: var(--space-8);
 }
 
 .back-btn {
@@ -128,7 +128,7 @@ const cartByTailor = computed(() => {
 }
 
 .title {
-  font-size: 24px;
+  font-size: var(--text-h1);
   font-weight: 800;
   color: var(--text-primary);
   margin: 0;
@@ -136,38 +136,38 @@ const cartByTailor = computed(() => {
 
 .empty-cart-state {
   text-align: center;
-  padding: 60px 20px;
+  padding: var(--space-12) var(--space-5);
   background: var(--wood-walnut);
-  border-radius: 24px;
+  border-radius: var(--radius-lg);
   border: 1px dashed var(--glass-border);
 }
 
 .empty-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
+  font-size: var(--text-display);
+  margin-bottom: var(--space-4);
   opacity: 0.8;
 }
 
 .empty-title {
-  font-size: 20px;
+  font-size: var(--text-h2);
   font-weight: 800;
   color: var(--text-primary);
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
 }
 
 .empty-desc {
-  font-size: 14px;
+  font-size: var(--text-body);
   color: var(--text-muted);
-  margin-bottom: 24px;
-  line-height: 1.5;
+  margin-bottom: var(--space-6);
+  line-height: var(--leading-snug);
 }
 
 .primary-btn-outline {
   background: transparent;
   color: var(--accent-amber);
   border: 1px solid var(--accent-amber);
-  padding: 12px 24px;
-  border-radius: 12px;
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-sm);
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -181,25 +181,25 @@ const cartByTailor = computed(() => {
 .cart-content {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: var(--space-6);
 }
 
 .tailor-group {
   background: var(--wood-walnut);
   border: 1px solid var(--glass-border);
-  border-radius: 20px;
+  border-radius: var(--radius-md);
   overflow: hidden;
 }
 
 .tailor-header {
-  padding: 16px 20px;
+  padding: var(--space-4) var(--space-5);
   background: rgba(0,0,0,0.2);
   border-bottom: 1px solid var(--glass-border);
 }
 
 .tailor-header h3 {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--text-body);
   font-weight: 800;
   color: var(--text-amber);
   text-transform: uppercase;
@@ -214,8 +214,8 @@ const cartByTailor = computed(() => {
 .cart-item {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 16px 20px;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
   border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 
@@ -226,7 +226,7 @@ const cartByTailor = computed(() => {
 .item-img {
   width: 64px;
   height: 64px;
-  border-radius: 12px;
+  border-radius: var(--radius-sm);
   object-fit: cover;
   cursor: pointer;
 }
@@ -237,8 +237,8 @@ const cartByTailor = computed(() => {
 }
 
 .item-name {
-  margin: 0 0 4px 0;
-  font-size: 15px;
+  margin: 0 0 var(--space-1) 0;
+  font-size: var(--text-body-lg);
   font-weight: 700;
   color: var(--text-primary);
   display: -webkit-box;
@@ -249,17 +249,17 @@ const cartByTailor = computed(() => {
 
 .item-price {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
+  font-size: var(--text-body);
   font-weight: 700;
   color: var(--accent-amber);
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
 }
 
 .item-variants {
   display: flex;
-  gap: 8px;
-  font-size: 11px;
+  gap: var(--space-2);
+  font-size: var(--text-caption);
   color: var(--text-muted);
 }
 
@@ -268,7 +268,7 @@ const cartByTailor = computed(() => {
   border: none;
   color: var(--text-muted);
   cursor: pointer;
-  padding: 8px;
+  padding: var(--space-2);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -282,19 +282,19 @@ const cartByTailor = computed(() => {
 }
 
 .group-footer {
-  padding: 16px 20px;
+  padding: var(--space-4) var(--space-5);
   background: rgba(0,0,0,0.1);
   border-top: 1px solid var(--glass-border);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--space-4);
 }
 
 .group-total {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 14px;
+  font-size: var(--text-body);
   font-weight: 700;
   color: var(--text-primary);
 }
@@ -302,21 +302,21 @@ const cartByTailor = computed(() => {
 .total-price {
   font-family: 'JetBrains Mono', monospace;
   color: var(--accent-amber);
-  font-size: 16px;
+  font-size: var(--text-body-lg);
 }
 
 .checkout-btn {
   background: linear-gradient(135deg, #166534, #15803d);
   color: white;
   border: none;
-  padding: 14px;
-  border-radius: 12px;
+  padding: var(--space-4);
+  border-radius: var(--radius-sm);
   font-weight: 800;
-  font-size: 14px;
+  font-size: var(--text-body);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--space-2);
   cursor: pointer;
   transition: all 0.2s;
   box-shadow: 0 4px 12px rgba(22, 101, 52, 0.2);

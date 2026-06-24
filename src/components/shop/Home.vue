@@ -238,19 +238,19 @@ const handleSearch = () => {
 .skeleton-card {
   width: 200px;
   flex-shrink: 0;
-  margin-right: 16px;
+  margin-right: var(--space-4);
 }
 .skeleton-img {
   width: 100%;
   height: 240px;
-  border-radius: 20px;
+  border-radius: var(--radius-md);
   background: var(--wood-walnut);
 }
 .skeleton-text {
   width: 60%;
   height: 12px;
-  margin-top: 12px;
-  border-radius: 4px;
+  margin-top: var(--space-3);
+  border-radius: var(--radius-sm);
   background: var(--wood-walnut);
 }
 
@@ -258,7 +258,7 @@ const handleSearch = () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-right: 24px;
+  margin-right: var(--space-6);
 }
 .skeleton-avatar {
   width: 80px;
@@ -295,14 +295,14 @@ const handleSearch = () => {
 }
 
 .home-container {
-  padding: 24px 24px 40px 24px;
+  padding: var(--space-6) var(--space-6) var(--space-10) var(--space-6);
   max-width: 1200px;
   margin: 0 auto;
 }
 
 /* Search Bar (Ancestral Tech) */
 .search-container {
-  margin-bottom: 40px;
+  margin-bottom: var(--space-10);
 }
 
 .search-wrapper {
@@ -311,8 +311,8 @@ const handleSearch = () => {
   align-items: center;
   background: var(--input-bg);
   border: 1px solid var(--glass-border);
-  border-radius: 20px;
-  padding: 8px 8px 8px 20px;
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-5);
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
   transition: all 0.3s ease;
 }
@@ -326,9 +326,9 @@ const handleSearch = () => {
   background: var(--accent-amber);
   color: white;
   border: none;
-  border-radius: 12px;
-  padding: 8px 20px;
-  font-size: 13px;
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-5);
+  font-size: var(--text-body);
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
@@ -348,10 +348,10 @@ const handleSearch = () => {
   background: transparent;
   border: none;
   flex: 1;
-  font-size: 15px;
+  font-size: var(--text-body-lg);
   color: var(--text-primary);
   outline: none;
-  padding-right: 12px;
+  padding-right: var(--space-3);
 }
 
 .search-input::placeholder {
@@ -379,13 +379,13 @@ const handleSearch = () => {
   position: relative;
   background: linear-gradient(135deg, var(--wood-walnut) 0%, var(--wood-polished) 100%);
   border: 1px solid var(--glass-border);
-  border-radius: 32px;
-  padding: 40px;
+  border-radius: var(--radius-lg);
+  padding: var(--space-10);
   overflow: hidden;
-  margin-bottom: 64px;
+  margin-bottom: var(--space-12);
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: var(--space-8);
   box-shadow: 0 20px 40px rgba(0,0,0,0.4);
 }
 
@@ -394,7 +394,7 @@ const handleSearch = () => {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    padding: 64px;
+    padding: var(--space-12);
   }
 }
 
@@ -416,10 +416,10 @@ const handleSearch = () => {
 }
 
 .hero-title {
-  font-size: 32px;
-  line-height: 1.1;
+  font-size: var(--text-display);
+  line-height: var(--leading-tight);
   font-weight: 800;
-  margin-bottom: 20px;
+  margin-bottom: var(--space-5);
   background: linear-gradient(to right, var(--text-primary), var(--accent-amber));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -427,26 +427,26 @@ const handleSearch = () => {
 
 @media (min-width: 768px) {
   .hero-title {
-    font-size: 48px;
+    font-size: var(--text-display);
   }
 }
 
 .hero-description {
-  font-size: 16px;
-  line-height: 1.6;
+  font-size: var(--text-body-lg);
+  line-height: var(--leading-relaxed);
   color: var(--text-muted);
-  margin-bottom: 32px;
+  margin-bottom: var(--space-8);
 }
 
 .hero-cta-btn {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px 32px;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-8);
   background: linear-gradient(135deg, var(--accent-amber), #92400E);
   color: white;
   border: none;
-  border-radius: 16px;
+  border-radius: var(--radius-md);
   font-weight: 700;
   letter-spacing: 1px;
   cursor: pointer;
@@ -460,7 +460,7 @@ const handleSearch = () => {
 }
 
 .btn-arrow {
-  font-size: 20px;
+  font-size: var(--text-h2);
   transition: transform 0.3s ease;
 }
 
@@ -496,14 +496,15 @@ const handleSearch = () => {
 
 /* Collections Modules */
 .tech-section-title {
-  font-size: 20px;
+  font-size: var(--text-h2);
   font-weight: 700;
   letter-spacing: 1px;
   color: var(--text-primary);
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 24px;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+  line-height: var(--leading-tight);
 }
 
 .tech-section-title::before {
@@ -518,7 +519,7 @@ const handleSearch = () => {
 .collections-grid {
   display: grid;
   grid-template-columns: repeat(1, 1fr);
-  gap: 24px;
+  gap: var(--space-6);
 }
 
 @media (min-width: 768px) {
@@ -530,8 +531,8 @@ const handleSearch = () => {
 .collection-module {
   position: relative;
   height: 220px;
-  border-radius: 24px;
-  padding: 32px;
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -590,28 +591,30 @@ const handleSearch = () => {
 
 .module-tag {
   display: inline-block;
-  font-size: 10px;
+  font-size: var(--text-micro);
   font-weight: 800;
   letter-spacing: 1px;
-  padding: 4px 10px;
+  padding: var(--space-1) var(--space-3);
   background: rgba(0,0,0,0.6);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 6px;
-  margin-bottom: 12px;
-  color: #FBBF24; /* Hardcoded amber for consistency on dark overlay */
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-3);
+  color: #FBBF24;
 }
 
 .module-title {
-  font-size: 22px;
+  font-size: var(--text-h2);
   font-weight: 800;
-  color: white; /* Forced white for readability on dark gradient */
-  margin-bottom: 4px;
+  color: white;
+  margin-bottom: var(--space-1);
+  line-height: var(--leading-tight);
 }
 
 .module-subtitle {
-  font-size: 13px;
-  color: rgba(255,255,255,0.8); /* Slightly brighter white for better contrast */
+  font-size: var(--text-body);
+  color: rgba(255,255,255,0.8);
+  line-height: var(--leading-snug);
   opacity: 0;
   transition: opacity 0.3s ease 0.1s;
 }
@@ -622,13 +625,13 @@ const handleSearch = () => {
 
 /* Future Heritage Teaser */
 .future-heritage {
-  margin-top: 48px;
+  margin-top: var(--space-12);
 }
 
 .wood-banner {
   background: var(--wood-gradient);
   border-radius: var(--radius-lg);
-  padding: 40px 24px;
+  padding: var(--space-10) var(--space-6);
   position: relative;
   overflow: hidden;
   box-shadow: var(--shadow-lg);
@@ -659,28 +662,29 @@ const handleSearch = () => {
   display: inline-block;
   background: var(--accent-gold);
   color: var(--wood-deep);
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 11px;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--text-caption);
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 1px;
-  margin-bottom: 16px;
+  margin-bottom: var(--space-4);
 }
 
 .teaser-title {
-  font-size: 28px;
+  font-size: var(--text-h1);
   font-weight: 800;
-  margin: 0 0 12px 0;
+  margin: 0 0 var(--space-3) 0;
   color: var(--text-primary);
-  font-family: serif; /* Elegant contrast */
+  font-family: serif;
+  line-height: var(--leading-tight);
 }
 
 .teaser-text {
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: var(--text-body);
+  line-height: var(--leading-relaxed);
   max-width: 500px;
-  margin: 0 auto 24px auto;
+  margin: 0 auto var(--space-6) auto;
   opacity: 0.85;
 }
 
@@ -689,19 +693,19 @@ const handleSearch = () => {
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-3);
   text-align: left;
   background: rgba(0,0,0,0.2);
-  padding: 16px;
-  border-radius: 16px;
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
   border: 1px solid rgba(255,255,255,0.05);
 }
 
 .update-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 13px;
+  gap: var(--space-3);
+  font-size: var(--text-body);
 }
 
 .update-dot {
@@ -719,22 +723,22 @@ const handleSearch = () => {
 
 .update-time {
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: var(--text-caption);
 }
 
 .countdown-teaser {
-  font-size: 13px;
+  font-size: var(--text-body);
   font-weight: 600;
   color: var(--accent-gold);
   border: 1px solid var(--accent-glow);
-  padding: 8px 16px;
-  border-radius: 8px;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-sm);
   display: inline-block;
 }
 
 /* Sections */
 .section {
-  margin-bottom: 32px;
+  margin-bottom: var(--space-8);
 }
 
 /* Scrolling & Grids */
@@ -742,14 +746,12 @@ const handleSearch = () => {
 /* Scrolling & Grids */
 .scroll-container {
   display: flex;
-  gap: 16px;
+  gap: var(--space-4);
   overflow-x: auto;
-  padding: 4px 4px 24px 4px; /* Added padding to prevent shadow clipping */
-  margin: -4px -4px 0 -4px;
-  -webkit-overflow-scrolling: touch; /* Momentum scrolling on iOS */
-  scroll-snap-type: x proximity; /* Subtle snapping for better feel */
-  
-  /* Desktop scrollbar styling */
+  padding: var(--space-1) var(--space-1) var(--space-6) var(--space-1);
+  margin: calc(var(--space-1) * -1) calc(var(--space-1) * -1) 0 calc(var(--space-1) * -1);
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
   scrollbar-width: thin;
   scrollbar-color: var(--accent-amber) var(--wood-deep);
 }
@@ -785,12 +787,12 @@ const handleSearch = () => {
 }
 
 .scroll-container :deep(.product-details) {
-  padding: 16px;
-  gap: 12px;
+  padding: var(--space-4);
+  gap: var(--space-3);
 }
 
 .scroll-container :deep(.product-name) {
-  font-size: 13px;
+  font-size: var(--text-h3);
   -webkit-line-clamp: 1;
 }
 
@@ -808,8 +810,8 @@ const handleSearch = () => {
 }
 
 .category-card {
-  width: 140px; /* Slightly wider for better text fit */
-  padding: 16px;
+  width: 140px;
+  padding: var(--space-4);
   height: 140px;
   background-color: var(--wood-walnut);
   border-radius: var(--radius-lg);
@@ -833,17 +835,18 @@ const handleSearch = () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .cat-name-home {
   font-weight: 700;
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: var(--text-body);
+  line-height: var(--leading-tight);
 }
 
 .cat-example-home {
-  font-size: 10px;
+  font-size: var(--text-micro);
   color: var(--text-amber);
   font-style: italic;
   font-weight: 500;
@@ -852,7 +855,7 @@ const handleSearch = () => {
 .explore-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
+  gap: var(--space-4);
 }
 
 .explore-grid :deep(.product-card) {
@@ -868,12 +871,12 @@ const handleSearch = () => {
 }
 
 .explore-grid :deep(.product-details) {
-  padding: 12px !important;
-  gap: 8px !important;
+  padding: var(--space-3) !important;
+  gap: var(--space-2) !important;
 }
 
 .explore-grid :deep(.product-name) {
-  font-size: 13px !important;
+  font-size: var(--text-h3) !important;
   -webkit-line-clamp: 1 !important;
 }
 
@@ -898,7 +901,7 @@ const handleSearch = () => {
 }
 
 .view-all-link {
-  font-size: 13px;
+  font-size: var(--text-body);
   font-weight: 700;
   color: var(--accent-amber);
   background: none;
@@ -907,7 +910,7 @@ const handleSearch = () => {
 }
 
 .tribe-feedback-scroll {
-  padding-bottom: 24px;
+  padding-bottom: var(--space-6);
 }
 
 .feedback-bubble-card {
@@ -915,18 +918,18 @@ const handleSearch = () => {
   flex-shrink: 0;
   background: var(--wood-walnut);
   border: 1px solid var(--glass-border);
-  border-radius: 20px;
-  padding: 20px;
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-3);
   scroll-snap-align: start;
 }
 
 .bubble-header {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .bubble-avatar {
@@ -942,16 +945,17 @@ const handleSearch = () => {
 }
 
 .bubble-author {
-  font-size: 13px;
+  font-size: var(--text-body);
   font-weight: 700;
   color: var(--text-primary);
+  line-height: var(--leading-tight);
 }
 
 .bubble-text {
-  font-size: 13px;
+  font-size: var(--text-body);
   color: var(--text-muted);
   font-style: italic;
-  line-height: 1.5;
+  line-height: var(--leading-snug);
   margin: 0;
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -964,18 +968,18 @@ const handleSearch = () => {
   flex-shrink: 0;
   background: rgba(217, 164, 4, 0.05);
   border: 2px dashed rgba(217, 164, 4, 0.2);
-  border-radius: 20px;
+  border-radius: var(--radius-md);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: var(--space-3);
   cursor: pointer;
   color: var(--accent-amber);
   font-weight: 700;
-  font-size: 13px;
+  font-size: var(--text-body);
   text-align: center;
-  padding: 20px;
+  padding: var(--space-5);
   transition: all 0.3s;
 }
 
@@ -993,13 +997,13 @@ const handleSearch = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  font-size: var(--text-h2);
 }
 
 .stories-banner {
-  margin: 0 0 40px 0;
+  margin: 0 0 var(--space-10) 0;
   background: linear-gradient(135deg, var(--wood-polished), var(--wood-deep));
-  border-radius: 24px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--glass-border);
   display: flex;
   overflow: hidden;
@@ -1014,36 +1018,37 @@ const handleSearch = () => {
 
 .banner-content {
   flex: 1;
-  padding: 24px;
+  padding: var(--space-6);
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
 
 .banner-tag {
-  font-size: 10px;
+  font-size: var(--text-micro);
   font-weight: 800;
   text-transform: uppercase;
   color: var(--accent-amber);
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
 }
 
 .banner-content h3 {
-  font-size: 18px;
+  font-size: var(--text-h3);
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
+  line-height: var(--leading-tight);
 }
 
 .banner-content p {
-  font-size: 13px;
+  font-size: var(--text-body);
   color: var(--text-muted);
-  margin-bottom: 16px;
-  line-height: 1.4;
+  margin-bottom: var(--space-4);
+  line-height: var(--leading-snug);
 }
 
 .read-link {
-  font-size: 13px;
+  font-size: var(--text-body);
   font-weight: 700;
   color: var(--text-amber);
 }

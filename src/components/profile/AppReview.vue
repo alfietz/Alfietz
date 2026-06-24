@@ -128,7 +128,7 @@ const handleSubmit = () => {
 .app-review-page {
   background: var(--wood-deep);
   min-height: 100vh;
-  padding: 24px 20px 140px;
+  padding: var(--space-6) var(--space-5) var(--space-12);
   max-width: 800px;
   margin: 0 auto;
   display: flex;
@@ -138,8 +138,8 @@ const handleSubmit = () => {
 .header-row {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 40px;
+  gap: var(--space-4);
+  margin-bottom: var(--space-10);
 }
 
 .back-btn {
@@ -162,7 +162,7 @@ const handleSubmit = () => {
 }
 
 .title {
-  font-size: 24px;
+  font-size: var(--text-h1);
   font-weight: 800;
   color: var(--text-amber);
   margin: 0;
@@ -173,38 +173,38 @@ const handleSubmit = () => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: var(--space-8);
 }
 
 .rating-section-card {
   background: var(--wood-walnut);
   border: 1px solid var(--glass-border);
-  border-radius: 24px;
-  padding: 32px;
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
   text-align: center;
   box-shadow: 0 10px 30px rgba(0,0,0,0.2);
 }
 
 .section-label {
   display: block;
-  font-size: 16px;
+  font-size: var(--text-body-lg);
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 24px;
+  margin-bottom: var(--space-6);
 }
 
 .stars-row {
   display: flex;
   justify-content: center;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
 }
 
 .star-btn-large {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 4px;
+  padding: var(--space-1);
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
@@ -227,7 +227,7 @@ const handleSubmit = () => {
 }
 
 .rating-status-text {
-  font-size: 14px;
+  font-size: var(--text-body);
   font-weight: 700;
   color: var(--accent-amber);
   margin: 0;
@@ -237,16 +237,16 @@ const handleSubmit = () => {
 .input-group-modern {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .group-label {
-  font-size: 13px;
+  font-size: var(--text-body);
   font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 1.5px;
-  padding-left: 4px;
+  padding-left: var(--space-1);
 }
 
 .textarea-container {
@@ -258,10 +258,10 @@ const handleSubmit = () => {
   min-height: 180px;
   background: var(--wood-walnut);
   border: 2px solid var(--glass-border);
-  border-radius: 20px;
-  padding: 20px;
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
   color: white;
-  font-size: 16px;
+  font-size: var(--text-body-lg);
   outline: none;
   resize: none;
   font-family: inherit;
@@ -277,12 +277,12 @@ const handleSubmit = () => {
   position: absolute;
   bottom: 16px;
   right: 20px;
-  font-size: 11px;
+  font-size: var(--text-caption);
   font-weight: 700;
   color: var(--text-muted);
   background: rgba(0,0,0,0.3);
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
 }
 
 .char-counter.limit {
@@ -294,11 +294,11 @@ const handleSubmit = () => {
   height: 140px;
   background: var(--wood-walnut);
   border: 2px dashed var(--glass-border);
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
-  padding: 0 24px;
-  gap: 20px;
+  padding: 0 var(--space-6);
+  gap: var(--space-5);
   cursor: pointer;
   transition: all 0.3s;
 }
@@ -322,17 +322,17 @@ const handleSubmit = () => {
 .upload-text {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .main-text {
-  font-size: 15px;
+  font-size: var(--text-body-lg);
   font-weight: 700;
   color: var(--text-primary);
 }
 
 .sub-text {
-  font-size: 12px;
+  font-size: var(--text-caption);
   color: var(--text-muted);
 }
 
@@ -340,7 +340,7 @@ const handleSubmit = () => {
   position: relative;
   width: 100%;
   height: 240px;
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
   border: 2px solid var(--accent-amber);
   box-shadow: 0 10px 30px rgba(0,0,0,0.3);
@@ -380,7 +380,7 @@ const handleSubmit = () => {
   bottom: 0;
   left: 0;
   width: 100%;
-  padding: 24px 20px 40px;
+  padding: var(--space-6) var(--space-5) var(--space-10);
   background: linear-gradient(to top, var(--wood-deep) 80%, transparent);
   z-index: 100;
   display: flex;
@@ -393,15 +393,15 @@ const handleSubmit = () => {
   background: var(--accent-amber);
   color: white;
   border: none;
-  border-radius: 20px;
-  padding: 18px;
-  font-size: 16px;
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  font-size: var(--text-body-lg);
   font-weight: 800;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: var(--space-3);
   box-shadow: 0 10px 25px var(--accent-glow);
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
