@@ -40,18 +40,18 @@ defineEmits(['go-back', 'select-category'])
 .category-list-page {
   background-color: var(--wood-deep);
   min-height: 100vh;
-  padding: var(--space-6) var(--space-5) 100px;
+  padding: 24px 20px 100px;
 }
 
 .header-row {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
-  margin-bottom: var(--space-8);
+  gap: 16px;
+  margin-bottom: 32px;
 }
 
 .title {
-  font-size: var(--text-h1);
+  font-size: 22px;
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
@@ -60,12 +60,12 @@ defineEmits(['go-back', 'select-category'])
 .category-grid {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: 12px;
 }
 
 .category-item {
   background: var(--wood-walnut);
-  padding: var(--space-5);
+  padding: 20px;
   border-radius: var(--radius-lg);
   display: flex;
   justify-content: space-between;
@@ -79,21 +79,21 @@ defineEmits(['go-back', 'select-category'])
 }
 
 .cat-name {
-  font-size: var(--text-body-lg);
+  font-size: 16px;
   font-weight: 700;
   color: var(--text-primary);
-  margin: 0 0 var(--space-1) 0;
+  margin: 0 0 4px 0;
 }
 
 .cat-examples {
-  font-size: var(--text-body);
+  font-size: 13px;
   color: var(--text-amber);
   font-style: italic;
-  margin: 0 0 var(--space-2) 0;
+  margin: 0 0 8px 0;
 }
 
 .cat-count {
-  font-size: var(--text-caption);
+  font-size: 12px;
   color: var(--text-muted);
   margin: 0;
 }

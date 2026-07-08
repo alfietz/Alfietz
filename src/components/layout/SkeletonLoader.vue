@@ -165,7 +165,7 @@ defineProps({
 .skeleton-info {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: 8px;
 }
 
 .skeleton-line {

@@ -654,7 +654,7 @@ const handleDeclineNegotiation = async (neg) => {
 
 <style scoped>
 .console-page {
-  padding: var(--space-10) var(--space-6);
+  padding: 40px 24px;
   max-width: 1440px;
   margin: 0 auto;
   min-height: 100vh;
@@ -663,33 +663,33 @@ const handleDeclineNegotiation = async (neg) => {
 .header-row {
   display: flex;
   align-items: center;
-  gap: var(--space-5);
-  margin-bottom: var(--space-10);
+  gap: 20px;
+  margin-bottom: 40px;
 }
 
 .title {
-  font-size: var(--text-display);
+  font-size: 28px;
   font-weight: 800;
   color: var(--text-primary);
   margin: 0;
 }
 
 .subtitle {
-  font-size: var(--text-body);
+  font-size: 14px;
   color: var(--text-muted);
-  margin: var(--space-1) 0 0 0;
+  margin: 4px 0 0 0;
 }
 
 .subtitle-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: var(--space-5);
+  gap: 20px;
   flex-wrap: wrap;
 }
 
 .view-shop-link {
-  font-size: var(--text-body);
+  font-size: 13px;
   font-weight: 700;
   color: var(--accent-amber);
   background: none;
@@ -712,47 +712,47 @@ const handleDeclineNegotiation = async (neg) => {
 .community-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: var(--space-6);
+  gap: 24px;
 }
 
 .community-card {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   border-radius: var(--radius-md);
-  padding: var(--space-6);
+  padding: 24px;
 }
 
 .card-title {
-  font-size: var(--text-body-lg);
+  font-size: 16px;
   font-weight: 800;
   color: var(--text-primary);
-  margin: 0 0 var(--space-2) 0;
+  margin: 0 0 8px 0;
 }
 
 .card-desc {
-  font-size: var(--text-caption);
+  font-size: 12px;
   color: var(--text-muted);
-  margin-bottom: var(--space-5);
+  margin-bottom: 20px;
 }
 
 .mini-portfolio-feed {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: 12px;
 }
 
 .mini-update-item {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  font-size: var(--text-body);
+  gap: 10px;
+  font-size: 13px;
 }
 
 .social-proof-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
-  margin-bottom: var(--space-6);
+  gap: 16px;
+  margin-bottom: 24px;
 }
 
 .social-stat {
@@ -761,7 +761,7 @@ const handleDeclineNegotiation = async (neg) => {
 }
 
 .stat-num {
-  font-size: var(--text-h1);
+  font-size: 24px;
   font-weight: 800;
   color: var(--accent-amber);
 }
@@ -773,23 +773,23 @@ const handleDeclineNegotiation = async (neg) => {
 }
 
 .section-hint {
-  font-size: var(--text-body);
+  font-size: 13px;
   color: var(--text-muted);
-  margin: -20px 0 var(--space-6) 0;
+  margin: -20px 0 24px 0;
 }
 
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: var(--space-5);
-  margin-bottom: var(--space-12);
+  gap: 20px;
+  margin-bottom: 48px;
 }
 
 .stat-card {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   border-radius: var(--radius-md);
-  padding: var(--space-6);
+  padding: 24px;
   display: flex;
   flex-direction: column;
   box-shadow: 0 4px 20px rgba(0,0,0,0.1);
@@ -802,48 +802,48 @@ const handleDeclineNegotiation = async (neg) => {
 }
 
 .stat-label {
-  font-size: var(--text-caption);
+  font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
   color: var(--text-muted);
   letter-spacing: 1px;
-  margin-bottom: var(--space-2);
+  margin-bottom: 8px;
 }
 
 .stat-value {
-  font-size: var(--text-display);
+  font-size: 32px;
   font-weight: 800;
   color: var(--text-primary);
-  line-height: var(--leading-tight);
+  line-height: 1;
 }
 
 .stat-trend {
-  font-size: var(--text-caption);
+  font-size: 12px;
   font-weight: 700;
   color: var(--price-text);
-  margin-top: var(--space-3);
+  margin-top: 12px;
 }
 
 .stat-hint {
-  font-size: var(--text-caption);
+  font-size: 12px;
   color: var(--text-muted);
-  margin-top: var(--space-3);
+  margin-top: 12px;
 }
 
 /* Tab Navigation */
 .tab-nav {
   display: flex;
-  gap: var(--space-3);
-  margin-bottom: var(--space-8);
+  gap: 12px;
+  margin-bottom: 32px;
   border-bottom: 1px solid var(--glass-border);
-  padding-bottom: var(--space-1);
+  padding-bottom: 2px;
 }
 
 .tab-btn {
   background: transparent;
   border: none;
-  padding: var(--space-3) var(--space-6);
-  font-size: var(--text-body-lg);
+  padding: 12px 24px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--text-muted);
   cursor: pointer;
@@ -870,7 +870,7 @@ const handleDeclineNegotiation = async (neg) => {
 .inventory-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: var(--space-5);
+  gap: 20px;
 }
 
 .inventory-card {
@@ -898,9 +898,9 @@ const handleDeclineNegotiation = async (neg) => {
   position: absolute;
   top: 12px;
   right: 12px;
-  padding: var(--space-1) 10px;
+  padding: 4px 10px;
   border-radius: 6px;
-  font-size: var(--text-micro);
+  font-size: 10px;
   font-weight: 800;
   text-transform: uppercase;
 }
@@ -909,37 +909,37 @@ const handleDeclineNegotiation = async (neg) => {
 .stock-overlay.out-of-stock { background: #EF4444; color: white; }
 
 .inventory-details {
-  padding: var(--space-4);
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: 8px;
 }
 
 .inv-name {
   margin: 0;
-  font-size: var(--text-body-lg);
+  font-size: 15px;
   font-weight: 700;
   color: var(--text-primary);
 }
 
 .inv-price {
-  font-size: var(--text-body);
+  font-size: 14px;
   font-weight: 600;
   color: var(--accent-amber);
 }
 
 .inv-actions {
-  margin-top: var(--space-3);
+  margin-top: 12px;
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: 8px;
 }
 
 .edit-btn {
   width: 100%;
-  padding: var(--space-3);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-caption);
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
   background: var(--wood-walnut);
@@ -955,9 +955,9 @@ const handleDeclineNegotiation = async (neg) => {
 
 .stock-toggle-btn {
   width: 100%;
-  padding: var(--space-3);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-caption);
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
   background: var(--price-bg);
@@ -976,9 +976,9 @@ const handleDeclineNegotiation = async (neg) => {
   background: var(--accent-amber);
   color: white;
   border: none;
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-body);
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
 }
@@ -986,7 +986,7 @@ const handleDeclineNegotiation = async (neg) => {
 .console-layout {
   display: flex;
   flex-direction: column;
-  gap: var(--space-10);
+  gap: 40px;
 }
 
 @media (min-width: 1200px) {
@@ -1003,26 +1003,26 @@ const handleDeclineNegotiation = async (neg) => {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   border-radius: var(--radius-md);
-  padding: var(--space-5);
+  padding: 20px;
 }
 
 .sidebar-title {
-  font-size: var(--text-body);
+  font-size: 14px;
   font-weight: 800;
   text-transform: uppercase;
   color: var(--text-amber);
-  margin-bottom: var(--space-5);
+  margin-bottom: 20px;
 }
 
 .activity-feed {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: 16px;
 }
 
 .activity-item {
   display: flex;
-  gap: var(--space-3);
+  gap: 12px;
   align-items: flex-start;
 }
 
@@ -1030,32 +1030,32 @@ const handleDeclineNegotiation = async (neg) => {
   width: 32px;
   height: 32px;
   background: var(--wood-walnut);
-  border-radius: var(--radius-sm);
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--text-body);
+  font-size: 14px;
 }
 
 .activity-content {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: 2px;
 }
 
 .activity-title {
-  font-size: var(--text-body);
+  font-size: 13px;
   font-weight: 700;
   color: var(--text-primary);
 }
 
 .activity-desc {
-  font-size: var(--text-caption);
+  font-size: 11px;
   color: var(--text-muted);
 }
 
 .activity-time {
-  font-size: var(--text-micro);
+  font-size: 10px;
   color: var(--accent-amber);
   font-weight: 700;
 }
@@ -1064,18 +1064,18 @@ const handleDeclineNegotiation = async (neg) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--space-6);
+  margin-bottom: 24px;
 }
 
 .section-title {
-  font-size: var(--text-h2);
+  font-size: 20px;
   font-weight: 800;
   color: var(--text-primary);
   margin: 0;
 }
 
 .view-all {
-  font-size: var(--text-body);
+  font-size: 13px;
   font-weight: 700;
   color: var(--accent-amber);
   background: none;
@@ -1086,23 +1086,23 @@ const handleDeclineNegotiation = async (neg) => {
 .mobile-orders-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: 16px;
 }
 
 .order-mobile-card {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   border-radius: var(--radius-md);
-  padding: var(--space-4);
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: 12px;
 }
 
 .order-card-header {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: 12px;
 }
 
 .order-card-title {
@@ -1115,22 +1115,22 @@ const handleDeclineNegotiation = async (neg) => {
   font-family: 'JetBrains Mono', monospace;
   font-weight: 800;
   color: var(--price-text);
-  font-size: var(--text-body);
+  font-size: 14px;
 }
 
 .order-card-body {
-  padding: var(--space-2) 0;
+  padding: 8px 0;
   border-top: 1px solid var(--glass-border);
   border-bottom: 1px solid var(--glass-border);
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: 6px;
 }
 
 .order-detail-row {
   display: flex;
   justify-content: space-between;
-  font-size: var(--text-caption);
+  font-size: 12px;
 }
 
 .detail-label { color: var(--text-muted); }
@@ -1169,8 +1169,8 @@ const handleDeclineNegotiation = async (neg) => {
 }
 
 .orders-table th {
-  padding: var(--space-4) var(--space-6);
-  font-size: var(--text-caption);
+  padding: 16px 24px;
+  font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
   color: var(--text-muted);
@@ -1179,31 +1179,31 @@ const handleDeclineNegotiation = async (neg) => {
 }
 
 .orders-table td {
-  padding: var(--space-4) var(--space-6);
+  padding: 16px 24px;
   border-bottom: 1px solid var(--card-border);
 }
 
 .order-info, .customer-info {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: 4px;
 }
 
 .order-item, .customer-name {
-  font-size: var(--text-body);
+  font-size: 14px;
   font-weight: 700;
   color: var(--text-primary);
 }
 
 .order-meta, .order-date {
-  font-size: var(--text-caption);
+  font-size: 12px;
   color: var(--text-muted);
 }
 
 .table-img-box {
   width: 44px;
   height: 44px;
-  border-radius: var(--radius-sm);
+  border-radius: 8px;
   overflow: hidden;
   border: 1px solid var(--glass-border);
   background: var(--wood-deep);
@@ -1219,35 +1219,35 @@ const handleDeclineNegotiation = async (neg) => {
   font-family: 'JetBrains Mono', monospace;
   font-weight: 800;
   color: var(--price-text);
-  font-size: var(--text-body);
+  font-size: 14px;
 }
 
 .inv-meta {
-  font-size: var(--text-caption);
+  font-size: 11px;
   color: var(--text-muted);
   font-style: italic;
 }
 
 .neg-meta {
-  font-size: var(--text-caption);
+  font-size: 11px;
   color: var(--accent-amber);
   font-weight: 600;
 }
 
 .neg-notes {
   background: rgba(0,0,0,0.2);
-  padding: var(--space-3);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-caption);
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 12px;
   color: var(--text-muted);
-  margin-bottom: var(--space-3);
+  margin-bottom: 12px;
   border-left: 3px solid var(--accent-amber);
 }
 
 .reach-row {
   display: flex;
   justify-content: space-between;
-  margin-top: var(--space-3);
+  margin-top: 12px;
 }
 
 .reach-item {
@@ -1257,13 +1257,13 @@ const handleDeclineNegotiation = async (neg) => {
 }
 
 .reach-value {
-  font-size: var(--text-h2);
+  font-size: 18px;
   font-weight: 800;
   color: var(--text-primary);
 }
 
 .reach-label {
-  font-size: var(--text-micro);
+  font-size: 10px;
   text-transform: uppercase;
   color: var(--text-muted);
 }
@@ -1271,15 +1271,15 @@ const handleDeclineNegotiation = async (neg) => {
 .status-manage {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: 6px;
 }
 
 .status-select {
   background: var(--wood-walnut);
   border: 1px solid var(--glass-border);
   color: var(--text-muted);
-  font-size: var(--text-micro);
-  padding: var(--space-1) var(--space-1);
+  font-size: 10px;
+  padding: 2px 4px;
   border-radius: 4px;
   outline: none;
   cursor: pointer;
@@ -1291,9 +1291,9 @@ const handleDeclineNegotiation = async (neg) => {
 
 .status-badge {
   display: inline-block;
-  padding: var(--space-1) var(--space-3);
-  border-radius: var(--radius-md);
-  font-size: var(--text-caption);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -1309,12 +1309,12 @@ const handleDeclineNegotiation = async (neg) => {
 .stat-mini-row {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  margin-top: var(--space-3);
+  gap: 8px;
+  margin-top: 12px;
 }
 
 .stat-meta {
-  font-size: var(--text-caption);
+  font-size: 11px;
   color: var(--text-muted);
 }
 
@@ -1322,9 +1322,9 @@ const handleDeclineNegotiation = async (neg) => {
   background: var(--wood-walnut);
   border: 1px solid var(--glass-border);
   color: var(--text-primary);
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-caption);
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.3s;
@@ -1349,25 +1349,25 @@ const handleDeclineNegotiation = async (neg) => {
 
 .action-group {
   display: flex;
-  gap: var(--space-2);
+  gap: 8px;
   justify-content: flex-end;
 }
 
 .badge-new {
   background: #EF4444;
   color: white;
-  font-size: var(--text-micro);
+  font-size: 10px;
   font-weight: 800;
-  padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius-sm);
+  padding: 2px 8px;
+  border-radius: 10px;
 }
 
 .negotiation-card {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   border-radius: var(--radius-md);
-  padding: var(--space-5);
-  margin-bottom: var(--space-4);
+  padding: 20px;
+  margin-bottom: 16px;
   transition: all 0.3s;
 }
 
@@ -1379,14 +1379,14 @@ const handleDeclineNegotiation = async (neg) => {
 .neg-header {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
-  margin-bottom: var(--space-4);
+  gap: 16px;
+  margin-bottom: 16px;
 }
 
 .neg-img-box {
   width: 50px;
   height: 50px;
-  border-radius: var(--radius-sm);
+  border-radius: 10px;
   overflow: hidden;
   border: 1px solid var(--glass-border);
   background: var(--wood-deep);
@@ -1402,17 +1402,17 @@ const handleDeclineNegotiation = async (neg) => {
 .neg-info {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: 2px;
 }
 
 .neg-customer {
-  font-size: var(--text-body-lg);
+  font-size: 15px;
   font-weight: 800;
   color: var(--text-primary);
 }
 
 .neg-item {
-  font-size: var(--text-caption);
+  font-size: 12px;
   color: var(--text-muted);
 }
 
@@ -1420,35 +1420,35 @@ const handleDeclineNegotiation = async (neg) => {
   background: var(--wood-deep);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-sm);
-  padding: var(--space-3);
-  margin-bottom: var(--space-5);
+  padding: 12px;
+  margin-bottom: 20px;
 }
 
 .offer-label {
   display: block;
-  font-size: var(--text-micro);
+  font-size: 10px;
   font-weight: 800;
   text-transform: uppercase;
   color: var(--text-muted);
-  margin-bottom: var(--space-1);
+  margin-bottom: 4px;
 }
 
 .offer-value {
-  font-size: var(--text-h2);
+  font-size: 18px;
   font-weight: 800;
   color: var(--price-text);
 }
 
 .neg-actions {
   display: flex;
-  gap: var(--space-2);
+  gap: 8px;
 }
 
 .accept-btn, .decline-btn {
   flex: 1;
-  padding: var(--space-3);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-caption);
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 12px;
   font-weight: 800;
   cursor: pointer;
 }
@@ -1471,7 +1471,7 @@ const handleDeclineNegotiation = async (neg) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-sm);
+  border-radius: 10px;
   background: var(--wood-walnut);
   border: 1px solid var(--glass-border);
   color: var(--accent-amber);

@@ -116,12 +116,12 @@ const handleFile = (e) => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-2);
+  gap: 8px;
   color: var(--accent-amber);
 }
 
 .overlay-label {
-  font-size: var(--text-caption);
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1px;

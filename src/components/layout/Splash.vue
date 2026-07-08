@@ -71,15 +71,15 @@ const selectLang = (lang) => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-4);
+  gap: 16px;
   animation: fadeIn 1s ease-in-out;
 }
 
 .logo-container.splash-logo {
   width: 160px;
   height: 160px;
-  padding: var(--space-7);
-  margin-bottom: var(--space-4);
+  padding: 28px;
+  margin-bottom: 16px;
   border: 4px solid var(--wood-walnut);
 }
 
@@ -89,7 +89,7 @@ const selectLang = (lang) => {
 
 .tagline {
   color: var(--text-amber);
-  font-size: var(--text-body-lg);
+  font-size: 16px;
   font-weight: 500;
   margin: 0;
   font-style: italic;
@@ -105,24 +105,24 @@ const selectLang = (lang) => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-4);
+  gap: 16px;
   animation: slideUp 0.5s ease-out;
 }
 
 .select-text {
   color: var(--text-primary);
   font-weight: 600;
-  font-size: var(--text-body);
+  font-size: 14px;
 }
 
 .lang-btns {
   display: flex;
-  gap: var(--space-3);
+  gap: 12px;
 }
 
 .lang-btn {
-  padding: var(--space-3) var(--space-6);
-  border-radius: var(--radius-sm);
+  padding: 10px 24px;
+  border-radius: 8px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;

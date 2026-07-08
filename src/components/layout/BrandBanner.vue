@@ -62,21 +62,21 @@ defineProps({
   width: 100%;
   min-height: 340px;
   background: linear-gradient(135deg, var(--wood-walnut) 0%, var(--wood-deep) 100%);
-  border-radius: var(--radius-lg);
+  border-radius: 32px;
   overflow: hidden;
   border: 1px solid var(--glass-border);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--space-10);
+  padding: 40px;
   box-shadow: 0 20px 50px rgba(0,0,0,0.6);
-  margin-bottom: var(--space-12);
+  margin-bottom: 48px;
 }
 
 @media (max-width: 768px) {
   .brand-banner {
     flex-direction: column;
-    padding: var(--space-10) var(--space-6);
+    padding: 40px 24px;
     min-height: auto;
     text-align: center;
   }
@@ -87,7 +87,7 @@ defineProps({
   z-index: 2;
   display: flex;
   align-items: center;
-  gap: var(--space-12);
+  gap: 60px;
   width: 100%;
   max-width: 1000px;
 }
@@ -95,7 +95,7 @@ defineProps({
 @media (max-width: 768px) {
   .banner-glass {
     flex-direction: column;
-    gap: var(--space-8);
+    gap: 32px;
   }
 }
 
@@ -136,7 +136,7 @@ defineProps({
   height: 100px;
   background: #FDFBF7;
   border-radius: 50%;
-  padding: var(--space-4);
+  padding: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -150,7 +150,7 @@ defineProps({
   .logo-vault {
     width: 80px;
     height: 80px;
-    padding: var(--space-3);
+    padding: 12px;
   }
 }
 
@@ -192,12 +192,12 @@ defineProps({
 .heritage-tag {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  font-size: var(--text-caption);
+  gap: 8px;
+  font-size: 11px;
   font-weight: 800;
   color: var(--accent-amber);
   letter-spacing: 2px;
-  margin-bottom: var(--space-3);
+  margin-bottom: 12px;
 }
 
 @media (max-width: 768px) {
@@ -217,48 +217,48 @@ defineProps({
 .banner-title {
   display: flex;
   flex-direction: column;
-  margin-bottom: var(--space-4);
+  margin-bottom: 16px;
 }
 
 .title-top {
-  font-size: var(--text-display);
+  font-size: 42px;
   font-weight: 900;
   color: var(--text-primary);
   letter-spacing: 4px;
-  line-height: var(--leading-tight);
+  line-height: 1;
 }
 
 .title-bottom {
-  font-size: var(--text-h2);
+  font-size: 18px;
   font-weight: 700;
   color: var(--text-amber);
   letter-spacing: 8px;
-  margin-top: var(--space-1);
+  margin-top: 4px;
 }
 
 @media (max-width: 480px) {
-  .title-top { font-size: var(--text-display); }
-  .title-bottom { font-size: var(--text-body); letter-spacing: 6px; }
+  .title-top { font-size: 32px; }
+  .title-bottom { font-size: 14px; letter-spacing: 6px; }
 }
 
 .banner-subtitle {
-  font-size: var(--text-body-lg);
+  font-size: 15px;
   color: var(--text-muted);
   max-width: 400px;
-  line-height: var(--leading-relaxed);
-  margin-bottom: var(--space-8);
+  line-height: 1.6;
+  margin-bottom: 32px;
 }
 
 @media (max-width: 768px) {
   .banner-subtitle {
-    margin: 0 auto var(--space-8);
+    margin: 0 auto 32px;
   }
 }
 
 .banner-actions {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: 16px;
 }
 
 .heritage-line {
@@ -276,9 +276,9 @@ defineProps({
 
 .digital-coordinates {
   display: flex;
-  gap: var(--space-3);
+  gap: 12px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: var(--text-caption);
+  font-size: 11px;
   color: var(--text-muted);
   opacity: 0.6;
 }

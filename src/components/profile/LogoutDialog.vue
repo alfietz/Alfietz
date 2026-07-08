@@ -29,15 +29,15 @@ defineEmits(['cancel', 'confirm'])
   align-items: center;
   justify-content: center;
   z-index: 2000;
-  padding: var(--space-5);
+  padding: 20px;
   font-family: 'Inter', -apple-system, sans-serif;
   backdrop-filter: blur(8px);
 }
 
 .dialog-card {
   background: var(--wood-deep);
-  border-radius: var(--radius-lg);
-  padding: var(--space-8) var(--space-6);
+  border-radius: 20px;
+  padding: 32px 24px;
   width: 100%;
   max-width: 320px;
   text-align: center;
@@ -45,28 +45,28 @@ defineEmits(['cancel', 'confirm'])
 }
 
 .dialog-title {
-  margin: 0 0 var(--space-3) 0;
-  font-size: var(--text-h2);
+  margin: 0 0 12px 0;
+  font-size: 20px;
   font-weight: 700;
   color: var(--text-primary);
 }
 
 .dialog-text {
-  margin: 0 0 var(--space-6) 0;
-  font-size: var(--text-body);
+  margin: 0 0 24px 0;
+  font-size: 14px;
   color: var(--text-muted);
 }
 
 .dialog-actions {
   display: flex;
-  gap: var(--space-3);
+  gap: 12px;
 }
 
 .btn-cancel, .btn-confirm {
   flex: 1;
-  padding: var(--space-4);
-  border-radius: var(--radius-md);
-  font-size: var(--text-body);
+  padding: 14px;
+  border-radius: 12px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;

@@ -1,7 +1,7 @@
 <!-------- (ReviewsList.vue) ./src/components/communication/ReviewsList.vue ------------>
 <script setup>
-import { ref, computed, watch } from 'vue'
-import { useProgressiveData } from '../../composables/useProgressiveData'
+import { ref, onMounted, computed, watch } from 'vue'
+import { db } from '../../db/client'
 
 const props = defineProps({
   productId: {
@@ -26,50 +26,11 @@ const props = defineProps({
 
 const emit = defineEmits(['go-back', 'write-review', 'go-product', 'navigate'])
 
-const activeId = computed(() => props.productId || props.tailorId)
-const isProductReview = computed(() => !!props.productId)
-
+const reviews = ref([])
+const loading = ref(true)
 const sortBy = ref('newest') // newest, highest, lowest
 const filterRating = ref(0) // 0 means all
-
-const reviewsQuery = useProgressiveData('get_reviews', {
-  isApp: props.isApp,
-  tailorId: props.isApp ? null : props.tailorId,
-  productId: (props.isApp || props.tailorId) ? null : props.productId
-}, {
-  cacheKey: `reviews_${props.productId || 'app'}_${props.tailorId || ''}`,
-  ttl: 2 * 60 * 1000
-})
-
-const reviews = computed(() => {
-  const raw = reviewsQuery.data.value
-  if (!raw || !raw.rows || !Array.isArray(raw.rows)) return []
-  return raw.rows.map(r => ({
-    id: r.id,
-    author: (r.first_name || r.last_name) ? `${r.first_name || ''} ${r.last_name || ''}`.trim() : r.username,
-    rating: r.rating,
-    text: r.text,
-    time: formatDate(r.created_at),
-    avatar: r.avatar,
-    image: r.image || null,
-    created_at: r.created_at,
-    productName: r.product_name || null,
-    productId: r.product_id || null,
-    productImage: r.product_image || null
-  }))
-})
-
-const tailorInfo = computed(() => {
-  if (!props.tailorId) return null
-  const raw = reviewsQuery.data.value
-  if (!raw || !raw.rows || raw.rows.length === 0) return null
-  const r = raw.rows[0]
-  return {
-    name: (r.tailor_first || r.tailor_last) ? `${r.tailor_first || ''} ${r.tailor_last || ''}`.trim() : (r.tailor_username || props.t('artisan'))
-  }
-})
-
-const loading = computed(() => !reviewsQuery.data.value && !reviewsQuery.error.value)
+const tailorInfo = ref(null)
 
 const stats = computed(() => {
   const counts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
@@ -105,14 +66,45 @@ const filteredAndSortedReviews = computed(() => {
   return result
 })
 
-watch(() => [props.productId, props.tailorId], ([pId, tId]) => {
-  reviewsQuery.setParams({
-    isApp: props.isApp,
-    tailorId: props.isApp ? null : tId,
-    productId: (props.isApp || tId) ? null : pId
-  })
-  reviewsQuery.refresh()
-})
+const fetchReviews = async () => {
+  try {
+    loading.value = true
+    
+    const res = await db.runAction('get_reviews', {
+      isApp: props.isApp,
+      tailorId: props.isApp ? null : props.tailorId,
+      productId: (props.isApp || props.tailorId) ? null : props.productId
+    });
+
+    reviews.value = res.rows.map(r => ({
+      id: r.id,
+      author: (r.first_name || r.last_name) ? `${r.first_name || ''} ${r.last_name || ''}`.trim() : r.username,
+      rating: r.rating,
+      text: r.text,
+      time: formatDate(r.created_at),
+      avatar: r.avatar,
+      image: r.image || null,
+      created_at: r.created_at,
+      productName: r.product_name || null,
+      productId: r.product_id || null,
+      productImage: r.product_image || null
+    }))
+
+    if (props.tailorId && res.rows.length > 0) {
+      const r = res.rows[0];
+      tailorInfo.value = {
+        name: (r.tailor_first || r.tailor_last) ? `${r.tailor_first || ''} ${r.tailor_last || ''}`.trim() : (r.tailor_username || props.t('artisan'))
+      }
+    }
+  } catch (e) {
+    console.error('Error fetching reviews:', e)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(fetchReviews)
+watch(() => [props.productId, props.tailorId], fetchReviews)
 
 function formatDate(dateStr) {
   if (!dateStr) return props.t('recently')
@@ -255,7 +247,7 @@ function formatDate(dateStr) {
 .reviews-page {
   background: var(--wood-deep);
   min-height: 100vh;
-  padding: var(--space-10) var(--space-6) 140px;
+  padding: 40px 24px 140px;
   max-width: 800px;
   margin: 0 auto;
 }
@@ -263,8 +255,8 @@ function formatDate(dateStr) {
 .header-row {
   display: flex;
   align-items: center;
-  gap: var(--space-5);
-  margin-bottom: var(--space-10);
+  gap: 20px;
+  margin-bottom: 40px;
 }
 
 .back-btn {
@@ -287,7 +279,7 @@ function formatDate(dateStr) {
 }
 
 .title {
-  font-size: var(--text-h1);
+  font-size: 24px;
   font-weight: 800;
   color: var(--text-primary);
   margin: 0;
@@ -298,8 +290,8 @@ function formatDate(dateStr) {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--space-5);
-  padding: var(--space-12) var(--space-5);
+  gap: 20px;
+  padding: 80px 20px;
   color: var(--text-muted);
 }
 
@@ -319,17 +311,17 @@ function formatDate(dateStr) {
 .rating-overview-card {
   background: var(--wood-walnut);
   border: 1px solid var(--glass-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-6);
+  border-radius: 24px;
+  padding: 24px;
   display: flex;
-  gap: var(--space-8);
-  margin-bottom: var(--space-8);
+  gap: 32px;
+  margin-bottom: 32px;
 }
 
 @media (max-width: 600px) {
   .rating-overview-card {
     flex-direction: column;
-    gap: var(--space-6);
+    gap: 24px;
     align-items: center;
     text-align: center;
   }
@@ -344,7 +336,7 @@ function formatDate(dateStr) {
 }
 
 .rating-score {
-  font-size: var(--text-display);
+  font-size: 48px;
   font-weight: 800;
   color: var(--text-primary);
   margin: 0;
@@ -352,36 +344,36 @@ function formatDate(dateStr) {
 
 .star-rating {
   display: flex;
-  gap: var(--space-1);
+  gap: 2px;
 }
 
-.large-stars .star { font-size: var(--text-h2); }
-.small-stars .star { font-size: var(--text-caption); }
+.large-stars .star { font-size: 20px; }
+.small-stars .star { font-size: 12px; }
 
 .star.filled { color: var(--accent-amber); }
 .star.empty { color: rgba(255,255,255,0.1); }
 
 .rating-count {
-  font-size: var(--text-body);
+  font-size: 14px;
   color: var(--text-muted);
-  margin-top: var(--space-2);
+  margin-top: 8px;
 }
 
 .rating-bars {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: 8px;
   width: 100%;
 }
 
 .rating-bar-row {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: 12px;
   cursor: pointer;
-  padding: var(--space-1);
-  border-radius: var(--radius-sm);
+  padding: 4px;
+  border-radius: 8px;
   transition: background 0.2s;
 }
 
@@ -389,7 +381,7 @@ function formatDate(dateStr) {
 .rating-bar-row.active { background: rgba(217, 164, 4, 0.1); }
 
 .star-label {
-  font-size: var(--text-caption);
+  font-size: 12px;
   font-weight: 700;
   color: var(--text-muted);
   width: 30px;
@@ -410,7 +402,7 @@ function formatDate(dateStr) {
 }
 
 .count-label {
-  font-size: var(--text-caption);
+  font-size: 12px;
   color: var(--text-muted);
   width: 20px;
   text-align: right;
@@ -420,17 +412,17 @@ function formatDate(dateStr) {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--space-6);
-  gap: var(--space-3);
+  margin-bottom: 24px;
+  gap: 12px;
 }
 
 .sort-select {
   background: var(--wood-walnut);
   border: 1px solid var(--glass-border);
   color: var(--text-primary);
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-body);
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-size: 14px;
   outline: none;
   cursor: pointer;
 }
@@ -439,9 +431,9 @@ function formatDate(dateStr) {
   background: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.2);
   color: #EF4444;
-  padding: var(--space-2) 14px;
-  border-radius: var(--radius-sm);
-  font-size: var(--text-caption);
+  padding: 8px 14px;
+  border-radius: 12px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
 }
@@ -449,28 +441,28 @@ function formatDate(dateStr) {
 .reviews-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: 20px;
 }
 
 .review-card {
   background: var(--wood-walnut);
   border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
-  padding: var(--space-5);
+  border-radius: 20px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: 16px;
 }
 
 .review-header {
   display: flex;
-  gap: var(--space-4);
+  gap: 16px;
 }
 
 .avatar {
   width: 52px;
   height: 52px;
-  border-radius: var(--radius-md);
+  border-radius: 16px;
   object-fit: cover;
 }
 
@@ -478,12 +470,12 @@ function formatDate(dateStr) {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: 4px;
 }
 
 .reviewer-name {
   margin: 0;
-  font-size: var(--text-body-lg);
+  font-size: 16px;
   font-weight: 700;
   color: var(--text-primary);
 }
@@ -491,41 +483,41 @@ function formatDate(dateStr) {
 .verified-badge {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
-  font-size: var(--text-micro);
+  gap: 4px;
+  font-size: 10px;
   font-weight: 800;
   color: #10B981;
   background: rgba(16, 185, 129, 0.1);
-  padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius-sm);
+  padding: 2px 6px;
+  border-radius: 6px;
   width: fit-content;
 }
 
 .meta-row {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: 12px;
 }
 
 .review-time {
-  font-size: var(--text-caption);
+  font-size: 12px;
   color: var(--text-muted);
 }
 
 .product-context {
   background: rgba(0,0,0,0.15);
-  border-radius: var(--radius-sm);
-  padding: var(--space-2) var(--space-3);
+  border-radius: 12px;
+  padding: 8px 12px;
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: 12px;
   cursor: pointer;
 }
 
 .product-mini-img-box {
   width: 36px;
   height: 36px;
-  border-radius: var(--radius-sm);
+  border-radius: 8px;
   overflow: hidden;
 }
 
@@ -536,19 +528,19 @@ function formatDate(dateStr) {
 }
 
 .product-context-info { flex: 1; display: flex; flex-direction: column; }
-.context-label { font-size: var(--text-micro); color: var(--text-muted); text-transform: uppercase; }
-.context-name { font-size: var(--text-body); font-weight: 700; color: var(--text-amber); }
+.context-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; }
+.context-name { font-size: 13px; font-weight: 700; color: var(--text-amber); }
 
 .review-text {
   margin: 0;
-  font-size: var(--text-body);
-  line-height: var(--leading-relaxed);
+  font-size: 14px;
+  line-height: 1.6;
   color: var(--text-muted);
 }
 
 .review-media-box {
-  margin-top: var(--space-3);
-  border-radius: var(--radius-sm);
+  margin-top: 12px;
+  border-radius: 12px;
   overflow: hidden;
   max-width: 300px;
 }
@@ -557,15 +549,15 @@ function formatDate(dateStr) {
 
 .review-footer {
   display: flex;
-  gap: var(--space-4);
+  gap: 16px;
   border-top: 1px solid rgba(255,255,255,0.05);
-  padding-top: var(--space-4);
+  padding-top: 16px;
 }
 
 .helpful-btn, .report-btn {
   background: none;
   border: none;
-  font-size: var(--text-caption);
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
   color: var(--text-muted);
@@ -575,9 +567,9 @@ function formatDate(dateStr) {
 
 .no-reviews {
   text-align: center;
-  padding: var(--space-12) var(--space-5);
+  padding: 60px 20px;
   color: var(--text-muted);
-  border-radius: var(--radius-lg);
+  border-radius: 24px;
   border: 1px dashed var(--glass-border);
 }
 
@@ -586,7 +578,7 @@ function formatDate(dateStr) {
   bottom: 0;
   left: 0;
   width: 100%;
-  padding: var(--space-6) var(--space-5) var(--space-10);
+  padding: 24px 20px 40px;
   background: linear-gradient(to top, var(--wood-deep) 80%, transparent);
   z-index: 10;
   display: flex;
@@ -599,15 +591,15 @@ function formatDate(dateStr) {
   background: var(--accent-amber);
   color: white;
   border: none;
-  border-radius: var(--radius-md);
-  padding: var(--space-5);
-  font-size: var(--text-body-lg);
+  border-radius: 20px;
+  padding: 18px;
+  font-size: 16px;
   font-weight: 800;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-3);
+  gap: 12px;
   box-shadow: 0 10px 25px var(--accent-glow);
 }
 </style>

@@ -73,7 +73,7 @@ const errorData = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--space-6);
+  padding: 24px;
   position: relative;
   overflow: hidden;
   text-align: center;
@@ -88,7 +88,7 @@ const errorData = computed(() => {
   align-items: center;
   background: var(--glass-bg);
   backdrop-filter: blur(20px);
-  padding: var(--space-10) var(--space-6);
+  padding: 40px 24px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--glass-border);
   box-shadow: 0 20px 50px rgba(0,0,0,0.5);
@@ -97,12 +97,12 @@ const errorData = computed(() => {
 .error-badge {
   background: var(--wood-walnut);
   color: var(--accent-amber);
-  font-size: var(--text-body);
+  font-size: 14px;
   font-weight: 800;
-  padding: var(--space-2) var(--space-4);
+  padding: 6px 16px;
   border-radius: 100px;
   border: 1px solid var(--accent-amber);
-  margin-bottom: var(--space-8);
+  margin-bottom: 32px;
   letter-spacing: 2px;
 }
 
@@ -113,7 +113,7 @@ const errorData = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: var(--space-8);
+  margin-bottom: 32px;
 }
 
 .vibe-icon-glow {
@@ -133,27 +133,27 @@ const errorData = computed(() => {
 }
 
 .vibe-icon {
-  font-size: var(--text-display);
-  line-height: var(--leading-tight);
+  font-size: 64px;
+  line-height: 1;
   z-index: 1;
 }
 
 .error-title {
-  font-size: var(--text-display);
-  margin-bottom: var(--space-4);
+  font-size: 28px;
+  margin-bottom: 16px;
   color: var(--text-primary);
   font-weight: 800;
 }
 
 .error-message {
-  font-size: var(--text-body-lg);
+  font-size: 16px;
   color: var(--text-muted);
-  margin-bottom: var(--space-10);
-  line-height: var(--leading-relaxed);
+  margin-bottom: 40px;
+  line-height: 1.6;
 }
 
 .back-home-btn {
-  gap: var(--space-3);
+  gap: 12px;
   max-width: 240px;
 }
 
@@ -189,10 +189,10 @@ const errorData = computed(() => {
 
 @media (max-width: 480px) {
   .error-title {
-    font-size: var(--text-h1);
+    font-size: 24px;
   }
   .error-message {
-    font-size: var(--text-body);
+    font-size: 14px;
   }
 }
 </style>

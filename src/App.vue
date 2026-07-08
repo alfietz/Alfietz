@@ -14,7 +14,7 @@ import WebHeader from './components/layout/WebHeader.vue'
 import LoadingSpinner from './components/layout/LoadingSpinner.vue'
 import Splash from './components/layout/Splash.vue'
 import PWAInstallPrompt from './components/layout/PWAInstallPrompt.vue'
-
+import SkeletonLoader from './components/layout/SkeletonLoader.vue'
 import Cart from './components/shop/Cart.vue'
 import { SpeedInsights } from "@vercel/speed-insights/vue"
 import { Analytics } from "@vercel/analytics/vue"
@@ -51,6 +51,7 @@ const userData = ref(getStored('user_data', {
 
 const currentLanguage = ref(getStored('language', 'en'))
 const isGlobalLoading = ref(false)
+const isInitialLoading = ref(true)
 const loadingMessage = ref('Summoning Heritage...')
 const toast = ref({ show: false, message: '', type: 'info' })
 const isDeepLoading = ref(false)
@@ -314,7 +315,10 @@ const handleLogin = async (data) => {
       if (u.user_type === 'supplier' && res.locationUpdate) {
         const confirm = window.confirm(`Ancestors notice you are in ${res.locationUpdate.city}, ${res.locationUpdate.country}. Would you like to update your shop location to this place?`);
         if (confirm) {
-          await db.runAction('confirm_location_update', res.locationUpdate);
+          await db.runAction('confirm_location_update', {
+            userId: u.id,
+            ...res.locationUpdate
+          });
           showToast('Shop location updated successfully!', 'success');
         }
       }
@@ -491,6 +495,7 @@ const fetchInitialData = async (force = false) => {
     }
   } finally {
     isGlobalLoading.value = false;
+    isInitialLoading.value = false;
     isSyncing.value = false;
   }
 }
@@ -513,6 +518,7 @@ const toggleLike = async (product) => {
 
   try {
     await db.runAction('toggle_like', { 
+      userId: userData.value.id, 
       productId: product.id, 
       isAdding: product.liked 
     });
@@ -647,6 +653,7 @@ const handleWriteReview = async (data) => {
   try {
     await db.runAction('write_review', {
       productId: selectedProduct.value.id,
+      userId: userData.value.id,
       rating: data.rating,
       text: data.text,
       image: data.image || null
@@ -666,6 +673,7 @@ const handleAppExperienceSubmit = async (data) => {
   loadingMessage.value = 'Sharing your journey with the Tribe...';
   try {
     await db.runAction('submit_app_review', {
+      userId: userData.value.id,
       rating: data.rating,
       text: data.text,
       image: data.image
@@ -684,7 +692,7 @@ const handleFeedbackSubmit = async (message) => {
   isGlobalLoading.value = true
   loadingMessage.value = 'Sending feedback...'
   try {
-    await db.runAction('submit_feedback', { message })
+    await db.runAction('submit_feedback', { userId: userData.value.id, message })
     showToast('Feedback sent! Thank you.', 'success')
     navigateTo('home')
   } catch (e) {
@@ -698,7 +706,7 @@ const handleProductDelete = async (productId) => {
   isGlobalLoading.value = true;
   loadingMessage.value = 'Removing heritage item...';
   try {
-    await db.runAction('delete_product', { productId });
+    await db.runAction('delete_product', { productId, userId: userData.value.id });
     showToast('Item removed successfully.', 'success')
     await fetchInitialData()
     navigateTo('home')
@@ -869,6 +877,9 @@ const showNavBar = computed(() => {
 
 <template>
   <div class="app-wrapper">
+    <SkeletonLoader v-if="isInitialLoading" :t="t" />
+    
+    <template v-else>
     <!-- DESKTOP HEADER (WEB MODE) -->
     <WebHeader 
       v-if="showNavBar" 
@@ -1009,6 +1020,7 @@ const showNavBar = computed(() => {
     />
     <SpeedInsights />
     <Analytics />
+    </template>
   </div>
 </template>
 
@@ -1022,12 +1034,12 @@ const showNavBar = computed(() => {
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-4) var(--space-6);
+  gap: var(--spacing-sm);
+  padding: 0.875rem var(--spacing-lg);
   border-radius: var(--radius-full);
   background: var(--wood-deep);
   border: 1px solid var(--glass-border);
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
   z-index: 9999;
   min-width: 17.5rem;
   max-width: 90vw;
@@ -1036,7 +1048,7 @@ const showNavBar = computed(() => {
 .toast-notification.error { border-color: #EF4444; }
 .toast-notification.success .toast-icon { color: #10B981; }
 .toast-notification.error .toast-icon { color: #EF4444; }
-.toast-message { font-size: var(--text-body); font-weight: 600; color: var(--text-primary); }
+.toast-message { font-size: var(--font-sm); font-weight: 600; color: var(--text-primary); }
 
 @keyframes fadeUp {
   from { opacity: 0; transform: translate(-50%, 20px); }

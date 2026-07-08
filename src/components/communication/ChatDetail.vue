@@ -237,8 +237,8 @@ watch(messages, () => {
 .chat-header {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
-  padding: var(--space-4) var(--space-5);
+  gap: 16px;
+  padding: 16px 20px;
   background: var(--wood-walnut);
   border-bottom: 1px solid var(--glass-border);
   z-index: 10;
@@ -247,7 +247,7 @@ watch(messages, () => {
 .user-info {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: 12px;
 }
 
 .avatar-wrapper-mini {
@@ -281,14 +281,14 @@ watch(messages, () => {
 }
 
 .header-name {
-  font-size: var(--text-body-lg);
+  font-size: 16px;
   font-weight: 700;
   color: var(--text-primary);
   margin: 0;
 }
 
 .online-status {
-  font-size: var(--text-caption);
+  font-size: 11px;
   color: #10B981;
   font-weight: 600;
 }
@@ -298,7 +298,7 @@ watch(messages, () => {
   border: none;
   color: var(--text-muted);
   cursor: pointer;
-  padding: var(--space-2);
+  padding: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -321,7 +321,7 @@ watch(messages, () => {
 .messages-container {
   flex: 1;
   overflow-y: auto;
-  padding: var(--space-5);
+  padding: 20px;
   display: flex;
   flex-direction: column;
 }
@@ -329,7 +329,7 @@ watch(messages, () => {
 .skeleton-messages {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: 16px;
   width: 100%;
 }
 
@@ -345,7 +345,7 @@ watch(messages, () => {
   height: 44px;
   width: 60%;
   background: var(--wood-walnut);
-  border-radius: var(--radius-md);
+  border-radius: 18px;
   position: relative;
   overflow: hidden;
   border: 1px solid var(--glass-border);
@@ -368,9 +368,9 @@ watch(messages, () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-4);
+  gap: 16px;
   text-align: center;
-  margin-top: var(--space-10);
+  margin-top: 40px;
 }
 
 .hero-avatar-wrapper {
@@ -401,7 +401,7 @@ watch(messages, () => {
 }
 
 .hero-name {
-  font-size: var(--text-h2);
+  font-size: 20px;
   font-weight: 800;
   color: var(--text-primary);
   margin: 0;
@@ -409,7 +409,7 @@ watch(messages, () => {
 
 .hero-subtitle {
   font-family: 'JetBrains Mono', monospace;
-  font-size: var(--text-caption);
+  font-size: 11px;
   color: var(--text-amber);
   text-transform: uppercase;
   letter-spacing: 2px;
@@ -418,7 +418,7 @@ watch(messages, () => {
 .messages-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: 16px;
 }
 
 .message-wrapper {
@@ -434,17 +434,17 @@ watch(messages, () => {
   height: 28px;
   border-radius: 50%;
   object-fit: cover;
-  margin-right: var(--space-2);
+  margin-right: 8px;
   margin-top: auto;
   border: 1px solid var(--glass-border);
 }
 
 .message-bubble {
   max-width: 75%;
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-md);
-  font-size: var(--text-body-lg);
-  line-height: var(--leading-snug);
+  padding: 12px 16px;
+  border-radius: 18px;
+  font-size: 15px;
+  line-height: 1.5;
   box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
@@ -462,23 +462,23 @@ watch(messages, () => {
 }
 
 .message-time {
-  font-size: var(--text-micro);
+  font-size: 10px;
   opacity: 0.6;
   display: block;
   text-align: right;
-  margin-top: var(--space-1);
+  margin-top: 4px;
 }
 
 .chat-input-area {
-  padding: var(--space-3) var(--space-5) var(--space-8);
+  padding: 12px 20px 32px;
   background: var(--wood-deep);
   border-top: 1px solid var(--glass-border);
 }
 
 .quick-emojis {
   display: flex;
-  gap: var(--space-3);
-  margin-bottom: var(--space-3);
+  gap: 10px;
+  margin-bottom: 12px;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -486,20 +486,20 @@ watch(messages, () => {
 .emoji-btn {
   background: var(--wood-walnut);
   border: 1px solid var(--glass-border);
-  border-radius: var(--radius-sm);
-  padding: var(--space-2) var(--space-3);
-  font-size: var(--text-body-lg);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 16px;
   cursor: pointer;
 }
 
 .input-wrapper {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: 12px;
   background: var(--wood-walnut);
   border: 1px solid var(--glass-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-2) var(--space-4);
+  border-radius: 24px;
+  padding: 8px 16px;
 }
 
 .input-wrapper textarea {
@@ -507,8 +507,8 @@ watch(messages, () => {
   background: transparent;
   border: none;
   color: var(--text-primary);
-  padding: var(--space-2) 0;
-  font-size: var(--text-body-lg);
+  padding: 8px 0;
+  font-size: 15px;
   outline: none;
   resize: none;
 }

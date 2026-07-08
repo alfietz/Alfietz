@@ -77,19 +77,19 @@ const getEmoji = (message) => {
 .notifications-page {
   background-color: var(--wood-deep);
   min-height: 100vh;
-  padding: var(--space-6) var(--space-5);
+  padding: 24px 20px;
 }
 
 /* Header Styles */
 .header {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
-  margin-bottom: var(--space-8);
+  gap: 16px;
+  margin-bottom: 32px;
 }
 
 .title {
-  font-size: var(--text-h2);
+  font-size: 20px;
   font-weight: 600;
   margin: 0;
   color: var(--text-primary);
@@ -99,16 +99,16 @@ const getEmoji = (message) => {
 .list-container {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: 16px;
 }
 
 .notification-card {
   background-color: var(--wood-walnut);
-  border-radius: var(--radius-md);
-  padding: var(--space-4);
+  border-radius: 12px;
+  padding: 16px;
   display: flex;
   align-items: center;
-  gap: var(--space-4);
+  gap: 16px;
   cursor: pointer;
   transition: transform 0.2s, background-color 0.2s;
 }
@@ -122,7 +122,7 @@ const getEmoji = (message) => {
 .text-content {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: 4px;
 }
 
 /* --- Read State (Default) --- */
@@ -136,17 +136,17 @@ const getEmoji = (message) => {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  font-size: var(--text-h2);
+  font-size: 20px;
 }
 
 .item-name {
   font-weight: 600;
-  font-size: var(--text-body);
+  font-size: 14px;
   color: var(--text-muted);
 }
 
 .item-time {
-  font-size: var(--text-body);
+  font-size: 13px;
   color: var(--text-light);
 }
 
@@ -167,8 +167,8 @@ const getEmoji = (message) => {
 .empty-state {
   text-align: center;
   color: var(--text-light);
-  padding: var(--space-10) 0;
-  font-size: var(--text-body);
+  padding: 40px 0;
+  font-size: 14px;
 }
 
 .back-btn {

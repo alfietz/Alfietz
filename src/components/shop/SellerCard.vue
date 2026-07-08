@@ -42,7 +42,7 @@ defineEmits(['select'])
 .seller-card {
   min-width: 150px;
   background: var(--wood-walnut);
-  padding: var(--space-5) var(--space-4);
+  padding: 20px 16px;
   border-radius: var(--radius-lg);
   display: flex;
   flex-direction: column;
@@ -62,7 +62,7 @@ defineEmits(['select'])
 
 .avatar-wrapper {
   position: relative;
-  margin-bottom: var(--space-4);
+  margin-bottom: 16px;
 }
 
 .seller-avatar {
@@ -89,30 +89,30 @@ defineEmits(['select'])
 }
 
 .seller-name {
-  font-size: var(--text-h3);
+  font-size: 15px;
   font-weight: 700;
   color: var(--text-primary);
   margin: 0;
 }
 
 .local-tag {
-  font-size: var(--text-micro);
+  font-size: 10px;
   font-weight: 800;
   color: #10B981;
   background: rgba(16, 185, 129, 0.1);
-  padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius-sm);
-  margin-left: var(--space-1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
   white-space: nowrap;
 }
 
 .shop-verified-tag {
-  font-size: var(--text-micro);
+  font-size: 9px;
   font-weight: 800;
   color: var(--accent-amber);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: var(--space-1);
+  margin-bottom: 6px;
   opacity: 0.8;
 }
 
@@ -120,19 +120,19 @@ defineEmits(['select'])
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-1);
+  gap: 6px;
   background: var(--wood-deep);
-  padding: var(--space-1) var(--space-3);
-  border-radius: var(--radius-md);
+  padding: 4px 10px;
+  border-radius: 20px;
 }
 
 .star {
   color: var(--text-amber);
-  font-size: var(--text-body-lg);
+  font-size: 14px;
 }
 
 .rating-value, .likes-value {
-  font-size: var(--text-caption);
+  font-size: 12px;
   font-weight: 700;
   color: var(--text-primary);
 }

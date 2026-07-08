@@ -47,19 +47,19 @@ defineEmits(['go-back', 'go-details', 'toggle-like'])
 .explore-page {
   background-color: var(--wood-deep);
   min-height: 100vh;
-  padding: var(--space-6) var(--space-5);
+  padding: 24px 20px;
 }
 
 /* Header Styles */
 .header {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
-  margin-bottom: var(--space-8);
+  gap: 16px;
+  margin-bottom: 32px;
 }
 
 .title {
-  font-size: var(--text-h1);
+  font-size: 22px;
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
@@ -68,7 +68,7 @@ defineEmits(['go-back', 'go-details', 'toggle-like'])
 .explore-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: var(--space-4);
+  gap: 16px;
 }
 
 .back-btn {

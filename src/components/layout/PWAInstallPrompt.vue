@@ -89,7 +89,7 @@ const emit = defineEmits(['install', 'close'])
   margin-top: 0.25rem;
   font-size: var(--font-xs);
   color: var(--text-muted);
-  line-height: var(--leading-tight);
+  line-height: 1.3;
 }
 
 .banner-actions {
@@ -110,7 +110,7 @@ const emit = defineEmits(['install', 'close'])
   cursor: pointer;
   white-space: nowrap;
   transition: transform 0.2s;
-  line-height: var(--leading-tight);
+  line-height: 1;
 }
 
 .btn-install:hover {

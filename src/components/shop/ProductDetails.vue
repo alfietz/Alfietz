@@ -1,11 +1,10 @@
 <script setup>
-import { ref, computed, watch, h } from 'vue'
+import { ref, computed, watch, onMounted, h } from 'vue'
 import ProductCard from './ProductCard.vue'
 import SectionHeader from '../layout/SectionHeader.vue'
 import BaseDialog from '../layout/BaseDialog.vue'
-import { useRoute } from 'vue-router'
 import { db } from '../../db/client'
-import { useProgressiveData } from '../../composables/useProgressiveData'
+import { useRoute } from 'vue-router'
 
 const props = defineProps({
   productId: {
@@ -33,49 +32,6 @@ const props = defineProps({
 const emit = defineEmits(['go-back', 'go-reviews', 'go-feedback', 'toggle-favorite', 'delete', 'go-edit', 'order', 'negotiate', 'go-login', 'go-tailor'])
 
 const route = useRoute()
-
-const activeId = computed(() => route.params.id || props.productId)
-
-const productData = useProgressiveData('get_product_details', { productId: activeId.value }, {
-  cacheKey: `product_${activeId.value}`,
-  ttl: 2 * 60 * 1000
-})
-
-const product = computed(() => {
-  const raw = productData.data.value
-  if (!raw) return null
-  const p = raw.product || raw
-  const isLiked = props.favoriteItems.some(fav => fav.id === p.id)
-  return { ...p, liked: isLiked, isFavorite: isLiked }
-})
-const productError = computed(() => {
-  const e = productData.error.value
-  if (!e) return null
-  return typeof e === 'string' ? e : (e?.message || 'Failed to load heritage item')
-})
-const reviews = computed(() => (productData.data.value?.reviews) || [])
-const similarProducts = ref([])
-
-watch(activeId, (id) => {
-  if (!id) return
-  productData.setParams({ productId: id })
-  productData.refresh()
-}, { immediate: true })
-
-watch(() => productData.data.value, (raw) => {
-  if (!raw) return
-  const p = raw.product || raw
-  if (p && p.category_id && p.id) {
-    db.runAction('get_similar_products', {
-      categoryId: p.category_id,
-      productId: p.id
-    }).then(data => {
-      similarProducts.value = data.rows || []
-    }).catch(e => {
-      console.error('Failed to load similar products:', e)
-    })
-  }
-})
 
 // Dialog State
 const dialog = ref({
@@ -123,13 +79,12 @@ const Hexagon = {
   }
 }
 
+const product = ref(null)
+const reviews = ref([])
+const loading = ref(true)
+const error = ref(null)
 const parsedColors = ref([])
 const gallery = ref([])
-const activeImage = ref('')
-
-watch(() => productData.data.value, (val) => {
-  if (val) activeImage.value = val.image || ''
-}, { immediate: true })
 const selectedSize = ref('')
 const hasConnected = ref(false)
 const isNegotiating = ref(false)
@@ -137,6 +92,7 @@ const offerAmount = ref('')
 const selectedColorId = ref(null)
 const specialInstructions = ref('')
 const isStoryExpanded = ref(false)
+const similarProducts = ref([])
 
 const isOwner = computed(() => {
   return product.value && product.value.owner_id === props.currentUserId
@@ -161,6 +117,120 @@ const showMoreButton = computed(() => {
 })
 
 const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Custom Size']
+
+const loadProductData = async (activeId) => {
+  try {
+    loading.value = true
+    error.value = null
+    
+    if (!activeId) {
+      error.value = 'Product ID missing'
+      return
+    }
+
+    // Fetch full product + seller info + reviews
+    const res = await db.runAction('get_product_details', { productId: activeId });
+    
+    if (!res.product) {
+      error.value = 'Product not found'
+      return
+    }
+    
+    const isLiked = props.favoriteItems.some(fav => fav.id === res.product.id)
+    product.value = {
+      ...res.product,
+      liked: isLiked, 
+      isFavorite: isLiked
+    }
+    
+    // Parse variants
+    if (product.value.variants_json) {
+      try {
+        const variants = JSON.parse(product.value.variants_json)
+        parsedColors.value = variants.map((v, i) => ({
+          id: i,
+          hex: v.hex,
+          name: v.name,
+          image: v.image,
+          inStock: v.inStock !== undefined ? v.inStock : true
+        }))
+      } catch (e) {
+        console.error('Failed to parse variants_json:', e)
+      }
+    }
+
+    // Parse gallery
+    if (product.value.gallery_json) {
+      try {
+        gallery.value = JSON.parse(product.value.gallery_json)
+      } catch (e) {
+        console.error('Failed to parse gallery_json:', e)
+        gallery.value = []
+      }
+    }
+    
+    // Fallback to description parsing if no structured variants or parsing failed
+    if (parsedColors.value.length === 0) {
+      const desc = product.value.description || ''
+      const colorMatch = desc.match(/Colors:\s*(.*)/i)
+      if (colorMatch && colorMatch[1]) {
+        const parts = colorMatch[1].split(',').map(s => s.trim())
+        parsedColors.value = parts.map((p, i) => {
+          const match = p.match(/(.*)\s+\((.*)\)/)
+          return {
+            id: i,
+            name: match ? match[1] : p,
+            hex: match ? match[2] : '#8B4513',
+            inStock: true,
+            image: ''
+          }
+        })
+      }
+    }
+
+    // Initial variant selection
+    if (parsedColors.value.length > 0) {
+      selectedColorId.value = parsedColors.value[0].id
+    }
+
+    // Set reviews
+    reviews.value = res.reviews.map(r => ({
+      id: r.id,
+      author: r.first_name, // Just first name as requested
+      rating: r.rating,
+      text: r.text,
+      time: 'Recently',
+      avatar: r.avatar
+    }))
+
+    // Fetch similar products
+    const similarRes = await db.runAction('get_similar_products', { 
+      categoryId: product.value.category_id, 
+      productId: activeId 
+    });
+    similarProducts.value = similarRes.rows.map(p => ({
+      ...p,
+      liked: props.favoriteItems.some(fav => fav.id === p.id)
+    }))
+    
+  } catch (e) {
+    console.error('Fetch error:', e)
+    error.value = 'Failed to load heritage item'
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(async () => {
+  const activeId = route.params.id || props.productId
+  await loadProductData(activeId)
+})
+
+watch(() => route.params.id, async (newId) => {
+  if (newId) {
+    await loadProductData(newId)
+  }
+})
 
 const currentVariant = computed(() => {
   return parsedColors.value.find(c => c.id === selectedColorId.value) || parsedColors.value[0] || { inStock: false, name: 'None', hex: '' }
@@ -331,7 +401,70 @@ const shareProduct = async () => {
 </script>
 
 <template>
-  <div v-if="product" class="product-page animate-fade">
+  <div v-if="loading" class="product-page skeleton-mode">
+    <!-- Floating Heritage Status -->
+    <div class="heritage-status-overlay">
+      <div class="status-badge">
+        <div class="status-icon-pulse">🧩</div>
+        <span class="status-text">Deciphering Heritage...</span>
+      </div>
+    </div>
+
+    <div class="layout-container">
+      <div class="content-section">
+        <div class="header-row">
+          <div class="skeleton-title-large"></div>
+          <div class="skeleton-pill"></div>
+        </div>
+        
+        <div class="skeleton-color-section">
+          <div class="skeleton-label-small"></div>
+          <div class="skeleton-swatches">
+            <div v-for="i in 4" :key="i" class="skeleton-swatch"></div>
+          </div>
+        </div>
+
+        <div class="skeleton-specs">
+          <div v-for="i in 2" :key="i" class="skeleton-spec-item">
+            <div class="skeleton-label-mini"></div>
+            <div class="skeleton-value"></div>
+          </div>
+        </div>
+
+        <div class="skeleton-selection">
+          <div class="skeleton-label-small"></div>
+          <div class="skeleton-sizes">
+            <div v-for="i in 6" :key="i" class="skeleton-size"></div>
+          </div>
+        </div>
+
+        <div class="skeleton-story">
+          <div class="skeleton-label-small"></div>
+          <div class="skeleton-text-block"></div>
+          <div class="skeleton-text-block short"></div>
+        </div>
+      </div>
+      
+      <div class="image-section skeleton-image-area">
+        <div class="skeleton-top-bar">
+          <div class="skeleton-back-btn"></div>
+          <div class="skeleton-actions">
+            <div class="skeleton-action-icon"></div>
+            <div class="skeleton-action-icon"></div>
+          </div>
+        </div>
+        <div class="skeleton-main-img"></div>
+      </div>
+    </div>
+  </div>
+  
+  <div v-else-if="error" class="error-container">
+    <div class="error-icon">⚠️</div>
+    <p>{{ error }}</p>
+    <button @click="$emit('go-back')" class="back-btn">Back to Home</button>
+  </div>
+
+  <div v-else-if="product" class="product-page animate-fade">
     <div class="layout-container">
       <!-- DETAILS SECTION (Left on PC) -->
       <div class="content-section">
@@ -522,14 +655,14 @@ const shareProduct = async () => {
           </div>
         </div>
         <div class="main-image-container">
-          <img :src="currentVariant.image || activeImage" :alt="product.name" class="main-image" />
+          <img :src="currentVariant.image || product.image" :alt="product.name" class="main-image" />
           
           <!-- Image Gallery Thumbnails -->
           <div v-if="gallery.length > 0" class="image-gallery-nav">
             <div 
               class="thumb-wrapper" 
-              :class="{ active: (currentVariant.image || activeImage) === activeImage }"
-              @click="activeImage = product.image; selectedColorId = null"
+              :class="{ active: (currentVariant.image || product.image) === product.image }"
+              @click="selectedColorId = null"
             >
               <img :src="product.image" class="thumb-img" />
             </div>
@@ -537,7 +670,7 @@ const shareProduct = async () => {
               v-for="(img, idx) in gallery" 
               :key="idx" 
               class="thumb-wrapper"
-              @click="activeImage = img; selectedColorId = null"
+              @click="product.image = img; selectedColorId = null"
             >
               <img :src="img" class="thumb-img" />
             </div>
@@ -621,69 +754,6 @@ const shareProduct = async () => {
       @cancel="dialog.show = false"
     />
   </div>
-
-  <div v-else-if="productError" class="error-container">
-    <div class="error-icon">⚠️</div>
-    <p>{{ productError }}</p>
-    <button @click="$emit('go-back')" class="back-btn">Back to Home</button>
-  </div>
-
-  <div v-else class="product-page skeleton-mode">
-    <!-- Floating Heritage Status -->
-    <div class="heritage-status-overlay">
-      <div class="status-badge">
-        <div class="status-icon-pulse">🧩</div>
-        <span class="status-text">Deciphering Heritage...</span>
-      </div>
-    </div>
-
-    <div class="layout-container">
-      <div class="content-section">
-        <div class="header-row">
-          <div class="skeleton-title-large"></div>
-          <div class="skeleton-pill"></div>
-        </div>
-        
-        <div class="skeleton-color-section">
-          <div class="skeleton-label-small"></div>
-          <div class="skeleton-swatches">
-            <div v-for="i in 4" :key="i" class="skeleton-swatch"></div>
-          </div>
-        </div>
-
-        <div class="skeleton-specs">
-          <div v-for="i in 2" :key="i" class="skeleton-spec-item">
-            <div class="skeleton-label-mini"></div>
-            <div class="skeleton-value"></div>
-          </div>
-        </div>
-
-        <div class="skeleton-selection">
-          <div class="skeleton-label-small"></div>
-          <div class="skeleton-sizes">
-            <div v-for="i in 6" :key="i" class="skeleton-size"></div>
-          </div>
-        </div>
-
-        <div class="skeleton-story">
-          <div class="skeleton-label-small"></div>
-          <div class="skeleton-text-block"></div>
-          <div class="skeleton-text-block short"></div>
-        </div>
-      </div>
-      
-      <div class="image-section skeleton-image-area">
-        <div class="skeleton-top-bar">
-          <div class="skeleton-back-btn"></div>
-          <div class="skeleton-actions">
-            <div class="skeleton-action-icon"></div>
-            <div class="skeleton-action-icon"></div>
-          </div>
-        </div>
-        <div class="skeleton-main-img"></div>
-      </div>
-    </div>
-  </div>
 </template>
 
 <style scoped>
@@ -704,24 +774,24 @@ const shareProduct = async () => {
 .status-badge {
   background: rgba(13, 8, 5, 0.8);
   backdrop-filter: blur(12px);
-  padding: var(--space-4) var(--space-6);
+  padding: 16px 24px;
   border-radius: 100px;
   border: 1px solid var(--accent-amber);
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  box-shadow: var(--shadow-lg), 0 0 20px var(--accent-glow);
+  gap: 12px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5), 0 0 20px var(--accent-glow);
   animation: badgePop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .status-icon-pulse {
-  font-size: var(--text-h2);
+  font-size: 20px;
   animation: iconPulse 1.5s ease-in-out infinite;
 }
 
 .status-text {
   font-family: 'JetBrains Mono', monospace;
-  font-size: var(--text-body);
+  font-size: 14px;
   font-weight: 700;
   color: var(--text-amber);
   letter-spacing: 1px;
@@ -747,30 +817,30 @@ const shareProduct = async () => {
 .skeleton-title-large { width: 60%; height: 32px; background: var(--wood-walnut); border-radius: 8px; }
 .skeleton-pill { width: 100px; height: 40px; background: var(--wood-walnut); border-radius: 20px; }
 
-.skeleton-color-section { margin-top: var(--space-8); }
-.skeleton-label-small { width: 150px; height: 16px; background: var(--wood-walnut); border-radius: var(--radius-sm); margin-bottom: var(--space-4); }
-.skeleton-swatches { display: flex; gap: var(--space-3); }
-.skeleton-swatch { width: 48px; height: 48px; border-radius: var(--radius-sm); background: var(--wood-walnut); }
+.skeleton-color-section { margin-top: 32px; }
+.skeleton-label-small { width: 150px; height: 16px; background: var(--wood-walnut); border-radius: 4px; margin-bottom: 16px; }
+.skeleton-swatches { display: flex; gap: 12px; }
+.skeleton-swatch { width: 48px; height: 48px; border-radius: 12px; background: var(--wood-walnut); }
 
-.skeleton-specs { display: flex; gap: var(--space-10); margin-top: var(--space-8); }
+.skeleton-specs { display: flex; gap: 40px; margin-top: 32px; }
 .skeleton-spec-item { flex: 1; }
-.skeleton-label-mini { width: 60px; height: 10px; background: var(--wood-walnut); border-radius: 2px; margin-bottom: var(--space-2); }
-.skeleton-value { width: 100%; height: 16px; background: var(--wood-walnut); border-radius: var(--radius-sm); }
+.skeleton-label-mini { width: 60px; height: 10px; background: var(--wood-walnut); border-radius: 2px; margin-bottom: 8px; }
+.skeleton-value { width: 100%; height: 16px; background: var(--wood-walnut); border-radius: 4px; }
 
-.skeleton-selection { margin-top: var(--space-8); }
-.skeleton-sizes { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-.skeleton-size { width: 50px; height: 36px; border-radius: var(--radius-sm); background: var(--wood-walnut); }
+.skeleton-selection { margin-top: 32px; }
+.skeleton-sizes { display: flex; flex-wrap: wrap; gap: 8px; }
+.skeleton-size { width: 50px; height: 36px; border-radius: 10px; background: var(--wood-walnut); }
 
-.skeleton-story { margin-top: var(--space-8); }
-.skeleton-text-block { width: 100%; height: 14px; background: var(--wood-walnut); border-radius: var(--radius-sm); margin-bottom: var(--space-2); }
+.skeleton-story { margin-top: 32px; }
+.skeleton-text-block { width: 100%; height: 14px; background: var(--wood-walnut); border-radius: 4px; margin-bottom: 8px; }
 .skeleton-text-block.short { width: 70%; }
 
 .skeleton-image-area { background: var(--wood-deep) !important; display: flex; flex-direction: column; }
-.skeleton-top-bar { position: absolute; top: var(--space-6); left: var(--space-6); right: var(--space-6); display: flex; justify-content: space-between; z-index: 10; }
+.skeleton-top-bar { position: absolute; top: 24px; left: 24px; right: 24px; display: flex; justify-content: space-between; z-index: 10; }
 .skeleton-back-btn { width: 44px; height: 44px; border-radius: 50%; background: var(--wood-walnut); }
-.skeleton-actions { display: flex; gap: var(--space-3); }
+.skeleton-actions { display: flex; gap: 12px; }
 .skeleton-action-icon { width: 44px; height: 44px; border-radius: 50%; background: var(--wood-walnut); }
-.skeleton-main-img { width: 70%; height: 60%; background: var(--wood-walnut); border-radius: var(--radius-lg); margin: auto; }
+.skeleton-main-img { width: 70%; height: 60%; background: var(--wood-walnut); border-radius: 24px; margin: auto; }
 
 /* Shimmer Effect */
 .skeleton-mode [class*="skeleton-"] {
@@ -803,21 +873,21 @@ const shareProduct = async () => {
   }
 }
 
-.title-group { display: flex; flex-direction: column; gap: var(--space-2); }
-.out-of-stock-tag { background: #EF4444; color: white; padding: var(--space-1) var(--space-3); border-radius: var(--radius-sm); font-size: var(--text-caption); font-weight: 800; width: fit-content; text-transform: uppercase; margin-bottom: var(--space-2); }
+.title-group { display: flex; flex-direction: column; gap: 8px; }
+.out-of-stock-tag { background: #EF4444; color: white; padding: 4px 12px; border-radius: 8px; font-size: 12px; font-weight: 800; width: fit-content; text-transform: uppercase; margin-bottom: 8px; }
 
-.selection-section { margin-bottom: var(--space-6); }
-.size-options { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.selection-section { margin-bottom: 24px; }
+.size-options { display: flex; flex-wrap: wrap; gap: 8px; }
 .size-btn { 
   background: var(--wood-walnut); 
   border: 1px solid var(--glass-border); 
   color: var(--text-muted); 
-  padding: var(--space-2) var(--space-4); 
-  border-radius: var(--radius-sm); 
+  padding: 8px 14px; 
+  border-radius: 10px; 
   font-weight: 700; 
   cursor: pointer; 
   transition: all 0.2s; 
-  font-size: var(--text-caption);
+  font-size: 12px;
   min-width: 44px;
   text-align: center;
 }
@@ -828,10 +898,10 @@ const shareProduct = async () => {
   min-height: 100px;
   background: var(--input-bg);
   border: 2px solid var(--input-border);
-  border-radius: var(--radius-sm);
-  padding: var(--space-4);
+  border-radius: 12px;
+  padding: 16px;
   color: var(--input-text);
-  font-size: var(--text-body-lg);
+  font-size: 15px;
   outline: none;
   resize: vertical;
   transition: all 0.3s ease;
@@ -846,11 +916,11 @@ const shareProduct = async () => {
   box-shadow: 0 0 15px var(--accent-glow);
 }
 
-.color-section { margin-bottom: var(--space-10); }
-.color-options { display: flex; flex-wrap: wrap; gap: var(--space-5); }
-.color-option-wrapper { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); cursor: pointer; }
-.color-name-label { font-size: var(--text-caption); color: var(--text-muted); font-weight: 600; max-width: 60px; text-align: center; line-height: var(--leading-tight); }
-.variant-oos { font-size: var(--text-micro); color: #EF4444; font-weight: 800; text-transform: uppercase; }
+.color-section { margin-bottom: 40px; }
+.color-options { display: flex; flex-wrap: wrap; gap: 20px; }
+.color-option-wrapper { display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; }
+.color-name-label { font-size: 11px; color: var(--text-muted); font-weight: 600; max-width: 60px; text-align: center; line-height: 1.2; }
+.variant-oos { font-size: 9px; color: #EF4444; font-weight: 800; text-transform: uppercase; }
 
 .color-swatch { 
   width: 48px; 
@@ -876,14 +946,14 @@ const shareProduct = async () => {
 }
 
 .story-section.compact { 
-  margin-bottom: var(--space-6); 
+  margin-bottom: 24px; 
 }
 
 .story-label {
-  font-size: var(--text-body);
+  font-size: 14px;
   font-weight: 700;
   color: var(--text-primary);
-  margin: 0 0 var(--space-2) 0;
+  margin: 0 0 8px 0;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -893,9 +963,9 @@ const shareProduct = async () => {
   border: none;
   color: var(--accent-amber);
   font-weight: 700;
-  font-size: var(--text-body);
+  font-size: 13px;
   cursor: pointer;
-  padding: 0 var(--space-1);
+  padding: 0 4px;
   text-transform: lowercase;
 }
 
@@ -912,7 +982,7 @@ const shareProduct = async () => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--space-6);
+  gap: 24px;
 }
 
 .spinner-outer {
@@ -933,7 +1003,7 @@ const shareProduct = async () => {
 
 .loading-text {
   font-family: 'JetBrains Mono', monospace;
-  font-size: var(--text-body);
+  font-size: 14px;
   letter-spacing: 2px;
   color: var(--text-muted);
 }
@@ -1010,25 +1080,25 @@ const shareProduct = async () => {
 
 .action-btns {
   display: flex;
-  gap: var(--space-3);
+  gap: 12px;
 }
 
 .main-image-container {
   width: 100%;
   height: 100%;
-  padding: var(--space-10);
+  padding: 40px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--space-6);
+  gap: 24px;
 }
 
 .image-gallery-nav {
   display: flex;
-  gap: var(--space-3);
+  gap: 12px;
   overflow-x: auto;
-  padding: var(--space-2);
+  padding: 8px;
   width: 100%;
   justify-content: center;
   scrollbar-width: none;
@@ -1067,7 +1137,7 @@ const shareProduct = async () => {
 }
 
 .content-section {
-  padding: var(--space-8) var(--space-6) 140px var(--space-6);
+  padding: 32px 24px 140px 24px; /* Space for sticky bar */
   max-width: 800px;
   margin: 0 auto;
 }
@@ -1077,10 +1147,10 @@ const shareProduct = async () => {
     flex: 1;
     height: 100%;
     overflow-y: auto;
-    padding: var(--space-12) var(--space-12);
+    padding: 60px 60px;
     margin: 0;
     max-width: none;
-    order: 1;
+    order: 1; /* Details on Left on Desktop */
   }
 }
 
@@ -1088,21 +1158,21 @@ const shareProduct = async () => {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: var(--space-6);
-  gap: var(--space-4);
+  margin-bottom: 24px;
+  gap: 16px;
 }
 
 .product-title {
-  font-size: var(--text-h1);
+  font-size: 24px;
   font-weight: 800;
   color: var(--text-amber);
-  line-height: var(--leading-tight);
+  line-height: 1.2;
 }
 
 .price-pill {
   background: var(--price-bg);
   border: 1px solid var(--price-border);
-  padding: var(--space-3) var(--space-4);
+  padding: 10px 16px;
   border-radius: 30px;
   box-shadow: 0 0 20px rgba(74, 222, 128, 0.1);
 }
@@ -1111,20 +1181,20 @@ const shareProduct = async () => {
   font-family: 'JetBrains Mono', monospace;
   font-weight: 800;
   color: var(--price-text);
-  font-size: var(--text-body-lg);
+  font-size: 16px;
 }
 
 .category-module {
-  margin-bottom: var(--space-8);
+  margin-bottom: 32px;
 }
 
 .category-label {
   display: inline-block;
-  padding: var(--space-2) var(--space-4);
+  padding: 6px 16px;
   background: var(--wood-walnut);
   border: 1px solid var(--glass-border);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-caption);
+  border-radius: 12px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--text-amber);
   text-transform: uppercase;
@@ -1134,12 +1204,12 @@ const shareProduct = async () => {
 .artisan-section-mini {
   background: var(--wood-walnut);
   border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
-  padding: var(--space-3) var(--space-4);
+  border-radius: 16px;
+  padding: 12px 16px;
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  margin-bottom: var(--space-8);
+  gap: 12px;
+  margin-bottom: 32px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -1166,7 +1236,7 @@ const shareProduct = async () => {
 }
 
 .artisan-label {
-  font-size: var(--text-micro);
+  font-size: 10px;
   font-weight: 800;
   text-transform: uppercase;
   color: var(--text-muted);
@@ -1174,7 +1244,7 @@ const shareProduct = async () => {
 }
 
 .artisan-name {
-  font-size: var(--text-body-lg);
+  font-size: 15px;
   font-weight: 700;
   color: var(--text-primary);
 }
@@ -1182,13 +1252,13 @@ const shareProduct = async () => {
 .view-artisan-btn {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: 6px;
   background: rgba(217, 164, 4, 0.1);
   border: 1px solid rgba(217, 164, 4, 0.2);
   color: var(--accent-amber);
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-caption);
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
 }
@@ -1201,18 +1271,18 @@ const shareProduct = async () => {
 .specs-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--space-5);
-  margin-bottom: var(--space-10);
+  gap: 20px;
+  margin-bottom: 40px;
 }
 
 .spec-item {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: 4px;
 }
 
 .spec-label {
-  font-size: var(--text-micro);
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
   color: var(--text-muted);
@@ -1220,32 +1290,32 @@ const shareProduct = async () => {
 }
 
 .spec-value {
-  font-size: var(--text-body);
+  font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .section-title {
-  font-size: var(--text-h3);
+  font-size: 18px;
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: var(--space-4);
+  margin-bottom: 16px;
 }
 
 .section-title.small {
-  font-size: var(--text-body);
-  margin-bottom: var(--space-3);
+  font-size: 14px;
+  margin-bottom: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .compact-colors {
-  margin-bottom: var(--space-6);
+  margin-bottom: 24px;
 }
 
 .description {
-  font-size: var(--text-body-lg);
-  line-height: var(--leading-relaxed);
+  font-size: 15px;
+  line-height: 1.8;
   color: var(--text-muted);
 }
 
@@ -1253,44 +1323,44 @@ const shareProduct = async () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--space-6);
+  margin-bottom: 24px;
 }
 
 .section-title-group {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: 12px;
 }
 
 .rating-badge-summary {
   background: rgba(217, 164, 4, 0.1);
-  padding: var(--space-1) var(--space-3);
-  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: 4px;
   border: 1px solid rgba(217, 164, 4, 0.2);
 }
 
 .avg-val {
-  font-size: var(--text-body);
+  font-size: 14px;
   font-weight: 800;
   color: var(--accent-amber);
 }
 
 .star-mini {
   color: var(--accent-amber);
-  font-size: var(--text-caption);
+  font-size: 12px;
 }
 
 .count-val {
-  font-size: var(--text-caption);
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-muted);
 }
 
 .view-all-link {
-  font-size: var(--text-body);
+  font-size: 13px;
   font-weight: 700;
   color: var(--accent-amber);
   background: none;
@@ -1301,22 +1371,22 @@ const shareProduct = async () => {
 .no-reviews-box {
   background: var(--wood-walnut);
   border: 1px dashed var(--glass-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-10) var(--space-6);
+  border-radius: 24px;
+  padding: 40px 24px;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-3);
+  gap: 12px;
 }
 
 .empty-icon-mini {
-  font-size: var(--text-h1);
+  font-size: 24px;
   opacity: 0.8;
 }
 
 .no-reviews-text {
-  font-size: var(--text-body);
+  font-size: 14px;
   color: var(--text-muted);
   font-style: italic;
   margin: 0;
@@ -1326,12 +1396,12 @@ const shareProduct = async () => {
   background: var(--wood-deep);
   border: 1px solid var(--accent-amber);
   color: var(--accent-amber);
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-body);
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  margin-top: var(--space-2);
+  margin-top: 8px;
   transition: all 0.2s;
 }
 
@@ -1343,14 +1413,14 @@ const shareProduct = async () => {
 .review-preview-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: 16px;
 }
 
 .review-item-modern {
   background: var(--wood-walnut);
   border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
-  padding: var(--space-4);
+  border-radius: 20px;
+  padding: 16px;
   transition: transform 0.2s;
 }
 
@@ -1361,14 +1431,14 @@ const shareProduct = async () => {
 .review-item-header {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  margin-bottom: var(--space-3);
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
 .review-avatar-modern {
   width: 40px;
   height: 40px;
-  border-radius: var(--radius-sm);
+  border-radius: 12px;
   object-fit: cover;
   border: 1.5px solid var(--glass-border);
 }
@@ -1382,11 +1452,11 @@ const shareProduct = async () => {
 .author-row-modern {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: 6px;
 }
 
 .review-author-modern {
-  font-size: var(--text-body);
+  font-size: 14px;
   font-weight: 700;
   color: var(--text-primary);
 }
@@ -1399,22 +1469,22 @@ const shareProduct = async () => {
 }
 
 .star-rating.mini-modern .star {
-  font-size: var(--text-caption);
+  font-size: 12px;
 }
 
 .star.filled { color: var(--accent-amber); }
 .star.empty { color: rgba(255, 255, 255, 0.1); }
 
 .review-date-modern {
-  font-size: var(--text-caption);
+  font-size: 11px;
   font-weight: 600;
   color: var(--text-muted);
 }
 
 .review-text-modern {
-  font-size: var(--text-body);
+  font-size: 13px;
   color: var(--text-muted);
-  line-height: var(--leading-snug);
+  line-height: 1.6;
   margin: 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -1423,15 +1493,15 @@ const shareProduct = async () => {
 }
 
 .similar-products-section {
-  margin-top: var(--space-12);
+  margin-top: 48px;
 }
 
 .similar-scroll-container {
   display: flex;
-  gap: var(--space-4);
+  gap: 16px;
   overflow-x: auto;
-  padding: var(--space-1) var(--space-1) var(--space-6) var(--space-1);
-  margin: 0 calc(var(--space-1) * -1);
+  padding: 4px 4px 24px 4px;
+  margin: 0 -4px;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
 }
@@ -1454,12 +1524,12 @@ const shareProduct = async () => {
 }
 
 .similar-card :deep(.product-details) {
-  padding: var(--space-4);
-  gap: var(--space-3);
+  padding: 16px;
+  gap: 12px;
 }
 
 .similar-card :deep(.product-name) {
-  font-size: var(--text-h3);
+  font-size: 13px;
   -webkit-line-clamp: 1;
 }
 
@@ -1480,7 +1550,7 @@ const shareProduct = async () => {
   bottom: 0;
   left: 0;
   width: 100%;
-  padding: var(--space-4) var(--space-5) var(--space-8) var(--space-5);
+  padding: 16px 20px 32px 20px; /* Safe area padding */
   background: var(--glass-bg);
   backdrop-filter: blur(40px);
   border-top: 1px solid var(--glass-border);
@@ -1493,14 +1563,14 @@ const shareProduct = async () => {
 .action-grid {
   display: grid;
   grid-template-columns: 0.8fr 1fr 0.8fr 1.5fr;
-  gap: var(--space-2);
+  gap: 8px;
   width: 100%;
   max-width: 800px;
 }
 
 @media (min-width: 768px) {
   .action-grid {
-    gap: var(--space-3);
+    gap: 12px;
   }
 }
 
@@ -1508,15 +1578,15 @@ const shareProduct = async () => {
   background: var(--wood-walnut);
   border: 1px solid var(--glass-border);
   color: var(--text-primary);
-  border-radius: var(--radius-md);
+  border-radius: 20px;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2);
-  padding: var(--space-4);
+  gap: 8px;
+  padding: 16px;
   min-height: 56px;
-  font-size: var(--text-body);
+  font-size: 14px;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -1535,15 +1605,15 @@ const shareProduct = async () => {
   background: var(--wood-walnut);
   border: 1px solid var(--glass-border);
   color: var(--text-amber);
-  border-radius: var(--radius-md);
+  border-radius: 20px;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2);
-  padding: var(--space-4);
+  gap: 8px;
+  padding: 16px;
   min-height: 56px;
-  font-size: var(--text-body);
+  font-size: 14px;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -1551,15 +1621,15 @@ const shareProduct = async () => {
   background: linear-gradient(135deg, #166534, #15803d);
   color: white;
   border: none;
-  border-radius: var(--radius-md);
+  border-radius: 20px;
   font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-3);
-  padding: var(--space-4);
+  gap: 10px;
+  padding: 16px;
   min-height: 56px;
-  font-size: var(--text-body-lg);
+  font-size: 15px;
   box-shadow: 0 0 20px rgba(22, 101, 52, 0.3);
   -webkit-tap-highlight-color: transparent;
 }
@@ -1567,7 +1637,7 @@ const shareProduct = async () => {
 .negotiation-bar {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: 12px;
   width: 100%;
   max-width: 600px;
 }
@@ -1590,22 +1660,22 @@ const shareProduct = async () => {
   width: 100%;
   background: var(--input-bg);
   border: 1px solid var(--accent-amber);
-  border-radius: var(--radius-md);
-  padding: var(--space-4) var(--space-5) var(--space-4) var(--space-12);
+  border-radius: 20px;
+  padding: 16px 20px 16px 48px;
   color: white;
   font-family: 'JetBrains Mono', monospace;
   font-weight: 700;
   outline: none;
   min-height: 56px;
-  font-size: var(--text-body-lg);
+  font-size: 16px; /* No zoom */
 }
 
 .send-offer-btn {
   background: var(--accent-amber);
   color: white;
-  padding: 0 var(--space-6);
+  padding: 0 24px;
   height: 56px;
-  border-radius: var(--radius-md);
+  border-radius: 20px;
   font-weight: 800;
   box-shadow: 0 0 20px var(--accent-glow);
 }
@@ -1617,7 +1687,7 @@ const shareProduct = async () => {
   border: 1px solid var(--glass-border);
   border-radius: 50%;
   color: var(--text-muted);
-  font-size: var(--text-h3);
+  font-size: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1635,15 +1705,15 @@ const shareProduct = async () => {
   background: linear-gradient(135deg, var(--wood-walnut), var(--wood-deep));
   border: 1px solid var(--accent-amber);
   color: var(--text-amber);
-  border-radius: var(--radius-md);
+  border-radius: 20px;
   font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-3);
-  padding: var(--space-4);
+  gap: 12px;
+  padding: 16px;
   min-height: 56px;
-  font-size: var(--text-body-lg);
+  font-size: 16px;
   box-shadow: 0 8px 25px rgba(0,0,0,0.4);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;

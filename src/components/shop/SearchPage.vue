@@ -249,12 +249,12 @@ const handleSearch = (query, navigate = true) => {
 .search-header-glass {
   position: sticky;
   top: 0;
-  padding: var(--space-4);
+  padding: 16px;
   background: var(--glass-bg);
   backdrop-filter: blur(15px);
   z-index: 100;
   display: flex;
-  gap: var(--space-3);
+  gap: 12px;
   align-items: center;
   border-bottom: 1px solid var(--glass-border);
 }
@@ -264,11 +264,11 @@ const handleSearch = (query, navigate = true) => {
   background: var(--wood-walnut);
   border: 1px solid var(--glass-border);
   height: 44px;
-  border-radius: var(--radius-sm);
+  border-radius: 12px;
   display: flex;
   align-items: center;
-  padding: 0 var(--space-1) 0 var(--space-3);
-  gap: var(--space-3);
+  padding: 0 4px 0 12px;
+  gap: 10px;
   transition: all 0.3s ease;
 }
 
@@ -276,7 +276,7 @@ const handleSearch = (query, navigate = true) => {
   background: var(--accent-amber);
   color: white;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: 8px;
   width: 36px;
   height: 36px;
   display: flex;
@@ -322,33 +322,33 @@ const handleSearch = (query, navigate = true) => {
 .quick-results {
   background: var(--wood-walnut);
   border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
-  margin-bottom: var(--space-6);
+  border-radius: 16px;
+  margin-bottom: 24px;
   overflow: hidden;
   box-shadow: 0 10px 30px rgba(0,0,0,0.3);
 }
 
 .quick-section {
-  padding: var(--space-4);
+  padding: 16px;
   border-bottom: 1px solid var(--glass-border);
 }
 
 .section-title.mini {
-  font-size: var(--text-caption);
-  margin-bottom: var(--space-3);
+  font-size: 11px;
+  margin-bottom: 12px;
   opacity: 0.6;
 }
 
 .quick-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: 12px;
 }
 
 .quick-item {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: 12px;
 }
 
 .quick-avatar {
@@ -362,7 +362,7 @@ const handleSearch = (query, navigate = true) => {
 .quick-thumb {
   width: 36px;
   height: 36px;
-  border-radius: var(--radius-sm);
+  border-radius: 8px;
   object-fit: cover;
 }
 
@@ -372,23 +372,23 @@ const handleSearch = (query, navigate = true) => {
 }
 
 .quick-name {
-  font-size: var(--text-body);
+  font-size: 14px;
   font-weight: 700;
   color: var(--text-primary);
 }
 
 .quick-meta {
-  font-size: var(--text-caption);
+  font-size: 11px;
   color: var(--text-muted);
 }
 
 .see-all-btn {
   width: 100%;
-  padding: var(--space-4);
+  padding: 14px;
   background: var(--wood-polished);
   border: none;
   color: var(--accent-amber);
-  font-size: var(--text-body);
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
 }
@@ -419,7 +419,7 @@ const handleSearch = (query, navigate = true) => {
   height: 12px;
   background: var(--wood-polished);
   border-radius: 4px;
-  margin-bottom: var(--space-4);
+  margin-bottom: 16px;
   position: relative;
   overflow: hidden;
 }
@@ -436,7 +436,7 @@ const handleSearch = (query, navigate = true) => {
 .skeleton-square {
   width: 36px;
   height: 36px;
-  border-radius: var(--radius-sm);
+  border-radius: 8px;
   background: var(--wood-polished);
   position: relative;
   overflow: hidden;
@@ -449,7 +449,7 @@ const handleSearch = (query, navigate = true) => {
   overflow: hidden;
 }
 
-.skeleton-line.name { width: 120px; height: 12px; margin-bottom: var(--space-2); }
+.skeleton-line.name { width: 120px; height: 12px; margin-bottom: 6px; }
 .skeleton-line.bio, .skeleton-line.meta { width: 180px; height: 10px; }
 
 /* Shimmer Animation */
@@ -473,25 +473,25 @@ const handleSearch = (query, navigate = true) => {
 }
 
 .no-results-catch {
-  padding: var(--space-12) var(--space-5);
+  padding: 80px 20px;
   text-align: center;
 }
 
 .empty-icon {
-  font-size: var(--text-display);
-  margin-bottom: var(--space-5);
+  font-size: 48px;
+  margin-bottom: 20px;
 }
 
 .no-results-catch h4 {
-  font-size: var(--text-h2);
+  font-size: 18px;
   font-weight: 800;
-  margin: 0 0 var(--space-2) 0;
+  margin: 0 0 8px 0;
 }
 
 .no-results-catch p {
-  font-size: var(--text-body);
+  font-size: 14px;
   color: var(--text-muted);
-  margin-bottom: var(--space-5);
+  margin-bottom: 20px;
 }
 
 .search-icon {
@@ -504,7 +504,7 @@ const handleSearch = (query, navigate = true) => {
   outline: none;
   width: 100%;
   color: var(--text-primary);
-  font-size: var(--text-body-lg);
+  font-size: 15px;
   font-weight: 500;
 }
 
@@ -513,27 +513,27 @@ const handleSearch = (query, navigate = true) => {
 }
 
 .search-content {
-  padding: var(--space-6) var(--space-4);
+  padding: 24px 16px;
 }
 
 .category-filters-row {
   display: flex;
-  gap: var(--space-2);
+  gap: 8px;
   overflow-x: auto;
-  padding-bottom: var(--space-3);
-  margin-bottom: var(--space-3);
+  padding-bottom: 12px;
+  margin-bottom: 12px;
   scrollbar-width: none;
 }
 
 .category-filters-row::-webkit-scrollbar { display: none; }
 
 .cat-filter-btn {
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-sm);
+  padding: 8px 16px;
+  border-radius: 12px;
   background: rgba(255,255,255,0.05);
   border: 1px solid var(--glass-border);
   color: var(--text-primary);
-  font-size: var(--text-caption);
+  font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
   transition: all 0.2s;
@@ -547,30 +547,30 @@ const handleSearch = (query, navigate = true) => {
 
 .keyword-recommendations {
   display: flex;
-  gap: var(--space-2);
+  gap: 8px;
   overflow-x: auto;
-  padding-bottom: var(--space-6);
+  padding-bottom: 24px;
   border-bottom: 1px solid var(--glass-border);
-  margin-bottom: var(--space-6);
+  margin-bottom: 24px;
   scrollbar-width: none;
 }
 
 .keyword-recommendations::-webkit-scrollbar { display: none; }
 
 .keyword-chip {
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-md);
+  padding: 6px 14px;
+  border-radius: 20px;
   background: var(--wood-walnut);
   border: 1px solid var(--glass-border);
   color: var(--text-muted);
-  font-size: var(--text-caption);
+  font-size: 11px;
   font-weight: 700;
   white-space: nowrap;
   transition: all 0.2s;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: 6px;
 }
 
 .keyword-chip:hover {
@@ -580,18 +580,18 @@ const handleSearch = (query, navigate = true) => {
 }
 
 .search-section {
-  margin-bottom: var(--space-8);
+  margin-bottom: 32px;
 }
 
 .section-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--space-4);
+  margin-bottom: 16px;
 }
 
 .section-title {
-  font-size: var(--text-body-lg);
+  font-size: 16px;
   font-weight: 800;
   color: var(--text-primary);
   text-transform: uppercase;
@@ -599,7 +599,7 @@ const handleSearch = (query, navigate = true) => {
 }
 
 .text-link {
-  font-size: var(--text-body);
+  font-size: 13px;
   font-weight: 700;
   color: var(--accent-amber);
 }
@@ -607,33 +607,33 @@ const handleSearch = (query, navigate = true) => {
 .history-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  margin-bottom: var(--space-2);
+  gap: 12px;
+  margin-bottom: 8px;
 }
 
 .history-item {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3);
+  gap: 12px;
+  padding: 12px;
   background: var(--wood-walnut);
   border-radius: 10px;
   color: var(--text-primary);
-  font-size: var(--text-body);
+  font-size: 14px;
   font-weight: 500;
 }
 
 .category-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: var(--space-3);
+  gap: 10px;
 }
 
 .cat-card {
   background: var(--wood-walnut);
   border: 1px solid var(--glass-border);
-  padding: var(--space-4);
-  border-radius: var(--radius-sm);
+  padding: 16px;
+  border-radius: 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -642,13 +642,13 @@ const handleSearch = (query, navigate = true) => {
 
 .cat-name {
   display: block;
-  font-size: var(--text-body-lg);
+  font-size: 15px;
   font-weight: 700;
   color: var(--text-primary);
 }
 
 .cat-tag {
-  font-size: var(--text-caption);
+  font-size: 11px;
   color: var(--accent-amber);
   font-weight: 600;
 }
@@ -658,32 +658,32 @@ const handleSearch = (query, navigate = true) => {
 }
 
 .search-inspiration {
-  margin-top: var(--space-10);
+  margin-top: 40px;
 }
 
 .inspire-card {
   background: linear-gradient(135deg, var(--wood-walnut) 0%, var(--wood-deep) 100%);
   border: 1px solid var(--glass-border);
-  padding: var(--space-8) var(--space-5);
-  border-radius: var(--radius-md);
+  padding: 30px 20px;
+  border-radius: 20px;
   text-align: center;
 }
 
 .inspire-icon {
-  font-size: var(--text-display);
-  margin-bottom: var(--space-4);
+  font-size: 32px;
+  margin-bottom: 16px;
 }
 
 .inspire-card h4 {
-  margin: 0 0 var(--space-2) 0;
-  font-size: var(--text-h2);
+  margin: 0 0 8px 0;
+  font-size: 18px;
   font-weight: 800;
 }
 
 .inspire-card p {
-  font-size: var(--text-body);
+  font-size: 13px;
   color: var(--text-muted);
-  line-height: var(--leading-relaxed);
+  line-height: 1.6;
 }
 
 .back-btn {

@@ -139,7 +139,7 @@ const openWhatsAppSupport = () => {
 .settings-page {
   background-color: var(--wood-deep);
   min-height: 100vh;
-  padding: var(--space-8) var(--space-5);
+  padding: 32px 20px;
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -147,28 +147,27 @@ const openWhatsAppSupport = () => {
 .header-row {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
-  margin-bottom: var(--space-8);
+  gap: 16px;
+  margin-bottom: 32px;
 }
 
 .title {
-  font-size: var(--text-h1);
+  font-size: 24px;
   font-weight: 800;
   color: var(--text-primary);
-  line-height: var(--leading-tight);
 }
 
 .settings-container {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: 24px;
 }
 
 @media (min-width: 1024px) {
   .settings-container {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: var(--space-12);
+    gap: 48px;
     align-items: start;
   }
 }
@@ -176,39 +175,39 @@ const openWhatsAppSupport = () => {
 .settings-column {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: 24px;
 }
 
 .settings-card {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: 12px;
 }
 
 .card-label {
-  font-size: var(--text-caption);
+  font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
   color: var(--text-muted);
   letter-spacing: 1.5px;
-  margin-left: var(--space-1);
+  margin-left: 4px;
 }
 
 .role-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--space-3);
+  gap: 12px;
 }
 
 .role-card {
   background: var(--wood-walnut);
   border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
-  padding: var(--space-5);
+  border-radius: 20px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-3);
+  gap: 12px;
   transition: all 0.3s ease;
 }
 
@@ -226,7 +225,7 @@ const openWhatsAppSupport = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--text-display);
+  font-size: 24px;
 }
 
 .role-card.active .role-circle {
@@ -234,7 +233,7 @@ const openWhatsAppSupport = () => {
 }
 
 .role-title {
-  font-size: var(--text-body);
+  font-size: 14px;
   font-weight: 700;
   color: var(--text-primary);
 }
@@ -242,16 +241,16 @@ const openWhatsAppSupport = () => {
 .pill-selector {
   display: flex;
   background: var(--wood-walnut);
-  padding: var(--space-1);
-  border-radius: var(--radius-md);
+  padding: 4px;
+  border-radius: 16px;
   border: 1px solid var(--glass-border);
 }
 
 .pill-btn {
   flex: 1;
-  padding: var(--space-3);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-body);
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--text-muted);
 }
@@ -264,8 +263,8 @@ const openWhatsAppSupport = () => {
 .list-item {
   background: var(--wood-walnut);
   border: 1px solid var(--glass-border);
-  padding: var(--space-4) var(--space-5);
-  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -275,13 +274,13 @@ const openWhatsAppSupport = () => {
 .item-lead {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
+  gap: 16px;
   font-weight: 600;
-  font-size: var(--text-body-lg);
+  font-size: 15px;
 }
 
 .action-hint {
-  font-size: var(--text-caption);
+  font-size: 12px;
   color: var(--text-amber);
   font-weight: 700;
 }
@@ -315,18 +314,18 @@ const openWhatsAppSupport = () => {
 }
 
 .logout-btn {
-  margin-top: var(--space-4);
+  margin-top: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-3);
-  padding: var(--space-4);
+  gap: 12px;
+  padding: 16px;
   background: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.2);
-  border-radius: var(--radius-md);
+  border-radius: 16px;
   color: #EF4444;
   font-weight: 700;
-  font-size: var(--text-body-lg);
+  font-size: 15px;
 }
 
 .back-btn {

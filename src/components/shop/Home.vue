@@ -238,19 +238,19 @@ const handleSearch = () => {
 .skeleton-card {
   width: 200px;
   flex-shrink: 0;
-  margin-right: var(--space-4);
+  margin-right: 16px;
 }
 .skeleton-img {
   width: 100%;
   height: 240px;
-  border-radius: var(--radius-md);
+  border-radius: 20px;
   background: var(--wood-walnut);
 }
 .skeleton-text {
   width: 60%;
   height: 12px;
-  margin-top: var(--space-3);
-  border-radius: var(--radius-sm);
+  margin-top: 12px;
+  border-radius: 4px;
   background: var(--wood-walnut);
 }
 
@@ -258,7 +258,7 @@ const handleSearch = () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-right: var(--space-6);
+  margin-right: 24px;
 }
 .skeleton-avatar {
   width: 80px;
@@ -295,14 +295,14 @@ const handleSearch = () => {
 }
 
 .home-container {
-  padding: var(--space-6) var(--space-6) var(--space-10) var(--space-6);
+  padding: 24px 24px 40px 24px;
   max-width: 1200px;
   margin: 0 auto;
 }
 
 /* Search Bar (Ancestral Tech) */
 .search-container {
-  margin-bottom: var(--space-10);
+  margin-bottom: 40px;
 }
 
 .search-wrapper {
@@ -311,8 +311,8 @@ const handleSearch = () => {
   align-items: center;
   background: var(--input-bg);
   border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
-  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-5);
+  border-radius: 20px;
+  padding: 8px 8px 8px 20px;
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
   transition: all 0.3s ease;
 }
@@ -326,9 +326,9 @@ const handleSearch = () => {
   background: var(--accent-amber);
   color: white;
   border: none;
-  border-radius: var(--radius-sm);
-  padding: var(--space-2) var(--space-5);
-  font-size: var(--text-body);
+  border-radius: 12px;
+  padding: 8px 20px;
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
@@ -348,10 +348,10 @@ const handleSearch = () => {
   background: transparent;
   border: none;
   flex: 1;
-  font-size: var(--text-body-lg);
+  font-size: 15px;
   color: var(--text-primary);
   outline: none;
-  padding-right: var(--space-3);
+  padding-right: 12px;
 }
 
 .search-input::placeholder {
@@ -379,13 +379,13 @@ const handleSearch = () => {
   position: relative;
   background: linear-gradient(135deg, var(--wood-walnut) 0%, var(--wood-polished) 100%);
   border: 1px solid var(--glass-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-10);
+  border-radius: 32px;
+  padding: 40px;
   overflow: hidden;
-  margin-bottom: var(--space-12);
+  margin-bottom: 64px;
   display: flex;
   flex-direction: column;
-  gap: var(--space-8);
+  gap: 32px;
   box-shadow: 0 20px 40px rgba(0,0,0,0.4);
 }
 
@@ -394,7 +394,7 @@ const handleSearch = () => {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    padding: var(--space-12);
+    padding: 64px;
   }
 }
 
@@ -416,10 +416,10 @@ const handleSearch = () => {
 }
 
 .hero-title {
-  font-size: var(--text-display);
-  line-height: var(--leading-tight);
+  font-size: 32px;
+  line-height: 1.1;
   font-weight: 800;
-  margin-bottom: var(--space-5);
+  margin-bottom: 20px;
   background: linear-gradient(to right, var(--text-primary), var(--accent-amber));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -427,26 +427,26 @@ const handleSearch = () => {
 
 @media (min-width: 768px) {
   .hero-title {
-    font-size: var(--text-display);
+    font-size: 48px;
   }
 }
 
 .hero-description {
-  font-size: var(--text-body-lg);
-  line-height: var(--leading-relaxed);
+  font-size: 16px;
+  line-height: 1.6;
   color: var(--text-muted);
-  margin-bottom: var(--space-8);
+  margin-bottom: 32px;
 }
 
 .hero-cta-btn {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-4) var(--space-8);
+  gap: 12px;
+  padding: 16px 32px;
   background: linear-gradient(135deg, var(--accent-amber), #92400E);
   color: white;
   border: none;
-  border-radius: var(--radius-md);
+  border-radius: 16px;
   font-weight: 700;
   letter-spacing: 1px;
   cursor: pointer;
@@ -460,7 +460,7 @@ const handleSearch = () => {
 }
 
 .btn-arrow {
-  font-size: var(--text-h2);
+  font-size: 20px;
   transition: transform 0.3s ease;
 }
 
@@ -496,15 +496,14 @@ const handleSearch = () => {
 
 /* Collections Modules */
 .tech-section-title {
-  font-size: var(--text-h2);
+  font-size: 20px;
   font-weight: 700;
   letter-spacing: 1px;
   color: var(--text-primary);
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  margin-bottom: var(--space-6);
-  line-height: var(--leading-tight);
+  gap: 12px;
+  margin-bottom: 24px;
 }
 
 .tech-section-title::before {
@@ -519,7 +518,7 @@ const handleSearch = () => {
 .collections-grid {
   display: grid;
   grid-template-columns: repeat(1, 1fr);
-  gap: var(--space-6);
+  gap: 24px;
 }
 
 @media (min-width: 768px) {
@@ -531,8 +530,8 @@ const handleSearch = () => {
 .collection-module {
   position: relative;
   height: 220px;
-  border-radius: var(--radius-lg);
-  padding: var(--space-8);
+  border-radius: 24px;
+  padding: 32px;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -591,30 +590,28 @@ const handleSearch = () => {
 
 .module-tag {
   display: inline-block;
-  font-size: var(--text-micro);
+  font-size: 10px;
   font-weight: 800;
   letter-spacing: 1px;
-  padding: var(--space-1) var(--space-3);
+  padding: 4px 10px;
   background: rgba(0,0,0,0.6);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(255,255,255,0.1);
-  border-radius: var(--radius-sm);
-  margin-bottom: var(--space-3);
-  color: #FBBF24;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  color: #FBBF24; /* Hardcoded amber for consistency on dark overlay */
 }
 
 .module-title {
-  font-size: var(--text-h2);
+  font-size: 22px;
   font-weight: 800;
-  color: white;
-  margin-bottom: var(--space-1);
-  line-height: var(--leading-tight);
+  color: white; /* Forced white for readability on dark gradient */
+  margin-bottom: 4px;
 }
 
 .module-subtitle {
-  font-size: var(--text-body);
-  color: rgba(255,255,255,0.8);
-  line-height: var(--leading-snug);
+  font-size: 13px;
+  color: rgba(255,255,255,0.8); /* Slightly brighter white for better contrast */
   opacity: 0;
   transition: opacity 0.3s ease 0.1s;
 }
@@ -625,13 +622,13 @@ const handleSearch = () => {
 
 /* Future Heritage Teaser */
 .future-heritage {
-  margin-top: var(--space-12);
+  margin-top: 48px;
 }
 
 .wood-banner {
   background: var(--wood-gradient);
   border-radius: var(--radius-lg);
-  padding: var(--space-10) var(--space-6);
+  padding: 40px 24px;
   position: relative;
   overflow: hidden;
   box-shadow: var(--shadow-lg);
@@ -662,29 +659,28 @@ const handleSearch = () => {
   display: inline-block;
   background: var(--accent-gold);
   color: var(--wood-deep);
-  padding: var(--space-1) var(--space-3);
-  border-radius: var(--radius-md);
-  font-size: var(--text-caption);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 1px;
-  margin-bottom: var(--space-4);
+  margin-bottom: 16px;
 }
 
 .teaser-title {
-  font-size: var(--text-h1);
+  font-size: 28px;
   font-weight: 800;
-  margin: 0 0 var(--space-3) 0;
+  margin: 0 0 12px 0;
   color: var(--text-primary);
-  font-family: serif;
-  line-height: var(--leading-tight);
+  font-family: serif; /* Elegant contrast */
 }
 
 .teaser-text {
-  font-size: var(--text-body);
-  line-height: var(--leading-relaxed);
+  font-size: 14px;
+  line-height: 1.6;
   max-width: 500px;
-  margin: 0 auto var(--space-6) auto;
+  margin: 0 auto 24px auto;
   opacity: 0.85;
 }
 
@@ -693,19 +689,19 @@ const handleSearch = () => {
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: 12px;
   text-align: left;
   background: rgba(0,0,0,0.2);
-  padding: var(--space-4);
-  border-radius: var(--radius-md);
+  padding: 16px;
+  border-radius: 16px;
   border: 1px solid rgba(255,255,255,0.05);
 }
 
 .update-item {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  font-size: var(--text-body);
+  gap: 12px;
+  font-size: 13px;
 }
 
 .update-dot {
@@ -723,22 +719,22 @@ const handleSearch = () => {
 
 .update-time {
   color: var(--text-muted);
-  font-size: var(--text-caption);
+  font-size: 11px;
 }
 
 .countdown-teaser {
-  font-size: var(--text-body);
+  font-size: 13px;
   font-weight: 600;
   color: var(--accent-gold);
   border: 1px solid var(--accent-glow);
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-sm);
+  padding: 8px 16px;
+  border-radius: 8px;
   display: inline-block;
 }
 
 /* Sections */
 .section {
-  margin-bottom: var(--space-8);
+  margin-bottom: 32px;
 }
 
 /* Scrolling & Grids */
@@ -746,12 +742,14 @@ const handleSearch = () => {
 /* Scrolling & Grids */
 .scroll-container {
   display: flex;
-  gap: var(--space-4);
+  gap: 16px;
   overflow-x: auto;
-  padding: var(--space-1) var(--space-1) var(--space-6) var(--space-1);
-  margin: calc(var(--space-1) * -1) calc(var(--space-1) * -1) 0 calc(var(--space-1) * -1);
-  -webkit-overflow-scrolling: touch;
-  scroll-snap-type: x proximity;
+  padding: 4px 4px 24px 4px; /* Added padding to prevent shadow clipping */
+  margin: -4px -4px 0 -4px;
+  -webkit-overflow-scrolling: touch; /* Momentum scrolling on iOS */
+  scroll-snap-type: x proximity; /* Subtle snapping for better feel */
+  
+  /* Desktop scrollbar styling */
   scrollbar-width: thin;
   scrollbar-color: var(--accent-amber) var(--wood-deep);
 }
@@ -787,12 +785,12 @@ const handleSearch = () => {
 }
 
 .scroll-container :deep(.product-details) {
-  padding: var(--space-4);
-  gap: var(--space-3);
+  padding: 16px;
+  gap: 12px;
 }
 
 .scroll-container :deep(.product-name) {
-  font-size: var(--text-h3);
+  font-size: 13px;
   -webkit-line-clamp: 1;
 }
 
@@ -810,8 +808,8 @@ const handleSearch = () => {
 }
 
 .category-card {
-  width: 140px;
-  padding: var(--space-4);
+  width: 140px; /* Slightly wider for better text fit */
+  padding: 16px;
   height: 140px;
   background-color: var(--wood-walnut);
   border-radius: var(--radius-lg);
@@ -835,18 +833,17 @@ const handleSearch = () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-1);
+  gap: 4px;
 }
 
 .cat-name-home {
   font-weight: 700;
   color: var(--text-primary);
-  font-size: var(--text-body);
-  line-height: var(--leading-tight);
+  font-size: 14px;
 }
 
 .cat-example-home {
-  font-size: var(--text-micro);
+  font-size: 10px;
   color: var(--text-amber);
   font-style: italic;
   font-weight: 500;
@@ -855,7 +852,7 @@ const handleSearch = () => {
 .explore-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: var(--space-4);
+  gap: 16px;
 }
 
 .explore-grid :deep(.product-card) {
@@ -871,12 +868,12 @@ const handleSearch = () => {
 }
 
 .explore-grid :deep(.product-details) {
-  padding: var(--space-3) !important;
-  gap: var(--space-2) !important;
+  padding: 12px !important;
+  gap: 8px !important;
 }
 
 .explore-grid :deep(.product-name) {
-  font-size: var(--text-h3) !important;
+  font-size: 13px !important;
   -webkit-line-clamp: 1 !important;
 }
 
@@ -901,7 +898,7 @@ const handleSearch = () => {
 }
 
 .view-all-link {
-  font-size: var(--text-body);
+  font-size: 13px;
   font-weight: 700;
   color: var(--accent-amber);
   background: none;
@@ -910,7 +907,7 @@ const handleSearch = () => {
 }
 
 .tribe-feedback-scroll {
-  padding-bottom: var(--space-6);
+  padding-bottom: 24px;
 }
 
 .feedback-bubble-card {
@@ -918,18 +915,18 @@ const handleSearch = () => {
   flex-shrink: 0;
   background: var(--wood-walnut);
   border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
-  padding: var(--space-5);
+  border-radius: 20px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: 12px;
   scroll-snap-align: start;
 }
 
 .bubble-header {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: 12px;
 }
 
 .bubble-avatar {
@@ -945,17 +942,16 @@ const handleSearch = () => {
 }
 
 .bubble-author {
-  font-size: var(--text-body);
+  font-size: 13px;
   font-weight: 700;
   color: var(--text-primary);
-  line-height: var(--leading-tight);
 }
 
 .bubble-text {
-  font-size: var(--text-body);
+  font-size: 13px;
   color: var(--text-muted);
   font-style: italic;
-  line-height: var(--leading-snug);
+  line-height: 1.5;
   margin: 0;
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -968,18 +964,18 @@ const handleSearch = () => {
   flex-shrink: 0;
   background: rgba(217, 164, 4, 0.05);
   border: 2px dashed rgba(217, 164, 4, 0.2);
-  border-radius: var(--radius-md);
+  border-radius: 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--space-3);
+  gap: 12px;
   cursor: pointer;
   color: var(--accent-amber);
   font-weight: 700;
-  font-size: var(--text-body);
+  font-size: 13px;
   text-align: center;
-  padding: var(--space-5);
+  padding: 20px;
   transition: all 0.3s;
 }
 
@@ -997,13 +993,13 @@ const handleSearch = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--text-h2);
+  font-size: 20px;
 }
 
 .stories-banner {
-  margin: 0 0 var(--space-10) 0;
+  margin: 0 0 40px 0;
   background: linear-gradient(135deg, var(--wood-polished), var(--wood-deep));
-  border-radius: var(--radius-lg);
+  border-radius: 24px;
   border: 1px solid var(--glass-border);
   display: flex;
   overflow: hidden;
@@ -1018,37 +1014,36 @@ const handleSearch = () => {
 
 .banner-content {
   flex: 1;
-  padding: var(--space-6);
+  padding: 24px;
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
 
 .banner-tag {
-  font-size: var(--text-micro);
+  font-size: 10px;
   font-weight: 800;
   text-transform: uppercase;
   color: var(--accent-amber);
-  margin-bottom: var(--space-2);
+  margin-bottom: 8px;
 }
 
 .banner-content h3 {
-  font-size: var(--text-h3);
+  font-size: 18px;
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: var(--space-2);
-  line-height: var(--leading-tight);
+  margin-bottom: 8px;
 }
 
 .banner-content p {
-  font-size: var(--text-body);
+  font-size: 13px;
   color: var(--text-muted);
-  margin-bottom: var(--space-4);
-  line-height: var(--leading-snug);
+  margin-bottom: 16px;
+  line-height: 1.4;
 }
 
 .read-link {
-  font-size: var(--text-body);
+  font-size: 13px;
   font-weight: 700;
   color: var(--text-amber);
 }

@@ -43,38 +43,35 @@ defineEmits(['view-all'])
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--space-4);
-  padding: 0 var(--space-1);
+  margin-bottom: var(--spacing-md);
+  padding: 0 4px;
 }
 
 .section-title {
-  font-size: var(--text-h3);
+  font-size: 18px;
   font-weight: 700;
   color: var(--text-primary);
   margin: 0;
-  line-height: var(--leading-tight);
 }
 
 .view-all-btn {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: 4px;
   color: var(--text-amber);
-  font-size: var(--text-caption);
+  font-size: 14px;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
   background: none;
   border: none;
   cursor: pointer;
-  padding: var(--space-1) var(--space-2);
+  padding: 4px 8px;
   border-radius: var(--radius-sm);
   transition: all 0.2s ease;
 }
 
 .view-all-btn:hover {
   background-color: var(--wood-walnut);
-  transform: translateX(var(--space-1));
+  transform: translateX(2px);
 }
 
 .chevron-icon {
@@ -82,6 +79,6 @@ defineEmits(['view-all'])
 }
 
 .view-all-btn:hover .chevron-icon {
-  transform: translateX(var(--space-1));
+  transform: translateX(2px);
 }
 </style>

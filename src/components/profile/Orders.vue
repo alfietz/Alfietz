@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed } from 'vue'
-import { useProgressiveData } from '../../composables/useProgressiveData'
+import { ref, onMounted } from 'vue'
+import { db } from '../../db/client'
 import BaseDialog from '../layout/BaseDialog.vue'
 
 const props = defineProps({
@@ -16,31 +16,10 @@ const props = defineProps({
 
 defineEmits(['go-back', 'go-chat'])
 
-const ordersQuery = useProgressiveData('get_orders', { userId: props.userData?.id }, {
-  cacheKey: `orders_${props.userData?.id}`,
-  ttl: 2 * 60 * 1000
-})
+const STORAGE_KEY = 'alfie_orders_cache'
 
-const orders = computed(() => {
-  const raw = ordersQuery.data.value
-  if (!raw) return []
-  const rows = raw.rows
-  if (!Array.isArray(rows)) return []
-  return rows.map(o => ({
-    id: o.id,
-    item: o.item_name,
-    tailor: (o.tailor_first_name || o.tailor_last_name) ? `${o.tailor_first_name || ''} ${o.tailor_last_name || ''}`.trim() : o.tailor_username,
-    tailor_id: o.tailor_id,
-    tailorFirstName: o.tailor_first_name,
-    tailorPhone: o.tailor_phone,
-    date: new Date(o.created_at).toLocaleDateString(),
-    price: o.price,
-    status: o.status,
-    image: o.image
-  }))
-})
-
-const loading = computed(() => !ordersQuery.data.value && !ordersQuery.error.value)
+const orders = ref([])
+const loading = ref(true)
 
 const dialog = ref({
   show: false,
@@ -55,6 +34,50 @@ const showDialog = (options) => {
     title: options.title || '',
     message: options.message || '',
     type: options.type || 'info'
+  }
+}
+
+onMounted(async () => {
+  // 1. Instant Cache Load
+  const cached = localStorage.getItem(STORAGE_KEY)
+  if (cached) {
+    try {
+      orders.value = JSON.parse(cached)
+      loading.value = false // Skip loading state if we have a cache
+    } catch (e) {
+      console.warn("Failed to parse orders cache")
+    }
+  }
+
+  await fetchOrders()
+})
+
+const fetchOrders = async () => {
+  try {
+    const res = await db.runAction('get_orders', { userId: props.userData.id })
+    
+    const newOrders = res.rows.map(o => ({
+      id: o.id,
+      item: o.item_name,
+      tailor: (o.tailor_first_name || o.tailor_last_name) ? `${o.tailor_first_name || ''} ${o.tailor_last_name || ''}`.trim() : o.tailor_username,
+      tailor_id: o.tailor_id,
+      tailorFirstName: o.tailor_first_name,
+      tailorPhone: o.tailor_phone,
+      date: new Date(o.created_at).toLocaleDateString(),
+      price: o.price,
+      status: o.status,
+      image: o.image
+    }))
+
+    // 2. Smart Update (Only update and cache if data changed)
+    if (JSON.stringify(newOrders) !== JSON.stringify(orders.value)) {
+      orders.value = newOrders
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(newOrders))
+    }
+  } catch (e) {
+    console.error("Error fetching orders:", e)
+  } finally {
+    loading.value = false
   }
 }
 
@@ -154,7 +177,7 @@ const openWhatsApp = (order) => {
 
 <style scoped>
 .orders-page {
-  padding: var(--space-10) var(--space-6);
+  padding: 40px 24px;
   max-width: 800px;
   margin: 0 auto;
   min-height: 100vh;
@@ -163,12 +186,12 @@ const openWhatsApp = (order) => {
 .header-row {
   display: flex;
   align-items: center;
-  gap: var(--space-5);
-  margin-bottom: var(--space-10);
+  gap: 20px;
+  margin-bottom: 40px;
 }
 
 .title {
-  font-size: var(--text-h1);
+  font-size: 24px;
   font-weight: 800;
   color: var(--text-primary);
   margin: 0;
@@ -177,16 +200,16 @@ const openWhatsApp = (order) => {
 .orders-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: 20px;
 }
 
 .order-card {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   border-radius: var(--radius-md);
-  padding: var(--space-4);
+  padding: 16px;
   display: flex;
-  gap: var(--space-5);
+  gap: 20px;
   transition: all 0.3s;
 }
 
@@ -208,22 +231,22 @@ const openWhatsApp = (order) => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: 8px;
 }
 
 .message-tailor-btn {
-  margin-top: var(--space-2);
+  margin-top: 8px;
   background: var(--accent-amber);
   color: var(--wood-deep);
   border: none;
-  padding: var(--space-2) var(--space-4);
+  padding: 8px 16px;
   border-radius: var(--radius-sm);
   font-weight: 700;
-  font-size: var(--text-body);
+  font-size: 13px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2);
+  gap: 8px;
   cursor: pointer;
   transition: all 0.2s;
   width: fit-content;
@@ -250,21 +273,21 @@ const openWhatsApp = (order) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--space-2);
+  margin-bottom: 8px;
 }
 
 .order-id {
-  font-size: var(--text-caption);
+  font-size: 11px;
   font-weight: 800;
   color: var(--text-muted);
   text-transform: uppercase;
 }
 
 .status-badge {
-  font-size: var(--text-micro);
+  font-size: 10px;
   font-weight: 800;
-  padding: var(--space-1) var(--space-3);
-  border-radius: var(--radius-sm);
+  padding: 2px 10px;
+  border-radius: 10px;
   text-transform: uppercase;
 }
 
@@ -272,16 +295,16 @@ const openWhatsApp = (order) => {
 .status-success { background: rgba(16, 185, 129, 0.1); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.2); }
 
 .item-name {
-  font-size: var(--text-body-lg);
+  font-size: 16px;
   font-weight: 800;
   color: var(--text-primary);
-  margin: 0 0 var(--space-1) 0;
+  margin: 0 0 4px 0;
 }
 
 .tailor-name {
-  font-size: var(--text-body);
+  font-size: 13px;
   color: var(--text-muted);
-  margin: 0 0 var(--space-3) 0;
+  margin: 0 0 12px 0;
 }
 
 .order-footer {
@@ -295,30 +318,30 @@ const openWhatsApp = (order) => {
   font-family: 'JetBrains Mono', monospace;
   font-weight: 800;
   color: #10B981;
-  font-size: var(--text-body-lg);
+  font-size: 15px;
 }
 
 .order-date {
-  font-size: var(--text-caption);
+  font-size: 12px;
   color: var(--text-muted);
 }
 
 .footer-actions {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: 12px;
 }
 
 .chat-btn {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: 6px;
   background: var(--wood-walnut);
   border: 1px solid var(--glass-border);
   color: var(--accent-amber);
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-caption);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 11px;
   font-weight: 800;
   cursor: pointer;
   transition: all 0.3s;
@@ -331,12 +354,12 @@ const openWhatsApp = (order) => {
 
 .empty-state {
   text-align: center;
-  padding: var(--space-12) var(--space-5);
+  padding: 80px 20px;
 }
 
 .empty-icon {
-  font-size: var(--text-display);
-  margin-bottom: var(--space-5);
+  font-size: 48px;
+  margin-bottom: 20px;
 }
 
 .back-btn {

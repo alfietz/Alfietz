@@ -162,7 +162,7 @@ defineEmits(['go-back', 'submit'])
 .write-review-page {
   background-color: var(--wood-deep);
   min-height: 100vh;
-  padding: var(--space-10) var(--space-6) var(--space-12);
+  padding: 40px 24px 140px;
   max-width: 800px;
   margin: 0 auto;
 }
@@ -170,8 +170,8 @@ defineEmits(['go-back', 'submit'])
 .header-row {
   display: flex;
   align-items: center;
-  gap: var(--space-5);
-  margin-bottom: var(--space-10);
+  gap: 20px;
+  margin-bottom: 40px;
 }
 
 .back-btn {
@@ -194,7 +194,7 @@ defineEmits(['go-back', 'submit'])
 }
 
 .title {
-  font-size: var(--text-h1);
+  font-size: 24px;
   font-weight: 800;
   color: var(--text-primary);
   margin: 0;
@@ -203,36 +203,36 @@ defineEmits(['go-back', 'submit'])
 .form-container {
   display: flex;
   flex-direction: column;
-  gap: var(--space-10);
+  gap: 40px;
 }
 
 .rating-selection {
   text-align: center;
   background: var(--wood-walnut);
-  padding: var(--space-10) var(--space-5);
-  border-radius: var(--radius-lg);
+  padding: 40px 20px;
+  border-radius: 32px;
   border: 1px solid var(--glass-border);
 }
 
 .rating-label {
-  font-size: var(--text-body-lg);
+  font-size: 16px;
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: var(--space-6);
+  margin-bottom: 24px;
 }
 
 .stars {
   display: flex;
   justify-content: center;
-  gap: var(--space-3);
-  margin-bottom: var(--space-4);
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .star-btn {
   background: none;
   border: none;
   cursor: pointer;
-  padding: var(--space-1);
+  padding: 4px;
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
@@ -240,7 +240,7 @@ defineEmits(['go-back', 'submit'])
 .star-btn.active svg { filter: drop-shadow(0 0 8px var(--accent-glow)); }
 
 .rating-text-feedback {
-  font-size: var(--text-body);
+  font-size: 14px;
   font-weight: 800;
   color: var(--accent-amber);
   margin: 0;
@@ -251,11 +251,11 @@ defineEmits(['go-back', 'submit'])
 .input-group {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: 16px;
 }
 
 .group-label {
-  font-size: var(--text-caption);
+  font-size: 12px;
   font-weight: 800;
   color: var(--text-muted);
   text-transform: uppercase;
@@ -271,13 +271,13 @@ defineEmits(['go-back', 'submit'])
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--space-3);
+  gap: 12px;
   height: 120px;
   background: var(--wood-walnut);
   border: 2px dashed var(--glass-border);
-  border-radius: var(--radius-lg);
+  border-radius: 20px;
   color: var(--text-muted);
-  font-size: var(--text-body);
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
@@ -293,7 +293,7 @@ defineEmits(['go-back', 'submit'])
   width: 44px;
   height: 44px;
   background: var(--wood-deep);
-  border-radius: var(--radius-md);
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -306,7 +306,7 @@ defineEmits(['go-back', 'submit'])
   position: relative;
   width: 120px;
   height: 120px;
-  border-radius: var(--radius-lg);
+  border-radius: 20px;
   overflow: hidden;
   border: 2px solid var(--accent-amber);
   box-shadow: 0 8px 20px rgba(0,0,0,0.3);
@@ -336,16 +336,16 @@ defineEmits(['go-back', 'submit'])
 .tags-cloud {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-3);
+  gap: 10px;
 }
 
 .tag-pill {
   background: var(--wood-walnut);
   border: 1px solid var(--glass-border);
   color: var(--text-muted);
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-md);
-  font-size: var(--text-body);
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
@@ -365,9 +365,9 @@ defineEmits(['go-back', 'submit'])
   width: 100%;
   height: 160px;
   border: 1px solid var(--glass-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-6);
-  font-size: var(--text-body-lg);
+  border-radius: 24px;
+  padding: 24px;
+  font-size: 16px;
   color: var(--text-primary);
   outline: none;
   resize: none;
@@ -385,7 +385,7 @@ defineEmits(['go-back', 'submit'])
   position: absolute;
   bottom: 20px;
   right: 24px;
-  font-size: var(--text-caption);
+  font-size: 11px;
   font-weight: 800;
   color: var(--text-muted);
   opacity: 0.5;
@@ -396,7 +396,7 @@ defineEmits(['go-back', 'submit'])
   bottom: 0;
   left: 0;
   width: 100%;
-  padding: var(--space-6) var(--space-5) var(--space-10);
+  padding: 24px 20px 40px;
   background: linear-gradient(to top, var(--wood-deep) 80%, transparent);
   z-index: 10;
   display: flex;
@@ -409,15 +409,15 @@ defineEmits(['go-back', 'submit'])
   background: var(--accent-amber);
   color: white;
   border: none;
-  border-radius: var(--radius-lg);
-  padding: var(--space-5);
-  font-size: var(--text-body-lg);
+  border-radius: 20px;
+  padding: 18px;
+  font-size: 16px;
   font-weight: 800;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-3);
+  gap: 12px;
   box-shadow: 0 10px 25px var(--accent-glow);
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }

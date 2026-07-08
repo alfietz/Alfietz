@@ -33,7 +33,7 @@ defineEmits(['go-back', 'go-details', 'toggle-like'])
 .favorites-page {
   background-color: var(--wood-deep);
   min-height: 100vh;
-  padding: var(--space-6) var(--space-5);
+  padding: 24px 20px;
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -41,12 +41,12 @@ defineEmits(['go-back', 'go-details', 'toggle-like'])
 .header-row {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
-  margin-bottom: var(--space-6);
+  gap: 16px;
+  margin-bottom: 24px;
 }
 
 .title {
-  font-size: var(--text-h1);
+  font-size: 22px;
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
@@ -55,6 +55,6 @@ defineEmits(['go-back', 'go-details', 'toggle-like'])
 .favorites-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: var(--space-4);
+  gap: 16px;
 }
 </style>
