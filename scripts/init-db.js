@@ -1,295 +1,226 @@
 import { createClient } from "@libsql/client"
 import * as dotenv from 'dotenv'
 import bcrypt from 'bcryptjs'
-dotenv.config()
+import path from 'path'
+import { fileURLToPath } from 'url'
+import fs from 'fs'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+const projectRoot = path.resolve(__dirname, '..')
+
+// Load env vars from project root
+const envPath = path.resolve(projectRoot, '.env')
+const envLocalPath = path.resolve(projectRoot, '.env.local')
+if (fs.existsSync(envLocalPath)) dotenv.config({ path: envLocalPath })
+if (fs.existsSync(envPath)) dotenv.config({ path: envPath })
+
+const url = process.env.TURSO_URL || process.env.VITE_TURSO_URL || 'file:local.db'
+const authToken = process.env.TURSO_AUTH_TOKEN || process.env.VITE_TURSO_AUTH_TOKEN
 
 const client = createClient({
-  url: process.env.TURSO_URL || process.env.VITE_TURSO_URL,
-  authToken: process.env.TURSO_AUTH_TOKEN || process.env.VITE_TURSO_AUTH_TOKEN,
+  url,
+  ...(url.startsWith('file:') ? {} : { authToken }),
 })
 
-async function init() {
-  console.log("Initializing Turso Database for Alfietz...")
+const sanitize = (val) => typeof val === 'bigint' ? val.toString() : val
+
+const mapRows = (result) => {
+  return result.rows.map(row => {
+    const obj = {}
+    result.columns.forEach((col, i) => { obj[col] = sanitize(row[i]) })
+    return obj
+  })
+}
+
+async function seed() {
+  console.log("Seeding Alfietz database...")
+  console.log(`Database: ${url}`)
 
   try {
-    // 1. Drop existing tables in correct order
-    await client.execute("DROP TABLE IF EXISTS app_reviews")
-    await client.execute("DROP TABLE IF EXISTS notifications")
-    await client.execute("DROP TABLE IF EXISTS feedback")
-    await client.execute("DROP TABLE IF EXISTS reviews")
-    await client.execute("DROP TABLE IF EXISTS favorites")
-    await client.execute("DROP TABLE IF EXISTS products")
-    await client.execute("DROP TABLE IF EXISTS sellers")
-    await client.execute("DROP TABLE IF EXISTS categories")
-    await client.execute("DROP TABLE IF EXISTS users")
-    await client.execute("DROP TABLE IF EXISTS messages")
-    await client.execute("DROP TABLE IF EXISTS orders")
-    await client.execute("DROP TABLE IF EXISTS negotiations")
+    // ── Clear existing data ──
+    await client.execute("DELETE FROM app_reviews")
+    await client.execute("DELETE FROM notifications")
+    await client.execute("DELETE FROM feedback")
+    await client.execute("DELETE FROM reviews")
+    await client.execute("DELETE FROM favorites")
+    await client.execute("DELETE FROM products")
+    await client.execute("DELETE FROM categories")
+    await client.execute("DELETE FROM tailor_profiles")
+    await client.execute("DELETE FROM login_history")
+    await client.execute("DELETE FROM messages")
+    await client.execute("DELETE FROM orders")
+    await client.execute("DELETE FROM negotiations")
+    await client.execute("DELETE FROM verification_codes")
+    await client.execute("DELETE FROM session_tokens")
+    await client.execute("DELETE FROM rate_limits")
+    await client.execute("DELETE FROM users")
 
-    // 2. Create tables
-    await client.execute(`
-      CREATE TABLE users (
-        id TEXT PRIMARY KEY,
-        username TEXT UNIQUE,
-        first_name TEXT,
-        last_name TEXT,
-        email TEXT UNIQUE,
-        password TEXT,
-        whatsapp TEXT,
-        avatar TEXT,
-        user_type TEXT DEFAULT 'buyer',
-        needs TEXT,
-        gives TEXT,
-        theme TEXT DEFAULT 'light',
-        profile_views INTEGER DEFAULT 0
-      )
-    `)
+    console.log("Cleared existing data.")
 
-    await client.execute(`
-      CREATE TABLE categories (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT UNIQUE,
-        count INTEGER DEFAULT 0
-      )
-    `)
+    // ── Users ──
+    const hashedPass = await bcrypt.hash('password123', 10)
 
-    await client.execute(`
-      CREATE TABLE products (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT,
-        price TEXT,
-        description TEXT,
-        material TEXT,
-        image TEXT,
-        category_id INTEGER,
-        likes_count INTEGER DEFAULT 0,
-        owner_id TEXT,
-        status TEXT DEFAULT 'In Stock',
-        variants_json TEXT,
-        gallery_json TEXT,
-        FOREIGN KEY(category_id) REFERENCES categories(id),
-        FOREIGN KEY(owner_id) REFERENCES users(id)
-      )
-    `)
+    const defaultAvatar = (name) => `https://i.pravatar.cc/300?u=${name}&bg=2A1810`
 
-    await client.execute(`
-      CREATE TABLE favorites (
-        user_id TEXT,
-        product_id INTEGER,
-        PRIMARY KEY (user_id, product_id),
-        FOREIGN KEY(user_id) REFERENCES users(id),
-        FOREIGN KEY(product_id) REFERENCES products(id)
-      )
-    `)
-
-    await client.execute(`
-      CREATE TABLE feedback (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id TEXT,
-        message TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(user_id) REFERENCES users(id)
-      )
-    `)
-
-    await client.execute(`
-      CREATE TABLE app_reviews (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id TEXT,
-        rating INTEGER,
-        text TEXT,
-        image TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(user_id) REFERENCES users(id)
-      )
-    `)
-
-    await client.execute(`
-      CREATE TABLE reviews (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        product_id INTEGER,
-        user_id TEXT,
-        rating INTEGER,
-        text TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(product_id) REFERENCES products(id),
-        FOREIGN KEY(user_id) REFERENCES users(id)
-      )
-    `)
-
-    await client.execute(`
-      CREATE TABLE notifications (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id TEXT,
-        message TEXT,
-        is_unread BOOLEAN DEFAULT 1,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(user_id) REFERENCES users(id)
-      )
-    `)
-
-    await client.execute(`
-      CREATE TABLE IF NOT EXISTS messages (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        sender_id TEXT,
-        receiver_id TEXT,
-        content TEXT,
-        is_read BOOLEAN DEFAULT 0,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    `)
-
-    await client.execute(`
-      CREATE TABLE IF NOT EXISTS orders (
-        id TEXT PRIMARY KEY,
-        item_name TEXT,
-        customer_id TEXT,
-        tailor_id TEXT,
-        price TEXT,
-        status TEXT DEFAULT 'Pending',
-        size TEXT,
-        color TEXT,
-        notes TEXT,
-        image TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    `)
-
-    await client.execute(`
-      CREATE TABLE IF NOT EXISTS negotiations (
-        id TEXT PRIMARY KEY,
-        item_name TEXT,
-        customer_id TEXT,
-        tailor_id TEXT,
-        proposed_price TEXT,
-        status TEXT DEFAULT 'Awaiting Reply',
-        size TEXT,
-        color TEXT,
-        notes TEXT,
-        image TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    `)
-
-    await client.execute(`
-      CREATE TABLE IF NOT EXISTS rate_limits (
-        key TEXT PRIMARY KEY,
-        count INTEGER DEFAULT 0,
-        expires_at INTEGER
-      )
-    `)
-
-    console.log("Tables created successfully.")
-
-    // 2.5 Insert Default Guest User with Hashed Password
-    const hashedPassword = await bcrypt.hash('password123', 10)
     await client.execute({
-      sql: "INSERT INTO users (id, username, first_name, last_name, email, password, whatsapp, avatar, user_type, theme) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-      args: ['guest', 'johnabram', 'John', 'Abram', 'johnabram@gmail.com', hashedPassword, '+255700000000', 'https://i.pravatar.cc/150?u=johnabram', 'buyer', 'dark']
+      sql: `INSERT INTO users (id, username, first_name, last_name, email, password, whatsapp, avatar, user_type, needs, gives, theme, is_verified, profile_views)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: ['guest', 'johnabram', 'John', 'Abram', 'johnabram@gmail.com', hashedPass,
+             '+255700000000', defaultAvatar('johnabram'), 'buyer', '', '', 'dark', 0, 0]
     })
 
-    // 2.6 Seed Initial Notifications
-    const initialNotifications = [
-      'A master tailor is ready for your Maasai Beads order',
-      'New Kente Royal collection just dropped!',
-      'Your Ankara Infinity Dress has been shipped'
+    const suppliers = [
+      { id: 's_amina',  username: 'amina',    firstName: 'Amina',    lastName: 'Oladipo',    email: 'amina@alfietz.shop',  specialty: 'Ankara Specialist',    bio: 'Amina is a 3rd generation tailor from Lagos, specializing in modern Ankara silhouettes that honor traditional motifs.',            rating: 4.9, is_verified: 1, profile_views: 1200 },
+      { id: 's_kofi',   username: 'kofi',     firstName: 'Kofi',     lastName: 'Asante',     email: 'kofi@alfietz.shop',   specialty: 'Kente Royal Wear',     bio: 'Master weaver Kofi brings the spirit of Ashanti royalty to every garment, using hand-loomed Kente from his home village.',              rating: 4.8, is_verified: 1, profile_views: 980 },
+      { id: 's_zahara', username: 'zahara',   firstName: 'Zahara',   lastName: 'Nkosi',      email: 'zahara@alfietz.shop', specialty: 'Maasai Beadwork',     bio: 'A collective of Maasai women artisans led by Zahara, preserving the ancient art of beadwork through sustainable fashion.',            rating: 5.0, is_verified: 0, profile_views: 1500 },
+      { id: 's_moussa', username: 'moussa',   firstName: 'Moussa',   lastName: 'Diallo',     email: 'moussa@alfietz.shop',  specialty: 'Agbada Master',       bio: 'Moussa is renowned for his grand Agbada robes, blending silk and cotton with intricate embroidery that tells a story.',               rating: 4.7, is_verified: 1, profile_views: 850 },
+      { id: 's_elena',  username: 'elena',    firstName: 'Elena',    lastName: 'Okafor',     email: 'elena@alfietz.shop',   specialty: 'Modern Dashiki',      bio: 'Elena redefines the Dashiki for the urban youth, focusing on bold colors and contemporary fits.',                                      rating: 4.5, is_verified: 0, profile_views: 600 },
+      { id: 's_juma',   username: 'juma',     firstName: 'Juma',     lastName: 'Mkamba',     email: 'juma@alfietz.shop',    specialty: 'Tribal Footwear',     bio: 'Juma crafts durable, stylish leather sandals inspired by nomadic footwear from the Sahel region.',                                    rating: 4.2, is_verified: 0, profile_views: 400 },
+      { id: 's_sara',   username: 'sara',     firstName: 'Sara',     lastName: 'Mensah',     email: 'sara@alfietz.shop',    specialty: 'Casual Heritage Wear', bio: 'Sara provides high-quality everyday wear with a touch of African textile influence.',                                                rating: 3.8, is_verified: 0, profile_views: 150 },
+      { id: 's_kwame',  username: 'kwame',    firstName: 'Kwame',    lastName: 'Boateng',    email: 'kwame@alfietz.shop',   specialty: 'Bespoke Tailoring',   bio: 'Kwame is an emerging designer exploring bold new silhouettes with recycled African wax prints.',                                      rating: 0.0, is_verified: 0, profile_views: 50 },
     ]
-    for (const msg of initialNotifications) {
+
+    for (const s of suppliers) {
       await client.execute({
-        sql: "INSERT INTO notifications (user_id, message) VALUES (?, ?)",
-        args: ['guest', msg]
+        sql: `INSERT INTO users (id, username, first_name, last_name, email, password, whatsapp, avatar, user_type, needs, gives, theme, is_verified, profile_views)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        args: [s.id, s.username, s.firstName, s.lastName, s.email, hashedPass,
+               '+2557' + Math.floor(10000000 + Math.random() * 90000000),
+               defaultAvatar(s.username), 'supplier', '', s.bio, 'dark', s.is_verified, s.profile_views]
+      })
+
+      // Tailor profile with case study and services
+      const defaultServices = JSON.stringify([
+        { id: 1, name: "Bespoke Tailoring", price: "From $50", desc: "Custom made-to-measure garments designed specifically for your body and style." },
+        { id: 2, name: "Heritage Restoration", price: "From $30", desc: "Specialized care and repair for traditional textiles like Kente, Ankara, and Maasai beadwork." },
+        { id: 3, name: "Precision Fitting", price: "Hourly Rate", desc: "Hardware-level adjustments and tailoring to your existing wardrobe." }
+      ])
+      const defaultContacts = JSON.stringify([
+        { id: 1, type: 'whatsapp', label: 'WhatsApp', value: '+2557' + Math.floor(10000000 + Math.random() * 90000000), isDefault: true },
+        { id: 2, type: 'email', label: 'Email', value: s.email, isDefault: true }
+      ])
+
+      await client.execute({
+        sql: `INSERT INTO tailor_profiles (user_id, quirk, case_study_title, case_study_quote, case_study_challenge, case_study_execution, case_study_result, case_study_image, services_json, contacts_json)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        args: [
+          s.id,
+          `"Every piece I create carries a piece of my ancestors' wisdom." — ${s.firstName}`,
+          `The ${s.specialty} Collection`,
+          `"A masterpiece that bridges tradition and modernity."`,
+          `Sourcing authentic materials while keeping costs accessible for the modern buyer.`,
+          `Partnered with local weaving cooperatives to ethically source hand-loomed textiles.`,
+          `A critically acclaimed collection that sold out within 48 hours of launch.`,
+          `https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=800&q=80`,
+          defaultServices,
+          defaultContacts
+        ]
       })
     }
 
-    // 3. Seed initial data
-    const categories = [
+    console.log(`Created ${suppliers.length + 1} users.`)
+
+    // ── Categories ──
+    const categoryNames = [
       'Ankara Essence', 'Kente Royal', 'Modern Dashiki', 'Maasai Beads',
       'Traditional Wedding', 'Heritage Headwear', 'Tribal Footwear', 'Agbada Collection',
       'Normal Clothes'
     ]
-    for (const name of categories) {
+    for (const name of categoryNames) {
       await client.execute({
         sql: "INSERT INTO categories (name, count) VALUES (?, ?)",
         args: [name, Math.floor(Math.random() * 200)]
       })
     }
+    console.log(`Created ${categoryNames.length} categories.`)
 
-    const products = [
-      { name: 'Royal Kente Blazer', price: '$145.00', category: 'Kente Royal', likes: 45 },
-      { name: 'Ankara Infinity Dress', price: '$95.00', category: 'Ankara Essence', likes: 82 },
-      { name: 'Tribal Print Kaftan', price: '$110.00', category: 'Modern Dashiki', likes: 31 },
-      { name: 'Heritage Gold Headwrap', price: '$45.00', category: 'Heritage Headwear', likes: 120 },
-      { name: 'Bogolan Mudcloth Vest', price: '$75.00', category: 'Ankara Essence', likes: 64 },
-      { name: 'Zulu Beaded Sandals', price: '$55.00', category: 'Tribal Footwear', likes: 28 },
-      { name: 'Maasai Warrior Shuka', price: '$60.00', category: 'Maasai Beads', likes: 95 },
-      { name: 'Agbada Grand Robe', price: '$250.00', category: 'Agbada Collection', likes: 15 },
-      { name: 'Adire Indigo Wrap', price: '$80.00', category: 'Traditional Wedding', likes: 53 },
-      { name: 'Kente Graduation Stole', price: '$35.00', category: 'Kente Royal', likes: 210 },
-      { name: 'Heritage Cotton T-Shirt', price: '$25.00', category: 'Normal Clothes', likes: 12 },
-      { name: 'Classic Denim Jeans', price: '$45.00', category: 'Normal Clothes', likes: 8 },
-      { name: 'Casual Summer Dress', price: '$35.00', category: 'Normal Clothes', likes: 22 },
-      { name: 'Lightweight Bomber Jacket', price: '$65.00', category: 'Normal Clothes', likes: 14 }
+    // ── Products ──
+    const productImages = [
+      'https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?q=80&w=800&auto=format',
+      'https://images.unsplash.com/photo-1544441893-675973e31985?q=80&w=800&auto=format',
+      'https://images.unsplash.com/photo-1584917865442-de89df76afd3?q=80&w=800&auto=format',
+      'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=800&auto=format',
+      'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?q=80&w=800&auto=format',
+      'https://images.unsplash.com/photo-1592078615290-033ee584e267?q=80&w=800&auto=format',
+      'https://images.unsplash.com/photo-1564257631407-4deb1f99d992?q=80&w=800&auto=format',
     ]
 
-    for (const p of products) {
-      const cat = await client.execute({
+    const products = [
+      { name: 'Royal Kente Blazer',         price: '$145.00', category: 'Kente Royal',         likes: 45,  owner: 's_kofi' },
+      { name: 'Ankara Infinity Dress',      price: '$95.00',  category: 'Ankara Essence',      likes: 82,  owner: 's_amina' },
+      { name: 'Tribal Print Kaftan',        price: '$110.00', category: 'Modern Dashiki',      likes: 31,  owner: 's_elena' },
+      { name: 'Heritage Gold Headwrap',     price: '$45.00',  category: 'Heritage Headwear',    likes: 120, owner: 's_amina' },
+      { name: 'Bogolan Mudcloth Vest',      price: '$75.00',  category: 'Ankara Essence',       likes: 64,  owner: 's_kofi' },
+      { name: 'Zulu Beaded Sandals',        price: '$55.00',  category: 'Tribal Footwear',      likes: 28,  owner: 's_juma' },
+      { name: 'Maasai Warrior Shuka',       price: '$60.00',  category: 'Maasai Beads',         likes: 95,  owner: 's_zahara' },
+      { name: 'Agbada Grand Robe',          price: '$250.00', category: 'Agbada Collection',    likes: 15,  owner: 's_moussa' },
+      { name: 'Adire Indigo Wrap Dress',    price: '$80.00',  category: 'Traditional Wedding',  likes: 53,  owner: 's_elena' },
+      { name: 'Kente Graduation Stole',     price: '$35.00',  category: 'Kente Royal',          likes: 210, owner: 's_kofi' },
+      { name: 'Heritage Cotton T-Shirt',    price: '$25.00',  category: 'Normal Clothes',       likes: 12,  owner: 's_sara' },
+      { name: 'Classic Denim Jeans',        price: '$45.00',  category: 'Normal Clothes',       likes: 8,   owner: 's_sara' },
+      { name: 'Ankara Summer Dress',        price: '$35.00',  category: 'Normal Clothes',       likes: 22,  owner: 's_elena' },
+      { name: 'Lightweight Bomber Jacket',  price: '$65.00',  category: 'Normal Clothes',       likes: 14,  owner: 's_kwame' },
+      { name: 'Kente Silk Tie',             price: '$29.00',  category: 'Kente Royal',          likes: 67,  owner: 's_kofi' },
+      { name: 'Maasai Beaded Necklace',     price: '$38.00',  category: 'Maasai Beads',         likes: 44,  owner: 's_zahara' },
+      { name: 'Ankara Flip Flops',          price: '$22.00',  category: 'Tribal Footwear',      likes: 19,  owner: 's_juma' },
+      { name: 'Dashiki Hoodie',             price: '$89.00',  category: 'Modern Dashiki',       likes: 73,  owner: 's_elena' },
+    ]
+
+    for (let i = 0; i < products.length; i++) {
+      const p = products[i]
+      const catRes = await client.execute({
         sql: "SELECT id FROM categories WHERE name = ?",
         args: [p.category]
       })
+      if (catRes.rows.length === 0) {
+        console.warn(`  Skipping ${p.name}: category "${p.category}" not found`)
+        continue
+      }
+      const categoryId = sanitize(catRes.rows[0].id)
+      const image = productImages[i % productImages.length]
+
       await client.execute({
-        sql: "INSERT INTO products (name, price, description, image, category_id, likes_count, owner_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        sql: `INSERT INTO products (name, price, description, material, image, category_id, likes_count, owner_id, status)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         args: [
-          p.name, 
-          p.price, 
-          `Exquisite ${p.name} handcrafted with premium African textiles.`, 
-          'https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?q=80&w=800',
-          cat.rows[0].id,
-          p.likes,
-          'guest'
+          p.name, p.price,
+          `Exquisite ${p.name} handcrafted with premium African textiles. Each piece tells a unique story of heritage and craftsmanship.`,
+          'Premium African Textile', image, categoryId, p.likes, p.owner, 'In Stock'
         ]
       })
     }
+    console.log(`Created ${products.length} products.`)
 
-    const sellers = [
-      { name: 'Amina Tailors', specialty: 'Ankara Specialist', bio: 'Amina is a 3rd generation tailor from Lagos, specializing in modern Ankara silhouettes that honor traditional motifs.', rating: 4.9, likes: 1200, clients: 450, avatar: 'https://i.pravatar.cc/150?u=amina', is_verified: 1 },
-      { name: 'Kofi Designs', specialty: 'Kente Royal Wear', bio: 'Master weaver Kofi brings the spirit of Ashanti royalty to every garment, using hand-loomed Kente from his home village.', rating: 4.8, likes: 980, clients: 320, avatar: 'https://i.pravatar.cc/150?u=kofi', is_verified: 1 },
-      { name: 'Zahara Crafts', specialty: 'Maasai Beadwork', bio: 'A collective of Maasai women artisans led by Zahara, preserving the ancient art of beadwork through sustainable fashion.', rating: 5.0, likes: 1500, clients: 600, avatar: 'https://i.pravatar.cc/150?u=zahara', is_verified: 0 },
-      { name: 'Moussa Robes', specialty: 'Agbada Master', bio: 'Moussa is renowned for his grand Agbada robes, blending silk and cotton with intricate embroidery that tells a story.', rating: 4.7, likes: 850, clients: 210, avatar: 'https://i.pravatar.cc/150?u=moussa', is_verified: 1 },
-      { name: 'Elena Prints', specialty: 'Modern Dashiki', bio: 'Elena redefines the Dashiki for the urban youth, focusing on bold colors and contemporary fits.', rating: 4.5, likes: 600, clients: 150, avatar: 'https://i.pravatar.cc/150?u=elena', is_verified: 0 },
-      { name: 'Juma Leather', specialty: 'Tribal Footwear', bio: 'Juma crafts durable, stylish leather sandals inspired by nomadic footwear from the Sahel region.', rating: 4.2, likes: 400, clients: 90, avatar: 'https://i.pravatar.cc/150?u=juma', is_verified: 0 },
-      { name: 'Sara Sews', specialty: 'Normal Clothes', bio: 'Sara provides high-quality everyday wear with a touch of African textile influence.', rating: 3.8, likes: 150, clients: 40, avatar: 'https://i.pravatar.cc/150?u=sara', is_verified: 0 },
-      { name: 'Newbie Stitches', specialty: 'Casual Wear', bio: 'A fresh talent in the heritage scene, exploring simple yet elegant designs.', rating: 0.0, likes: 0, clients: 0, avatar: 'https://i.pravatar.cc/150?u=newbie', is_verified: 0 }
-    ]
-
-    for (const s of sellers) {
-      await client.execute({
-        sql: "INSERT INTO sellers (name, specialty, bio, rating, likes_count, clients_count, avatar, is_verified) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-        args: [s.name, s.specialty, s.bio, s.rating, s.likes, s.clients, s.avatar, s.is_verified]
-      })
-    }
-
-    // 4. Seed initial reviews
-    const allProductsRes = await client.execute("SELECT id FROM products LIMIT 5")
+    // ── Reviews ──
     const reviewTexts = [
-      "Absolutely love this piece! The quality is amazing.",
-      "Beautiful craftsmanship. Worth every cent.",
-      "Fits perfectly and the colors are so vibrant!",
-      "Great service and fast delivery. Highly recommend.",
-      "The material feels so premium. I'm impressed."
+      "Absolutely love this piece! The quality is amazing and the craftsmanship is unparalleled.",
+      "Beautiful craftsmanship. Worth every cent. The attention to detail is remarkable.",
+      "Fits perfectly and the colors are so vibrant! Will definitely order again.",
+      "Great service and fast delivery. Highly recommend this artisan.",
+      "The material feels so premium. I'm impressed by the authenticity of the design.",
+      "A true masterpiece of heritage fashion. I receive compliments everywhere I go.",
+      "The tailor understood exactly what I wanted. The custom fit is perfect.",
     ]
-    for (const p of allProductsRes.rows) {
+    const allProds = await client.execute("SELECT id FROM products")
+    for (let i = 0; i < Math.min(allProds.rows.length, 8); i++) {
+      const productId = sanitize(allProds.rows[i].id)
+      const rating = 4 + Math.floor(Math.random() * 2)
+      const text = reviewTexts[Math.floor(Math.random() * reviewTexts.length)]
       await client.execute({
         sql: "INSERT INTO reviews (product_id, user_id, rating, text) VALUES (?, ?, ?, ?)",
-        args: [p.id, 'guest', 4 + Math.floor(Math.random() * 2), reviewTexts[Math.floor(Math.random() * reviewTexts.length)]]
+        args: [productId, 'guest', rating, text]
       })
     }
+    console.log("Created reviews.")
 
-    // 5. Seed initial app reviews
+    // ── App Reviews ──
     const appReviewTexts = [
-      "This app makes it so easy to find authentic heritage pieces!",
-      "The interface is beautiful and intuitive. Love the wood theme.",
-      "Great platform for connecting with skilled artisans directly.",
-      "Alfie is the future of African fashion digital marketplaces!"
+      "This app makes it so easy to find authentic heritage pieces! The connection with artisans is seamless.",
+      "The interface is beautiful and intuitive. Love the wood theme and the heritage aesthetic.",
+      "Great platform for connecting with skilled artisans directly without middlemen.",
+      "Alfie is the future of African fashion digital marketplaces! So proud to be part of this community.",
+      "The WhatsApp integration makes ordering so convenient. I've already placed three orders!"
     ]
     for (const text of appReviewTexts) {
       await client.execute({
@@ -297,12 +228,42 @@ async function init() {
         args: ['guest', 5, text]
       })
     }
+    console.log("Created app reviews.")
 
-    console.log("Database seeded successfully.")
+    // ── Notifications ──
+    const notifications = [
+      'A master tailor is ready for your Maasai Beads order',
+      'New Kente Royal collection just dropped!',
+      'Your Ankara Infinity Dress has been shipped',
+      '✨ New trend: Agbada Grand Robe is trending this week',
+      'Kofi Designs has responded to your inquiry'
+    ]
+    for (const msg of notifications) {
+      await client.execute({
+        sql: "INSERT INTO notifications (user_id, message) VALUES (?, ?)",
+        args: ['guest', msg]
+      })
+    }
+    console.log("Created notifications.")
+
+    // ── Favorites ──
+    const favProds = await client.execute("SELECT id FROM products ORDER BY likes_count DESC LIMIT 3")
+    for (const row of favProds.rows) {
+      await client.execute({
+        sql: "INSERT OR IGNORE INTO favorites (user_id, product_id) VALUES (?, ?)",
+        args: ['guest', sanitize(row.id)]
+      })
+    }
+    console.log("Created favorites.")
+
+    console.log("\n✓ Database seeded successfully!")
+    console.log("  Login: johnabram@gmail.com / password123")
+    console.log("  Supplier logins (any): e.g. amina@alfietz.shop / password123")
 
   } catch (e) {
-    console.error("Error initializing database:", e)
+    console.error("Error seeding database:", e)
+    process.exit(1)
   }
 }
 
-init()
+seed()

@@ -11,6 +11,10 @@ const props = defineProps({
     type: Boolean,
     default: true
   },
+  unreadChatCount: {
+    type: Number,
+    default: 0
+  },
   t: {
     type: Function,
     required: true
@@ -42,6 +46,7 @@ const navItems = computed(() => {
         <svg v-if="item === 'home'" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         <svg v-else-if="item === 'favorites'" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-amber)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="fav-icon"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
         <svg v-else-if="item === 'chats'" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-13.4 8.38 8.38 0 0 1 3.8.9L21 3z"/></svg>
+        <span v-if="item === 'chats' && unreadChatCount > 0" class="chat-badge">{{ unreadChatCount > 99 ? '99+' : unreadChatCount }}</span>
         <svg v-else-if="item === 'profile'" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         <div v-if="activeTab === item" class="active-dot"></div>
       </div>
@@ -161,5 +166,24 @@ const navItems = computed(() => {
   background-color: var(--accent-amber);
   border-radius: 50%;
   box-shadow: 0 0 8px var(--accent-glow);
+}
+
+.chat-badge {
+  position: absolute;
+  top: -5px;
+  right: -7px;
+  min-width: 16px;
+  height: 16px;
+  background: #EF4444;
+  color: white;
+  font-size: 9px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  padding: 0 4px;
+  border: 1.5px solid var(--wood-deep);
+  line-height: 1;
 }
 </style>

@@ -1,5 +1,7 @@
 <!-------- (SellerCard.vue) ./src/components/shop/SellerCard.vue ------------>
 <script setup>
+import { ref } from 'vue'
+
 defineProps({
   seller: {
     type: Object,
@@ -11,13 +13,16 @@ defineProps({
   }
 })
 
-defineEmits(['select'])
+const emit = defineEmits(['select'])
+
+const imageLoaded = ref(false)
 </script>
 
 <template>
   <div class="seller-card" @click="$emit('select', seller)">
-    <div class="avatar-wrapper">
-      <img :src="seller.avatar" :alt="seller.name" class="seller-avatar" :loading="loading" />
+    <div class="avatar-wrapper" :class="{ 'img-loaded': imageLoaded }">
+      <div v-if="!imageLoaded" class="avatar-shimmer"></div>
+      <img :src="seller.avatar" :alt="seller.name" class="seller-avatar" :class="{ 'img-reveal': imageLoaded }" :loading="loading" @load="imageLoaded = true" />
       <div v-if="seller.isVerified" class="verify-badge" title="Physical Shop Verified">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
       </div>
@@ -65,13 +70,40 @@ defineEmits(['select'])
   margin-bottom: 16px;
 }
 
+.avatar-shimmer {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: linear-gradient(90deg, var(--wood-walnut) 25%, var(--wood-polished) 50%, var(--wood-walnut) 75%);
+  background-size: 200% 100%;
+  animation: img-pulse 1.5s infinite linear;
+  z-index: 1;
+}
+
 .seller-avatar {
   width: 72px;
   height: 72px;
   border-radius: 50%;
   object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.4s ease;
   border: 3px solid var(--wood-deep);
   box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.seller-avatar.img-reveal {
+  opacity: 1;
+}
+
+.img-loaded .avatar-shimmer {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+@keyframes img-pulse {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 .verify-badge {

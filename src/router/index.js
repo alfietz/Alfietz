@@ -27,6 +27,7 @@ const routes = [
   { path: '/settings', name: 'settings', component: () => import('../components/profile/Settings.vue') },
   { path: '/tailor-console', name: 'tailor-console', component: () => import('../components/profile/TailorConsole.vue') },
   { path: '/orders', name: 'orders', component: () => import('../components/profile/Orders.vue') },
+  { path: '/negotiations', name: 'negotiations', component: () => import('../components/communication/Negotiations.vue') },
   { path: '/help', name: 'help', component: () => import('../components/communication/Help.vue') },
   { path: '/feedback', name: 'feedback', component: () => import('../components/communication/Feedback.vue') },
   { path: '/stories', name: 'stories', component: () => import('../components/communication/HeritageStories.vue') },
@@ -75,7 +76,7 @@ router.beforeEach((to, from) => {
   const authRoutes = [
     'profile', 'chats', 'chat-detail', 'edit-profile', 
     'settings', 'tailor-console', 'orders', 'upload-work',
-    'notifications', 'write-review', 'app-review'
+    'notifications', 'write-review', 'app-review', 'negotiations'
   ]
 
   if (authRoutes.includes(to.name) && isGuest) {

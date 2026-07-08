@@ -9,8 +9,17 @@ const props = defineProps({
   }
 })
 
-// Define emits so we can tell the parent when the back button is clicked
-defineEmits(['go-back'])
+const emit = defineEmits(['go-back', 'navigate'])
+
+const handleClick = (item) => {
+  if (item.type === 'order' && item.target_id) {
+    emit('navigate', 'orders')
+  } else if (item.type === 'negotiation' && item.target_id) {
+    emit('navigate', 'negotiations')
+  } else if (item.type === 'message' && item.target_id) {
+    emit('navigate', 'chats')
+  }
+}
 
 const formatTime = (timestamp) => {
   if (!timestamp) return ''
@@ -55,6 +64,7 @@ const getEmoji = (message) => {
         :key="item.id" 
         class="notification-card"
         :class="{ 'is-unread': item.is_unread }"
+        @click="handleClick(item)"
       >
         <div class="icon-circle">
           <span class="notification-emoji">{{ getEmoji(item.message) }}</span>

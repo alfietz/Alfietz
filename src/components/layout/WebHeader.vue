@@ -11,6 +11,10 @@ const props = defineProps({
     type: Number,
     default: 0
   },
+  unreadChatCount: {
+    type: Number,
+    default: 0
+  },
   isGuest: {
     type: Boolean,
     default: true
@@ -71,11 +75,13 @@ onUnmounted(() => {
           class="nav-link" 
           :class="{ 
             active: activeTab === item,
-            'login-link': item === 'login'
+            'login-link': item === 'login',
+            'has-badge': item === 'chats' && unreadChatCount > 0
           }" 
           @click="$emit('navigate', item)"
         >
           {{ t(item) }}
+          <span v-if="item === 'chats' && unreadChatCount > 0" class="nav-badge">{{ unreadChatCount > 99 ? '99+' : unreadChatCount }}</span>
           <span v-if="activeTab === item" class="active-glow"></span>
         </button>
       </nav>
@@ -265,6 +271,29 @@ onUnmounted(() => {
   background-color: var(--accent-amber);
   box-shadow: 0 0 10px var(--accent-glow);
   border-radius: 2px;
+}
+
+.nav-badge {
+  position: absolute;
+  top: -4px;
+  right: -8px;
+  min-width: 18px;
+  height: 18px;
+  background: #EF4444;
+  color: white;
+  font-size: 10px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  padding: 0 5px;
+  border: 2px solid var(--wood-deep);
+  line-height: 1;
+}
+
+.has-badge {
+  position: relative;
 }
 
 .header-actions {

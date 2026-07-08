@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { db } from '../../db/client'
 
 const props = defineProps({
@@ -21,19 +21,17 @@ const conversations = ref([])
 const loading = ref(true)
 
 onMounted(async () => {
-  // 1. Instant Cache Load
   const cached = localStorage.getItem(STORAGE_KEY)
   if (cached) {
     try {
       conversations.value = JSON.parse(cached)
-      loading.value = false // Skip loading state if we have a cache
+      loading.value = false
     } catch (e) {
       console.warn("Failed to parse chat cache")
     }
   }
-  
-  // 2. Background Refresh
   await fetchConversations()
+  startPolling()
 })
 
 const fetchConversations = async () => {
@@ -65,6 +63,55 @@ function formatTime(dateStr) {
   const date = new Date(dateStr)
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
+
+const POLL_INTERVAL = 15000
+let pollTimer = null
+let lastMaxMessageId = parseInt(localStorage.getItem('alfie_last_msg_id') || '0')
+
+const startPolling = () => {
+  stopPolling()
+  pollTimer = setInterval(pollNewMessages, POLL_INTERVAL)
+}
+
+const stopPolling = () => {
+  if (pollTimer) {
+    clearInterval(pollTimer)
+    pollTimer = null
+  }
+}
+
+const pollNewMessages = async () => {
+  try {
+    const res = await db.runAction('check_new_messages', {
+      userId: props.userData.id,
+      lastMessageId: lastMaxMessageId
+    })
+    if (res.hasNew) {
+      lastMaxMessageId = parseInt(res.maxMessageId) || lastMaxMessageId
+      localStorage.setItem('alfie_last_msg_id', String(lastMaxMessageId))
+      await fetchConversations()
+    }
+  } catch (e) {
+    console.error('Poll error:', e)
+  }
+}
+
+const handleVisibilityChange = () => {
+  if (document.hidden) {
+    stopPolling()
+  } else {
+    startPolling()
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('visibilitychange', handleVisibilityChange)
+})
+
+onUnmounted(() => {
+  stopPolling()
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
+})
 </script>
 
 <template>

@@ -91,7 +91,7 @@ const handleSearch = () => {
         <span class="read-link">Read Heritage Stories →</span>
       </div>
       <div class="banner-image">
-        <img src="https://images.unsplash.com/photo-1660695828374-4ff51ac9df5d?w=800&auto=format&fit=crop" alt="Kente Story" />
+        <img src="https://images.unsplash.com/photo-1660695828374-4ff51ac9df5d?w=800&auto=format&fit=crop" alt="Kente Story" loading="lazy" />
       </div>
     </section>
 
@@ -184,7 +184,7 @@ const handleSearch = () => {
       <div class="scroll-container tribe-feedback-scroll">
         <div v-for="rev in appReviews" :key="rev.id" class="feedback-bubble-card">
           <div class="bubble-header">
-            <img :src="rev.avatar" class="bubble-avatar" />
+            <img :src="rev.avatar" class="bubble-avatar" loading="lazy" />
             <div class="bubble-info">
               <span class="bubble-author">{{ rev.author }}</span>
               <div class="star-rating mini">

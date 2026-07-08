@@ -142,7 +142,7 @@ const handleSearch = (query, navigate = true) => {
               class="quick-item tap-active"
               @click="$emit('go-tailor', tailor)"
             >
-              <img :src="tailor.avatar" class="quick-avatar" />
+              <img :src="tailor.avatar" class="quick-avatar" loading="lazy" />
               <div class="quick-info">
                 <span class="quick-name">{{ tailor.name }}</span>
                 <span class="quick-meta">{{ tailor.bio }}</span>
@@ -161,7 +161,7 @@ const handleSearch = (query, navigate = true) => {
               class="quick-item tap-active"
               @click="$emit('go-product', item)"
             >
-              <img :src="item.image" class="quick-thumb" />
+              <img :src="item.image" class="quick-thumb" loading="lazy" />
               <div class="quick-info">
                 <span class="quick-name">{{ item.name }}</span>
                 <span class="quick-meta">{{ item.price }} • {{ item.category_name }}</span>

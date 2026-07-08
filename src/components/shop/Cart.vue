@@ -62,7 +62,7 @@ const cartByTailor = computed(() => {
         
         <div class="items-list">
           <div v-for="item in group.items" :key="item.cartId" class="cart-item">
-            <img :src="item.image" :alt="item.name" class="item-img" @click="$emit('go-details', item)" />
+            <img :src="item.image" :alt="item.name" class="item-img" loading="lazy" @click="$emit('go-details', item)" />
             <div class="item-info" @click="$emit('go-details', item)">
               <h4 class="item-name">{{ item.name }}</h4>
               <span class="item-price">{{ item.price }}</span>
