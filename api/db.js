@@ -82,6 +82,11 @@ function createHttpClient(url, authToken) {
   async function execute(sqlOrOpts, args) {
     const sql = typeof sqlOrOpts === 'object' ? sqlOrOpts.sql : sqlOrOpts;
     const params = typeof sqlOrOpts === 'object' ? (sqlOrOpts.args || []) : (args || []);
+    const typedArgs = params.map(a => {
+      if (a == null) return { type: "null", value: null };
+      if (typeof a === "number" || typeof a === "bigint") return { type: "integer", value: String(a) };
+      return { type: "text", value: String(a) };
+    });
 
     const dbUrl = url.replace(/^[a-z][a-z0-9+.-]*:\/\//, '');
     const response = await fetch(`https://${dbUrl}/v2/pipeline`, {
@@ -91,7 +96,7 @@ function createHttpClient(url, authToken) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        requests: [{ type: 'execute', stmt: { sql, args: params } }]
+        requests: [{ type: 'execute', stmt: { sql, args: typedArgs } }]
       })
     });
 
