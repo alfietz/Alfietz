@@ -5,6 +5,7 @@ import SectionHeader from '../layout/SectionHeader.vue'
 import BaseDialog from '../layout/BaseDialog.vue'
 import { db } from '../../db/client'
 import { useRoute } from 'vue-router'
+import { useImageLoader } from '../../composables/useImageLoader'
 
 const props = defineProps({
   productId: {
@@ -93,6 +94,12 @@ const selectedColorId = ref(null)
 const specialInstructions = ref('')
 const isStoryExpanded = ref(false)
 const similarProducts = ref([])
+const mainImageLoaded = ref(false)
+const [colorImg, onColorImgLoad, onColorImgErr] = useImageLoader()
+const [artisanImg, onArtisanImgLoad, onArtisanImgErr] = useImageLoader()
+const [reviewImg, onReviewImgLoad, onReviewImgErr] = useImageLoader()
+const [thumb1Img, onThumb1ImgLoad, onThumb1ImgErr] = useImageLoader()
+const [thumb2Img, onThumb2ImgLoad, onThumb2ImgErr] = useImageLoader()
 
 const isOwner = computed(() => {
   return product.value && product.value.owner_id === props.currentUserId
@@ -144,9 +151,14 @@ const loadProductData = async (activeId) => {
     }
     
     // Parse variants
+    const safeJsonParse = (val) => {
+      if (!val) return null
+      if (typeof val === 'object') return val
+      try { return JSON.parse(val) } catch { return null }
+    }
     if (product.value.variants_json) {
-      try {
-        const variants = JSON.parse(product.value.variants_json)
+      const variants = safeJsonParse(product.value.variants_json)
+      if (Array.isArray(variants)) {
         parsedColors.value = variants.map((v, i) => ({
           id: i,
           hex: v.hex,
@@ -154,19 +166,12 @@ const loadProductData = async (activeId) => {
           image: v.image,
           inStock: v.inStock !== undefined ? v.inStock : true
         }))
-      } catch (e) {
-        console.error('Failed to parse variants_json:', e)
       }
     }
 
     // Parse gallery
     if (product.value.gallery_json) {
-      try {
-        gallery.value = JSON.parse(product.value.gallery_json)
-      } catch (e) {
-        console.error('Failed to parse gallery_json:', e)
-        gallery.value = []
-      }
+      gallery.value = safeJsonParse(product.value.gallery_json) || []
     }
     
     // Fallback to description parsing if no structured variants or parsing failed
@@ -493,7 +498,7 @@ const shareProduct = async () => {
                 :class="{ selected: selectedColorId === color.id, 'out-of-stock': !color.inStock, 'has-image': color.image }"
                 :style="!color.image ? { backgroundColor: color.hex } : {}"
               >
-                <img v-if="color.image" :src="color.image" :alt="color.name" class="variant-img" />
+                <div v-if="color.image" class="heritage-img" :class="{ loaded: colorImg }"><div class="heritage-img-shimmer"></div><img :src="color.image" :alt="color.name" class="variant-img" loading="lazy" @load="onColorImgLoad" @error="onColorImgErr" /></div>
               </div>
               <span class="color-name-label">{{ color.name }}</span>
               <span v-if="!color.inStock" class="variant-oos">Sold Out</span>
@@ -507,7 +512,7 @@ const shareProduct = async () => {
 
         <!-- Artisan Section -->
         <div class="artisan-section-mini" @click="$emit('go-tailor', { id: product.owner_id, username: product.owner_username, first_name: product.first_name, avatar: product.owner_avatar })">
-          <img :src="product.owner_avatar" class="artisan-avatar-mini" />
+          <div class="heritage-img" :class="{ loaded: artisanImg }"><div class="heritage-img-shimmer"></div><img :src="product.owner_avatar" class="artisan-avatar-mini" loading="lazy" @load="onArtisanImgLoad" @error="onArtisanImgErr" /></div>
           <div class="artisan-info-mini">
             <span class="artisan-label">Sold by</span>
             <span class="artisan-name">{{ product.first_name || product.owner_username }}</span>
@@ -594,7 +599,7 @@ const shareProduct = async () => {
           <div v-else class="review-preview-list">
             <div v-for="review in reviews.slice(0, 3)" :key="review.id" class="review-item-modern">
               <div class="review-item-header">
-                <img :src="review.avatar || 'https://i.pravatar.cc/150?u=' + review.author" class="review-avatar-modern" />
+                <div class="heritage-img" :class="{ loaded: reviewImg }"><div class="heritage-img-shimmer"></div><img :src="review.avatar || 'https://i.pravatar.cc/150?u=' + review.author" class="review-avatar-modern" loading="lazy" @load="onReviewImgLoad" @error="onReviewImgErr" /></div>
                 <div class="review-info-modern">
                   <div class="author-row-modern">
                     <span class="review-author-modern">{{ review.author }}</span>
@@ -654,8 +659,9 @@ const shareProduct = async () => {
             </button>
           </div>
         </div>
-        <div class="main-image-container">
-          <img :src="currentVariant.image || product.image" :alt="product.name" class="main-image" />
+        <div class="main-image-container" :class="{ 'img-loaded': mainImageLoaded }">
+          <div v-if="!mainImageLoaded" class="main-img-shimmer"></div>
+          <img :src="currentVariant.image || product.image" :alt="product.name" class="main-image" :class="{ 'img-reveal': mainImageLoaded }" @load="mainImageLoaded = true" />
           
           <!-- Image Gallery Thumbnails -->
           <div v-if="gallery.length > 0" class="image-gallery-nav">
@@ -664,7 +670,7 @@ const shareProduct = async () => {
               :class="{ active: (currentVariant.image || product.image) === product.image }"
               @click="selectedColorId = null"
             >
-              <img :src="product.image" class="thumb-img" />
+              <div class="heritage-img" :class="{ loaded: thumb1Img }"><div class="heritage-img-shimmer"></div><img :src="product.image" class="thumb-img" loading="lazy" @load="onThumb1ImgLoad" @error="onThumb1ImgErr" /></div>
             </div>
             <div 
               v-for="(img, idx) in gallery" 
@@ -672,7 +678,7 @@ const shareProduct = async () => {
               class="thumb-wrapper"
               @click="product.image = img; selectedColorId = null"
             >
-              <img :src="img" class="thumb-img" />
+              <div class="heritage-img" :class="{ loaded: thumb2Img }"><div class="heritage-img-shimmer"></div><img :src="img" class="thumb-img" loading="lazy" @load="onThumb2ImgLoad" @error="onThumb2ImgErr" /></div>
             </div>
           </div>
         </div>
@@ -1092,6 +1098,7 @@ const shareProduct = async () => {
   align-items: center;
   justify-content: center;
   gap: 24px;
+  position: relative;
 }
 
 .image-gallery-nav {
@@ -1129,11 +1136,37 @@ const shareProduct = async () => {
   object-fit: cover;
 }
 
+.main-img-shimmer {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  background: linear-gradient(90deg, var(--wood-walnut) 25%, var(--wood-polished) 50%, var(--wood-walnut) 75%);
+  background-size: 200% 100%;
+  animation: img-pulse 1.5s infinite linear;
+  z-index: 1;
+}
+
 .main-image {
   max-width: 100%;
   max-height: 80%; 
   object-fit: contain;
-  transition: transform 0.5s ease;
+  opacity: 0;
+  transition: opacity 0.4s ease, transform 0.5s ease;
+}
+
+.main-image.img-reveal {
+  opacity: 1;
+}
+
+.img-loaded .main-img-shimmer {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+@keyframes img-pulse {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 .content-section {

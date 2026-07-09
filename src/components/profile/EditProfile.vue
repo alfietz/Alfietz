@@ -16,7 +16,7 @@ const props = defineProps({
 const tempUser = ref({ ...props.userData })
 const errorMessage = ref('')
 const isUploading = ref(false)
-const IMGBB_API_KEY = '789903544b6554a772331b1ffe6e4cc4'
+const IMGBB_API_KEY = import.meta.env.VITE_IMGBB_API_KEY
 
 const emit = defineEmits(['go-back', 'update:user-data'])
 

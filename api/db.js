@@ -1,5 +1,5 @@
-import { createClient } from "@libsql/client";
 import dotenv from 'dotenv';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import bcrypt from 'bcryptjs';
@@ -7,13 +7,27 @@ import { Resend } from 'resend';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const projectRoot = path.resolve(__dirname, '..');
 
-// Load environment variables
-const envPath = path.resolve(process.cwd(), '.env');
-const envLocalPath = path.resolve(process.cwd(), '.env.local');
+// Load environment variables (from project root, not CWD)
+const envPath = path.resolve(projectRoot, '.env');
+const envLocalPath = path.resolve(projectRoot, '.env.local');
 
 dotenv.config({ path: envLocalPath });
 dotenv.config({ path: envPath });
+
+function readEnvVar(name, fallback = '') {
+  if (fs.existsSync(envPath) && dotenv.parse(fs.readFileSync(envPath, 'utf-8'))[name]) {
+    return dotenv.parse(fs.readFileSync(envPath, 'utf-8'))[name];
+  }
+  if (fs.existsSync(envLocalPath) && dotenv.parse(fs.readFileSync(envLocalPath, 'utf-8'))[name]) {
+    return dotenv.parse(fs.readFileSync(envLocalPath, 'utf-8'))[name];
+  }
+  return process.env[name] || fallback;
+}
+
+const CFG_DB_URL = readEnvVar('TURSO_URL', readEnvVar('VITE_TURSO_URL', 'file:local.db'));
+const CFG_DB_TOKEN = readEnvVar('TURSO_AUTH_TOKEN', readEnvVar('VITE_TURSO_AUTH_TOKEN', ''));
 
 // Log for debugging (only names, not values)
 if (process.env.NODE_ENV === 'development') {
@@ -64,6 +78,59 @@ async function checkRateLimit(client, key, limit, windowSeconds) {
   return { allowed: true, remaining: limit - 1 };
 }
 
+function createHttpClient(url, authToken) {
+  async function execute(sqlOrOpts, args) {
+    const sql = typeof sqlOrOpts === 'object' ? sqlOrOpts.sql : sqlOrOpts;
+    const params = typeof sqlOrOpts === 'object' ? (sqlOrOpts.args || []) : (args || []);
+    const typedArgs = params.map(a => {
+      if (a == null) return { type: "null", value: null };
+      if (typeof a === "number" || typeof a === "bigint") return { type: "integer", value: String(a) };
+      return { type: "text", value: String(a) };
+    });
+
+    const dbUrl = url.replace(/^[a-z][a-z0-9+.-]*:\/\//, '');
+    const response = await fetch(`https://${dbUrl}/v2/pipeline`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        requests: [{ type: 'execute', stmt: { sql, args: typedArgs } }]
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`DB HTTP ${response.status}: ${await response.text()}`);
+    }
+
+    const data = await response.json();
+    const result = data.results?.[0]?.response?.result;
+    if (!result) {
+      const err = data.results?.[0]?.response?.error;
+      throw new Error(err?.message || 'Unknown database error');
+    }
+
+    const rawCols = result.cols || result.columns || [];
+    const columns = rawCols.map(c => typeof c === 'object' ? c.name : c);
+    const rows = (result.rows || []).map(row => {
+      const vals = row.map(cell => cell?.value ?? cell);
+      const r = [...vals];
+      columns.forEach((col, i) => { r[col] = vals[i]; });
+      return r;
+    });
+
+    return {
+      rows,
+      columns,
+      rowsAffected: result.affected_row_count ?? result.rowsAffected ?? 0,
+      lastInsertRowid: result.last_insert_rowid != null ? result.last_insert_rowid : undefined
+    };
+  }
+
+  return { execute };
+}
+
 export default async function handler(req, res) {
   // CORS Headers
   res.setHeader('Access-Control-Allow-Credentials', true);
@@ -78,33 +145,18 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  // Platform Verification (Independence & Security)
-  const platform = req.headers['x-heritage-platform'] || 'unknown';
-  const appKey = req.headers['x-heritage-app-key'] || 'none';
-
-  // In production, these should be set via process.env for maximum security
-  const VALID_ANDROID_KEY = process.env.ANDROID_APP_KEY || 'heritage_android_secure_v1';
-  const VALID_WEB_KEY = process.env.WEB_APP_KEY || 'heritage_web_public_v1';
-
-  let isVerified = false;
-  if (platform === 'android' && appKey === VALID_ANDROID_KEY) isVerified = true;
-  if (platform === 'web' && appKey === VALID_WEB_KEY) isVerified = true;
-
-  // Reject unauthorized platforms or keys
-  if (!isVerified) {
-    console.error(`[Security] Unauthorized access attempt: Platform=${platform}, Key=${appKey}`);
-    return res.status(403).json({ error: 'Unauthorized Platform: Heritage access denied.' });
-  }
-
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const url = process.env.TURSO_URL || process.env.VITE_TURSO_URL;
-  const authToken = process.env.TURSO_AUTH_TOKEN || process.env.VITE_TURSO_AUTH_TOKEN;
-  const resendApiKey = process.env.RESEND_API_KEY;
+  // Resolve database config (read directly from .env to bypass Vercel's forced env vars)
+  const url = (CFG_DB_URL || process.env.VITE_TURSO_URL || '').trim() || 'file:local.db';
+  const authToken = (CFG_DB_TOKEN || process.env.VITE_TURSO_AUTH_TOKEN || '').trim();
+  const resendApiKey = (process.env.RESEND_API_KEY || '').trim() || undefined;
 
-  if (!url || !authToken) {
+  // Local file databases don't need an auth token
+  const needsToken = !url.startsWith('file:');
+  if (!url || (needsToken && !authToken)) {
     return res.status(500).json({ error: 'Database configuration missing' });
   }
 
@@ -116,7 +168,7 @@ export default async function handler(req, res) {
 
   try {
     const startTime = Date.now();
-    const client = createClient({ url, authToken });
+    const client = createHttpClient(url, authToken);
     const resend = resendApiKey ? new Resend(resendApiKey) : null;
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
 
@@ -171,6 +223,25 @@ export default async function handler(req, res) {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    await client.execute("CREATE TABLE IF NOT EXISTS categories (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE, count INTEGER DEFAULT 0)");
+    await client.execute(`
+      CREATE TABLE IF NOT EXISTS products (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, price TEXT,
+        description TEXT, material TEXT, image TEXT, category_id INTEGER,
+        likes_count INTEGER DEFAULT 0, owner_id TEXT, status TEXT DEFAULT 'In Stock',
+        variants_json TEXT, gallery_json TEXT,
+        FOREIGN KEY(category_id) REFERENCES categories(id),
+        FOREIGN KEY(owner_id) REFERENCES users(id)
+      )
+    `);
+    await client.execute("CREATE TABLE IF NOT EXISTS favorites (user_id TEXT, product_id INTEGER, PRIMARY KEY (user_id, product_id))");
+    await client.execute("CREATE TABLE IF NOT EXISTS reviews (id INTEGER PRIMARY KEY AUTOINCREMENT, product_id INTEGER, user_id TEXT, rating INTEGER, text TEXT, image TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+    await client.execute("CREATE TABLE IF NOT EXISTS app_reviews (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, rating INTEGER, text TEXT, image TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+    await client.execute("CREATE TABLE IF NOT EXISTS notifications (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, message TEXT, is_unread BOOLEAN DEFAULT 1, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+    await client.execute("CREATE TABLE IF NOT EXISTS feedback (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, message TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+    await client.execute("CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY AUTOINCREMENT, sender_id TEXT, receiver_id TEXT, content TEXT, is_read BOOLEAN DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+    await client.execute("CREATE TABLE IF NOT EXISTS orders (id TEXT PRIMARY KEY, item_name TEXT, customer_id TEXT, tailor_id TEXT, price TEXT, status TEXT DEFAULT 'Pending', size TEXT, color TEXT, notes TEXT, image TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+    await client.execute("CREATE TABLE IF NOT EXISTS negotiations (id TEXT PRIMARY KEY, item_name TEXT, customer_id TEXT, tailor_id TEXT, proposed_price TEXT, status TEXT DEFAULT 'Awaiting Reply', size TEXT, color TEXT, notes TEXT, image TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
 
     // Add missing columns if they don't exist
     await client.execute("ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT 0").catch(() => {});
@@ -181,6 +252,8 @@ export default async function handler(req, res) {
     await client.execute("ALTER TABLE users ADD COLUMN profile_views INTEGER DEFAULT 0").catch(() => {});
     
     await client.execute("ALTER TABLE reviews ADD COLUMN image TEXT").catch(() => {});
+    await client.execute("ALTER TABLE notifications ADD COLUMN type TEXT").catch(() => {});
+    await client.execute("ALTER TABLE notifications ADD COLUMN target_id TEXT").catch(() => {});
     
     // Robust column check for products.created_at
     const tableInfo = await client.execute("PRAGMA table_info(products)");
@@ -396,6 +469,9 @@ export default async function handler(req, res) {
           favorites = favsRes.rows.map(r => sanitize(r.product_id));
           notifications = mapRows(notifsRes);
           productCount = sanitize(countRes.rows[0]?.total || 0);
+          
+          const unreadChatRes = await client.execute({ sql: "SELECT COUNT(*) as cnt FROM messages WHERE receiver_id = ? AND is_read = 0", args: [userId] });
+          customResponse = { ...customResponse, unreadChatCount: sanitize(unreadChatRes.rows[0]?.cnt || 0) };
           
           const uStats = userStatsRes.rows[0];
           customResponse = {
@@ -655,8 +731,8 @@ export default async function handler(req, res) {
         break;
 
       case 'create_notification':
-        sql = 'INSERT INTO notifications (user_id, message, is_unread) VALUES (?, ?, 1)';
-        args = [params.userId, params.message];
+        sql = 'INSERT INTO notifications (user_id, message, is_unread, type, target_id) VALUES (?, ?, 1, ?, ?)';
+        args = [params.userId, params.message, params.type || null, params.targetId || null];
         break;
 
       case 'get_chats':
@@ -680,8 +756,10 @@ export default async function handler(req, res) {
         break;
 
       case 'get_messages':
-        sql = 'SELECT * FROM messages WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?) ORDER BY created_at ASC';
-        args = [params.userId, params.otherId, params.otherId, params.userId];
+        const limit = Math.min(parseInt(params.limit) || 50, 200);
+        const offset = parseInt(params.offset) || 0;
+        sql = 'SELECT * FROM messages WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?) ORDER BY created_at DESC LIMIT ? OFFSET ?';
+        args = [params.userId, params.otherId, params.otherId, params.userId, limit, offset];
         break;
 
       case 'get_orders':
@@ -734,13 +812,42 @@ export default async function handler(req, res) {
         };
         break;
 
-      case 'get_similar_products':
-        const simRes = await client.execute({
-          sql: "SELECT p.*, c.name as categoryName FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE p.category_id = ? AND p.id != ? LIMIT 4",
-          args: [params.categoryId, params.productId]
-        });
-        customResponse = { rows: mapRows(simRes) };
+      case 'check_new_messages':
+        const lastId = parseInt(params.lastMessageId) || 0;
+        const [newMsgRes, maxIdRes] = await Promise.all([
+          client.execute({
+            sql: "SELECT COUNT(*) as cnt FROM messages WHERE (sender_id = ? OR receiver_id = ?) AND id > ?",
+            args: [params.userId, params.userId, lastId]
+          }),
+          client.execute({
+            sql: "SELECT COALESCE(MAX(id), 0) as max_id FROM messages WHERE (sender_id = ? OR receiver_id = ?)",
+            args: [params.userId, params.userId]
+          })
+        ]);
+        customResponse = {
+          hasNew: parseInt(sanitize(newMsgRes.rows[0]?.cnt || 0)) > 0,
+          count: sanitize(newMsgRes.rows[0]?.cnt || 0),
+          maxMessageId: sanitize(maxIdRes.rows[0]?.max_id || 0)
+        };
         break;
+
+      case 'get_negotiations':
+        sql = `
+          SELECT n.*,
+                 u_cust.first_name as customer_first_name, u_cust.last_name as customer_last_name, u_cust.username as customer_username, u_cust.avatar as customer_avatar,
+                 u_tail.first_name as tailor_first_name, u_tail.last_name as tailor_last_name, u_tail.username as tailor_username, u_tail.avatar as tailor_avatar,
+                 p.name as product_name, p.image as product_image
+          FROM negotiations n
+          JOIN users u_cust ON n.customer_id = u_cust.id
+          JOIN users u_tail ON n.tailor_id = u_tail.id
+          LEFT JOIN products p ON n.item_name = p.name AND (n.customer_id = p.owner_id OR n.tailor_id = p.owner_id)
+          WHERE n.customer_id = ? OR n.tailor_id = ?
+          ORDER BY n.created_at DESC
+        `;
+        args = [params.userId, params.userId];
+        break;
+
+      case 'get_similar_products':
 
       case 'get_user_by_id':
         sql = 'SELECT id, username, first_name, last_name, avatar, user_type FROM users WHERE id = ?';

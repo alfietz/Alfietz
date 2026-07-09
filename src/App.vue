@@ -101,6 +101,7 @@ const categories = ref(getStored('categories_cache', []))
 const favoriteItems = ref(getStored('favorites', []))
 const userNotifications = ref([])
 const userProductCount = ref(0)
+const unreadChatCount = ref(0)
 const searchResults = ref([])
 const appReviews = ref([])
 const portfolioUpdates = ref([])
@@ -150,7 +151,15 @@ watch(() => route.path, () => {
   }
 });
 
+let lastNavKey = ''
+let lastNavTime = 0
 const navigateTo = (screenName, extraState = {}) => {
+  const key = screenName + (extraState.selectedProduct?.id || extraState.selectedSeller?.id || extraState.selectedCategory || '')
+  const now = Date.now()
+  if (key && key === lastNavKey && now - lastNavTime < 600) return
+  lastNavKey = key
+  lastNavTime = now
+
   if (!screenName && !extraState.selectedProduct && !extraState.selectedSeller && !extraState.selectedCategory) {
     console.warn('[NavigateTo] Warning: screenName is missing and no specific entity navigation was requested.');
     return;
@@ -474,6 +483,9 @@ const fetchInitialData = async (force = false) => {
       }
       userNotifications.value = data.notifications;
       userProductCount.value = data.productCount;
+      if (data.unreadChatCount !== undefined) {
+        unreadChatCount.value = parseInt(data.unreadChatCount) || 0;
+      }
     }
 
     const newAppReviews = data.appReviews.map(r => ({
@@ -573,14 +585,11 @@ const handleNewOrder = async (data) => {
     });
     console.log('[Data] Order saved successfully');
     
-    // Notify the tailor
     if (tailorId && tailorId !== 'guest') {
-      await createNotification(tailorId, `New order created for "${data.itemName}"! 📦✨`);
+      await createNotification(tailorId, `New order created for "${data.itemName}"`, 'order', orderId);
     }
-    
-    // Also notify the customer if they aren't the same person
     if (customerId !== tailorId && customerId !== 'guest') {
-      await createNotification(customerId, `Your order for "${data.itemName}" has been placed! 🧵`);
+      await createNotification(customerId, `Your order for "${data.itemName}" has been placed!`, 'order', orderId);
     }
       
     showToast('Order placed successfully! Connecting to WhatsApp...', 'success');
@@ -608,7 +617,7 @@ const handleNewNegotiation = async (data) => {
     showToast('Negotiation initiated successfully!', 'success')
     
     if (tailorId && tailorId !== 'guest') {
-      await createNotification(tailorId, `New negotiation offer for "${data.itemName}"! 💰`)
+      await createNotification(tailorId, `New negotiation offer for "${data.itemName}"`, 'negotiation', tailorId)
     }
   } catch (e) {
     console.error('Negotiation error:', e)
@@ -616,11 +625,9 @@ const handleNewNegotiation = async (data) => {
   }
 }
 
-const createNotification = async (userId, message) => {
+const createNotification = async (userId, message, type = null, targetId = null) => {
   try {
-    await db.runAction('create_notification', { userId, message });
-    console.log(`[Notification] Created for ${userId}: ${message}`)
-    // Refresh local notifications if it's for the current user
+    await db.runAction('create_notification', { userId, message, type, targetId });
     if (userId === userData.value.id) {
       await fetchInitialData(true);
     }
@@ -636,9 +643,7 @@ const handleUpdateOrderStatus = async (data) => {
     
     showToast(`Order status updated to ${data.status}`, 'success')
     
-    // Notify the customer
-    let msg = `Your order for "${data.itemName}" has been updated to: ${data.status}!`
-    await createNotification(data.customerId, msg)
+    await createNotification(data.customerId, `Your order for "${data.itemName}" has been updated to: ${data.status}!`, 'order', data.orderId)
     await fetchInitialData()
   } catch (e) {
     console.error('[Data] Failed to update status:', e);
@@ -886,6 +891,7 @@ const showNavBar = computed(() => {
       :active-tab="route.name"
       :is-guest="userData.id === 'guest'"
       :can-install="isInstallable && !isStandalone"
+      :unread-chat-count="unreadChatCount"
       :t="t"
       :cart-count="cartItems.length"
       @navigate="navigateTo"
@@ -897,6 +903,7 @@ const showNavBar = computed(() => {
     <main :class="{ 'with-nav': showNavBar }">
     <router-view v-slot="{ Component }">
       <keep-alive>
+        <transition name="page-fade" mode="out-in">
         <component 
           :is="Component" 
           :t="t"
@@ -944,7 +951,7 @@ const showNavBar = computed(() => {
           @go-edit-profile="navigateTo('edit-profile')"
           @go-console="navigateTo('tailor-console')"
           @go-orders="navigateTo('orders')"
-          @go-negotiations="navigateTo('orders')"
+          @go-negotiations="navigateTo('negotiations')"
           @go-edit="(p) => { selectedEditProduct = p; navigateTo('upload-work') }"
           @go-upload="navigateTo('upload-work')"
           @go-app-review="navigateTo('app-review')"
@@ -989,6 +996,7 @@ const showNavBar = computed(() => {
           @submit-app-experience="handleAppExperienceSubmit"
           @loaded="userData.id !== 'guest' ? navigateTo('home') : navigateTo('login')"
         />
+      </transition>
       </keep-alive>
     </router-view>
     </main>
@@ -997,6 +1005,7 @@ const showNavBar = computed(() => {
       v-if="showNavBar" 
       :active-tab="route.name"
       :is-guest="userData.id === 'guest'"
+      :unread-chat-count="unreadChatCount"
       :t="t"
       @navigate="navigateTo"
     />

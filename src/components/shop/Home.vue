@@ -6,6 +6,7 @@ import SellerCard from './SellerCard.vue'
 import BrandBanner from '../layout/BrandBanner.vue'
 import SectionHeader from '../layout/SectionHeader.vue'
 import { CATEGORY_EXAMPLES_SIMPLE as categoryExamples } from '../../constants'
+import { useImageLoader } from '../../composables/useImageLoader'
 
 const props = defineProps({
   t: { type: Function, required: true },
@@ -19,6 +20,9 @@ const props = defineProps({
 })
 
 const searchQuery = ref('')
+
+const [img0, onImg0Load, onImg0Err] = useImageLoader()
+const [img1, onImg1Load, onImg1Err] = useImageLoader()
 
 const emit = defineEmits(['go-details', 'go-notifications', 'go-search', 'go-explore', 'go-categories', 'go-trending', 'go-tailor', 'toggle-like', 'search', 'navigate', 'go-stories'])
 
@@ -91,7 +95,10 @@ const handleSearch = () => {
         <span class="read-link">Read Heritage Stories →</span>
       </div>
       <div class="banner-image">
-        <img src="https://images.unsplash.com/photo-1660695828374-4ff51ac9df5d?w=800&auto=format&fit=crop" alt="Kente Story" />
+        <div class="heritage-img" :class="{ loaded: img0 }">
+          <div class="heritage-img-shimmer"></div>
+          <img src="https://images.unsplash.com/photo-1660695828374-4ff51ac9df5d?w=800&auto=format&fit=crop" alt="Kente Story" loading="lazy" @load="onImg0Load" @error="onImg0Err" />
+        </div>
       </div>
     </section>
 
@@ -184,7 +191,10 @@ const handleSearch = () => {
       <div class="scroll-container tribe-feedback-scroll">
         <div v-for="rev in appReviews" :key="rev.id" class="feedback-bubble-card">
           <div class="bubble-header">
-            <img :src="rev.avatar" class="bubble-avatar" />
+            <div class="heritage-img" :class="{ loaded: img1 }">
+              <div class="heritage-img-shimmer"></div>
+              <img :src="rev.avatar" class="bubble-avatar" loading="lazy" @load="onImg1Load" @error="onImg1Err" />
+            </div>
             <div class="bubble-info">
               <span class="bubble-author">{{ rev.author }}</span>
               <div class="star-rating mini">

@@ -1,6 +1,7 @@
 <!-------- (ProductCard.vue) ./src/components/ProductCard.vue ------------>
 <script setup>
-// This allows the Home component to pass product data into this card
+import { ref } from 'vue'
+
 defineProps({
   product: {
     type: Object,
@@ -16,7 +17,9 @@ defineProps({
   }
 })
 
-defineEmits(['toggle-like', 'select'])
+const emit = defineEmits(['toggle-like', 'select'])
+
+const imageLoaded = ref(false)
 </script>
 
 <template>
@@ -26,8 +29,9 @@ defineEmits(['toggle-like', 'select'])
     @click="$emit('select', product)"
   >
     <!-- Image Box -->
-    <div class="image-wrapper">
-      <img :src="product.image" :alt="'Photo of ' + product.name" class="product-img" :loading="loading" />
+    <div class="image-wrapper" :class="{ 'img-loaded': imageLoaded }">
+      <div v-if="!imageLoaded" class="img-shimmer"></div>
+      <img :src="product.image" :alt="'Photo of ' + product.name" class="product-img" :class="{ 'img-reveal': imageLoaded }" :loading="loading" @load="imageLoaded = true" @error="imageLoaded = true; $event.target.src = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect fill=%22%231A110A%22 width=%22100%22 height=%22100%22/%3E%3Ctext x=%2250%22 y=%2250%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23654A3E%22 font-size=%2230%22%3E✦%3C/text%3E%3C/svg%3E'" />
 
       <!-- Out of Stock Badge -->
       <div v-if="product.status === 'Out of Stock'" class="oos-badge">
@@ -118,12 +122,36 @@ defineEmits(['toggle-like', 'select'])
   }
 }
 
+.img-shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, var(--wood-walnut) 25%, var(--wood-polished) 50%, var(--wood-walnut) 75%);
+  background-size: 200% 100%;
+  animation: img-pulse 1.5s infinite linear;
+  z-index: 1;
+}
+
 .product-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 1; /* Improved visibility */
-  transition: all 0.5s ease;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.product-img.img-reveal {
+  opacity: 1;
+}
+
+.img-loaded .img-shimmer {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+@keyframes img-pulse {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 .oos-badge {
