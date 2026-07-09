@@ -1,4 +1,3 @@
-import { createClient } from "@libsql/client";
 import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
@@ -17,10 +16,8 @@ const envLocalPath = path.resolve(projectRoot, '.env.local');
 dotenv.config({ path: envLocalPath });
 dotenv.config({ path: envPath });
 
-// Read our own config directly from .env to bypass Vercel's forced env vars
 function readEnvVar(name, fallback = '') {
-  // First check what dotenv loaded (before Vercel overrides)
-  if (dotenv.parse(fs.readFileSync(envPath, 'utf-8'))[name]) {
+  if (fs.existsSync(envPath) && dotenv.parse(fs.readFileSync(envPath, 'utf-8'))[name]) {
     return dotenv.parse(fs.readFileSync(envPath, 'utf-8'))[name];
   }
   if (fs.existsSync(envLocalPath) && dotenv.parse(fs.readFileSync(envLocalPath, 'utf-8'))[name]) {
@@ -81,6 +78,52 @@ async function checkRateLimit(client, key, limit, windowSeconds) {
   return { allowed: true, remaining: limit - 1 };
 }
 
+function createHttpClient(url, authToken) {
+  async function execute(sqlOrOpts, args) {
+    const sql = typeof sqlOrOpts === 'object' ? sqlOrOpts.sql : sqlOrOpts;
+    const params = typeof sqlOrOpts === 'object' ? (sqlOrOpts.args || []) : (args || []);
+
+    const dbUrl = url.replace(/^https?:\/\//, '');
+    const response = await fetch(`https://${dbUrl}/v2/pipeline`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        requests: [{ type: 'execute', stmt: { sql, args: params } }]
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`DB HTTP ${response.status}: ${await response.text()}`);
+    }
+
+    const data = await response.json();
+    const result = data.results?.[0]?.response?.result;
+    if (!result) {
+      const err = data.results?.[0]?.response?.error;
+      throw new Error(err?.message || 'Unknown database error');
+    }
+
+    const columns = (result.columns || []).map(c => typeof c === 'object' ? c.name : c);
+    const rows = (result.rows || []).map(row => {
+      const r = [...row];
+      columns.forEach((col, i) => { r[col] = row[i]; });
+      return r;
+    });
+
+    return {
+      rows,
+      columns,
+      rowsAffected: result.rowsAffected ?? 0,
+      lastInsertRowid: result.last_insert_rowid != null ? result.last_insert_rowid : undefined
+    };
+  }
+
+  return { execute };
+}
+
 export default async function handler(req, res) {
   // CORS Headers
   res.setHeader('Access-Control-Allow-Credentials', true);
@@ -118,7 +161,7 @@ export default async function handler(req, res) {
 
   try {
     const startTime = Date.now();
-    const client = createClient({ url, authToken });
+    const client = createHttpClient(url, authToken);
     const resend = resendApiKey ? new Resend(resendApiKey) : null;
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
 
