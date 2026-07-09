@@ -83,7 +83,7 @@ function createHttpClient(url, authToken) {
     const sql = typeof sqlOrOpts === 'object' ? sqlOrOpts.sql : sqlOrOpts;
     const params = typeof sqlOrOpts === 'object' ? (sqlOrOpts.args || []) : (args || []);
 
-    const dbUrl = url.replace(/^https?:\/\//, '');
+    const dbUrl = url.replace(/^[a-z][a-z0-9+.-]*:\/\//, '');
     const response = await fetch(`https://${dbUrl}/v2/pipeline`, {
       method: 'POST',
       headers: {
