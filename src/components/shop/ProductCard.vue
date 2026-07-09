@@ -31,7 +31,7 @@ const imageLoaded = ref(false)
     <!-- Image Box -->
     <div class="image-wrapper" :class="{ 'img-loaded': imageLoaded }">
       <div v-if="!imageLoaded" class="img-shimmer"></div>
-      <img :src="product.image" :alt="'Photo of ' + product.name" class="product-img" :class="{ 'img-reveal': imageLoaded }" :loading="loading" @load="imageLoaded = true" />
+      <img :src="product.image" :alt="'Photo of ' + product.name" class="product-img" :class="{ 'img-reveal': imageLoaded }" :loading="loading" @load="imageLoaded = true" @error="imageLoaded = true; $event.target.src = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect fill=%22%231A110A%22 width=%22100%22 height=%22100%22/%3E%3Ctext x=%2250%22 y=%2250%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23654A3E%22 font-size=%2230%22%3E✦%3C/text%3E%3C/svg%3E'" />
 
       <!-- Out of Stock Badge -->
       <div v-if="product.status === 'Out of Stock'" class="oos-badge">

@@ -158,7 +158,7 @@ const loadProductData = async (activeId) => {
     }
     if (product.value.variants_json) {
       const variants = safeJsonParse(product.value.variants_json)
-      if (variants) {
+      if (Array.isArray(variants)) {
         parsedColors.value = variants.map((v, i) => ({
           id: i,
           hex: v.hex,

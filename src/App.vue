@@ -151,7 +151,15 @@ watch(() => route.path, () => {
   }
 });
 
+let lastNavKey = ''
+let lastNavTime = 0
 const navigateTo = (screenName, extraState = {}) => {
+  const key = screenName + (extraState.selectedProduct?.id || extraState.selectedSeller?.id || extraState.selectedCategory || '')
+  const now = Date.now()
+  if (key && key === lastNavKey && now - lastNavTime < 600) return
+  lastNavKey = key
+  lastNavTime = now
+
   if (!screenName && !extraState.selectedProduct && !extraState.selectedSeller && !extraState.selectedCategory) {
     console.warn('[NavigateTo] Warning: screenName is missing and no specific entity navigation was requested.');
     return;
