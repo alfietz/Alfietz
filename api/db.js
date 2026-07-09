@@ -106,7 +106,8 @@ function createHttpClient(url, authToken) {
       throw new Error(err?.message || 'Unknown database error');
     }
 
-    const columns = (result.columns || []).map(c => typeof c === 'object' ? c.name : c);
+    const rawCols = result.cols || result.columns || [];
+    const columns = rawCols.map(c => typeof c === 'object' ? c.name : c);
     const rows = (result.rows || []).map(row => {
       const r = [...row];
       columns.forEach((col, i) => { r[col] = row[i]; });
@@ -116,7 +117,7 @@ function createHttpClient(url, authToken) {
     return {
       rows,
       columns,
-      rowsAffected: result.rowsAffected ?? 0,
+      rowsAffected: result.affected_row_count ?? result.rowsAffected ?? 0,
       lastInsertRowid: result.last_insert_rowid != null ? result.last_insert_rowid : undefined
     };
   }
