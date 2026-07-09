@@ -6,7 +6,10 @@ import EditableText from '../layout/EditableText.vue'
 import EditableImage from '../layout/EditableImage.vue'
 import { db } from '../../db/client'
 import { useImageLoader } from '../../composables/useImageLoader'
+import { useSeo } from '../../composables/useSeo'
 import { useRoute } from 'vue-router'
+
+const { updateSeo } = useSeo()
 
 const props = defineProps({
   seller: {
@@ -324,41 +327,12 @@ const loadTailorData = async () => {
       author_name: (r.first_name || r.last_name) ? `${r.first_name || ''} ${r.last_name || ''}`.trim() : r.username
     }))
 
-    // Update SEO Meta Tags
-    const pageTitle = `${sellerData.value.name} | Alfietz Artisan Portfolio`;
-    const pageDesc = sellerData.value.bio || `Explore the heritage portfolio of ${sellerData.value.name} on Alfietz. Discover bespoke African craftsmanship and custom-tailored fashion.`;
-    
-    document.title = pageTitle;
-    
-    const updateMeta = (name, content, attr = 'name') => {
-      let meta = document.querySelector(`meta[${attr}="${name}"]`);
-      if (!meta) {
-        meta = document.createElement('meta');
-        meta.setAttribute(attr, name);
-        document.head.appendChild(meta);
-      }
-      meta.setAttribute('content', content);
-    };
-
-    updateMeta('description', pageDesc);
-    updateMeta('og:title', pageTitle, 'property');
-    updateMeta('og:description', pageDesc, 'property');
-    updateMeta('og:image', sellerData.value.avatar, 'property');
-    updateMeta('twitter:title', pageTitle);
-    updateMeta('twitter:description', pageDesc);
-    updateMeta('twitter:image', sellerData.value.avatar);
-
-    // Update JSON-LD Schema
-    const updateSchema = () => {
-      let schemaScript = document.querySelector('script[type="application/ld+json"]#tailor-schema');
-      if (!schemaScript) {
-        schemaScript = document.createElement('script');
-        schemaScript.setAttribute('type', 'application/ld+json');
-        schemaScript.setAttribute('id', 'tailor-schema');
-        document.head.appendChild(schemaScript);
-      }
-      
-      const schemaData = {
+    updateSeo({
+      title: `${sellerData.value.name} | Alfietz Artisan Portfolio`,
+      description: sellerData.value.bio || `Explore the heritage portfolio of ${sellerData.value.name} on Alfietz.`,
+      ogImage: sellerData.value.avatar || 'https://alfietz.shop/hero.png',
+      ogUrl: window.location.href,
+      jsonld: {
         "@context": "https://schema.org",
         "@type": "ProfessionalService",
         "name": sellerData.value.name,
@@ -371,19 +345,15 @@ const loadTailorData = async () => {
           "addressLocality": "Nairobi",
           "addressCountry": "KE"
         },
-        "description": pageDesc,
+        "description": sellerData.value.bio || '',
         "priceRange": "TSh",
         "aggregateRating": {
           "@type": "AggregateRating",
           "ratingValue": tailorStats.value.likes > 0 ? "4.9" : "0",
           "reviewCount": reviews.value.length || "0"
         }
-      };
-      
-      schemaScript.textContent = JSON.stringify(schemaData);
-    };
-
-    updateSchema();
+      }
+    })
 
     initializeDraft()
   } catch (e) {

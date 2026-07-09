@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import bcrypt from 'bcryptjs';
+import crypto from 'node:crypto';
 import { Resend } from 'resend';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -134,7 +135,11 @@ function createHttpClient(url, authToken) {
 export default async function handler(req, res) {
   // CORS Headers
   res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const allowedOrigins = ['https://alfietz.shop', 'https://alfietz.vercel.app', 'https://alfietz-zeta.vercel.app', 'http://localhost:3000', 'http://localhost:5173'];
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader(
     'Access-Control-Allow-Headers',
@@ -628,13 +633,7 @@ export default async function handler(req, res) {
         }
 
         const user = loginRes.rows[0];
-        let passMatch = false;
-        try {
-          passMatch = await bcrypt.compare(params.password, sanitize(user.password));
-        } catch (e) {
-          passMatch = params.password === sanitize(user.password);
-        }
-
+        const passMatch = await bcrypt.compare(params.password, sanitize(user.password));
         if (!passMatch) {
           return res.status(401).json({ error: 'Invalid email or password' });
         }
@@ -644,7 +643,7 @@ export default async function handler(req, res) {
         loginRes.columns.forEach((col, i) => { if (col !== 'password') userObj[col] = sanitize(user[i]); });
         
         // Generate Session Token
-        const sessionToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
+        const sessionToken = crypto.randomUUID();
         const sessionExpires = Math.floor(Date.now() / 1000) + (86400 * 7); // 7 days
         await client.execute({
           sql: "INSERT INTO session_tokens (token, user_id, expires_at) VALUES (?, ?, ?)",
@@ -687,7 +686,7 @@ export default async function handler(req, res) {
         args = [params.id, params.username, params.firstName, params.lastName, params.email, hashedPassword, params.whatsapp, params.avatar, params.userType, params.needs, params.gives, params.theme || 'dark'];
         
         // Generate Token for Signup too
-        const stoken = Math.random().toString(36).substring(2) + Date.now().toString(36);
+        const stoken = crypto.randomUUID();
         const sexpires = Math.floor(Date.now() / 1000) + (86400 * 7);
         await client.execute({
           sql: "INSERT INTO session_tokens (token, user_id, expires_at) VALUES (?, ?, ?)",
@@ -1003,7 +1002,7 @@ export default async function handler(req, res) {
         }
 
         // Generate 6-digit OTP
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otp = String(crypto.randomInt(100000, 999999));
         const expires = Math.floor(Date.now() / 1000) + 1800; // 30 minutes
 
         await client.execute({
@@ -1024,7 +1023,6 @@ export default async function handler(req, res) {
           }
         }
 
-        console.log(`[AUTH] Password reset OTP for ${params.email}: ${otp}`);
         
         customResponse = { 
           success: true, 

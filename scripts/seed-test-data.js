@@ -10,8 +10,8 @@ const projectRoot = path.resolve(__dirname, '..')
 const envPath = path.resolve(projectRoot, '.env')
 if (fs.existsSync(envPath)) dotenv.config({ path: envPath })
 
-const TURSO_URL = 'https://alfie1-alfietz.aws-us-east-1.turso.io'
-const AUTH_TOKEN = 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3ODM1MTc1MjIsImlkIjoiMDE5ZWY5NDktYjcwMS03ZTM3LTk4M2MtYTY0Y2I2MDJmN2E1Iiwia2lkIjoiY3ZGaXAteFpPNlN3Z29Yb2drbkliR1h6dVB6OTI0VUtQdzMyQlJhRUtmRSIsInJpZCI6IjBhZDM2NTc4LTFhMTMtNGZiNi1hMDdiLWE0ZmMzNTcxZTdmMiJ9.MmADluL0TfOeKgpQ99npQZwwpxV6CUcXRJmMgW5358OXrR27jK9BUpAL0gRq-NFhPT0E2R9yOoJ_lP6S9IdjAQ'
+const TURSO_URL = process.env.TURSO_URL || 'https://alfie1-alfietz.aws-us-east-1.turso.io'
+const AUTH_TOKEN = process.env.TURSO_AUTH_TOKEN || process.env.VITE_TURSO_AUTH_TOKEN
 const API = `${TURSO_URL}/v2/pipeline`
 
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)]
