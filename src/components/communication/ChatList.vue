@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import { useImageLoader } from '../../composables/useImageLoader'
 import { db } from '../../db/client'
 
 const props = defineProps({
@@ -19,6 +20,7 @@ const STORAGE_KEY = 'alfie_chats_cache'
 
 const conversations = ref([])
 const loading = ref(true)
+const chatAvatar = useImageLoader()
 
 onMounted(async () => {
   const cached = localStorage.getItem(STORAGE_KEY)
@@ -152,7 +154,7 @@ onUnmounted(() => {
         @click="$emit('go-chat', convo.id)"
       >
         <div class="avatar-box">
-          <img :src="convo.avatar || 'https://i.pravatar.cc/150'" alt="Avatar" />
+          <div class="heritage-img chat-avatar-wrap" :class="{ loaded: chatAvatar.loaded }"><div class="heritage-img-shimmer"></div><img :src="convo.avatar || 'https://i.pravatar.cc/150'" alt="Avatar" @load="chatAvatar.onLoad" @error="chatAvatar.onError" /></div>
           <div v-if="convo.unread" class="unread-dot"></div>
         </div>
         <div class="convo-info">

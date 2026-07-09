@@ -2,6 +2,7 @@
 <script setup>
 import { ref, watch, onMounted, computed } from 'vue'
 import { CATEGORY_EXAMPLES_SIMPLE as categoryExamples } from '../../constants'
+import { useImageLoader } from '../../composables/useImageLoader'
 
 const props = defineProps({
   categories: {
@@ -25,6 +26,8 @@ const props = defineProps({
 const searchQuery = ref('')
 const isFocused = ref(false)
 const isSearching = ref(false)
+const tailorImg = useImageLoader()
+const productImg = useImageLoader()
 const emit = defineEmits(['go-back', 'search', 'select-category', 'go-tailor', 'go-product'])
 
 const recommendedKeywords = computed(() => {
@@ -142,7 +145,7 @@ const handleSearch = (query, navigate = true) => {
               class="quick-item tap-active"
               @click="$emit('go-tailor', tailor)"
             >
-              <img :src="tailor.avatar" class="quick-avatar" loading="lazy" />
+              <div class="heritage-img" :class="{ loaded: tailorImg.loaded }"><div class="heritage-img-shimmer"></div><img :src="tailor.avatar" class="quick-avatar" loading="lazy" @load="tailorImg.onLoad" @error="tailorImg.onError" /></div>
               <div class="quick-info">
                 <span class="quick-name">{{ tailor.name }}</span>
                 <span class="quick-meta">{{ tailor.bio }}</span>
@@ -161,7 +164,7 @@ const handleSearch = (query, navigate = true) => {
               class="quick-item tap-active"
               @click="$emit('go-product', item)"
             >
-              <img :src="item.image" class="quick-thumb" loading="lazy" />
+              <div class="heritage-img" :class="{ loaded: productImg.loaded }"><div class="heritage-img-shimmer"></div><img :src="item.image" class="quick-thumb" loading="lazy" @load="productImg.onLoad" @error="productImg.onError" /></div>
               <div class="quick-info">
                 <span class="quick-name">{{ item.name }}</span>
                 <span class="quick-meta">{{ item.price }} • {{ item.category_name }}</span>

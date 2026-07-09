@@ -124,6 +124,38 @@
   animation: img-pulse 1.5s infinite linear;
 }
 
+.heritage-img {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+  background: var(--wood-deep);
+  line-height: 0;
+}
+.heritage-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.heritage-img.loaded img {
+  opacity: 1;
+}
+.heritage-img-shimmer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(90deg, var(--wood-walnut) 25%, var(--wood-polished) 50%, var(--wood-walnut) 75%);
+  background-size: 200% 100%;
+  animation: img-pulse 1.5s infinite linear;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+.heritage-img.loaded .heritage-img-shimmer {
+  opacity: 0;
+}
+
 .page-fade-enter-active,
 .page-fade-leave-active {
   transition: opacity 0.15s ease;

@@ -13,17 +13,11 @@ const emit = defineEmits(['loaded', 'select-language'])
 const showButtons = ref(false)
 
 onMounted(() => {
-  // Wait 1.5s for logo animation, then show buttons if language is not set
-  setTimeout(() => {
-    if (!props.language) {
-      showButtons.value = true
-    } else {
-      // If language is already set, wait another 1.5s and proceed
-      setTimeout(() => {
-        emit('loaded')
-      }, 1500)
-    }
-  }, 1500)
+  if (!props.language) {
+    showButtons.value = true
+  } else {
+    emit('loaded')
+  }
 })
 
 const selectLang = (lang) => {
