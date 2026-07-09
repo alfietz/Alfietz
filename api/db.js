@@ -95,24 +95,6 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  // Platform Verification (Independence & Security)
-  const platform = req.headers['x-heritage-platform'] || 'unknown';
-  const appKey = req.headers['x-heritage-app-key'] || 'none';
-
-  // In production, these should be set via process.env for maximum security
-  const VALID_ANDROID_KEY = process.env.ANDROID_APP_KEY || 'heritage_android_secure_v1';
-  const VALID_WEB_KEY = process.env.WEB_APP_KEY || 'heritage_web_public_v1';
-
-  let isVerified = false;
-  if (platform === 'android' && appKey === VALID_ANDROID_KEY) isVerified = true;
-  if (platform === 'web' && appKey === VALID_WEB_KEY) isVerified = true;
-
-  // Reject unauthorized platforms or keys
-  if (!isVerified) {
-    console.error(`[Security] Unauthorized access attempt: Platform=${platform}, Key=${appKey}`);
-    return res.status(403).json({ error: 'Unauthorized Platform: Heritage access denied.' });
-  }
-
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
