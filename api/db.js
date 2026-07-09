@@ -114,8 +114,9 @@ function createHttpClient(url, authToken) {
     const rawCols = result.cols || result.columns || [];
     const columns = rawCols.map(c => typeof c === 'object' ? c.name : c);
     const rows = (result.rows || []).map(row => {
-      const r = [...row];
-      columns.forEach((col, i) => { r[col] = row[i]; });
+      const vals = row.map(cell => cell?.value ?? cell);
+      const r = [...vals];
+      columns.forEach((col, i) => { r[col] = vals[i]; });
       return r;
     });
 
