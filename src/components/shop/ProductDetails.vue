@@ -6,6 +6,9 @@ import BaseDialog from '../layout/BaseDialog.vue'
 import { db } from '../../db/client'
 import { useRoute } from 'vue-router'
 import { useImageLoader } from '../../composables/useImageLoader'
+import { useSeo } from '../../composables/useSeo'
+
+const { updateSeo } = useSeo()
 
 const props = defineProps({
   productId: {
@@ -81,6 +84,36 @@ const Hexagon = {
 }
 
 const product = ref(null)
+
+watch(product, (p) => {
+  if (!p) return
+  const title = `${p.name} - Alfietz`
+  const desc = p.description ? p.description.replace(/<[^>]*>/g, '').slice(0, 160) : 'Bespoke African craftsmanship on Alfietz.'
+  const image = p.image || 'https://alfietz.shop/hero.png'
+  updateSeo({
+    title,
+    description: desc,
+    ogTitle: title,
+    ogDescription: desc,
+    ogImage: image,
+    ogUrl: `https://alfietz.shop/product/${p.id}`,
+    jsonld: {
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      name: p.name,
+      image,
+      description: desc,
+      sku: p.id,
+      offers: {
+        '@type': 'Offer',
+        price: p.price || '0',
+        priceCurrency: 'TZS',
+        availability: 'https://schema.org/InStock',
+      },
+    },
+  })
+}, { immediate: false })
+
 const reviews = ref([])
 const loading = ref(true)
 const error = ref(null)

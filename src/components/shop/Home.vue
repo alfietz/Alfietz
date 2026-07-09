@@ -7,6 +7,13 @@ import BrandBanner from '../layout/BrandBanner.vue'
 import SectionHeader from '../layout/SectionHeader.vue'
 import { CATEGORY_EXAMPLES_SIMPLE as categoryExamples } from '../../constants'
 import { useImageLoader } from '../../composables/useImageLoader'
+import { useSeo } from '../../composables/useSeo'
+
+useSeo({
+  title: 'Alfietz - Discover the Soul of African Craftsmanship',
+  description: 'Connect directly with master artisans. Discover bespoke African heritage crafts, custom-tailored fashion, and unique handmade trends. Order via WhatsApp.',
+  ogUrl: 'https://alfietz.shop/home',
+})
 
 const props = defineProps({
   t: { type: Function, required: true },

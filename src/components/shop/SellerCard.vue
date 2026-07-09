@@ -37,7 +37,10 @@ const imageLoaded = ref(false)
         <span class="star">★</span>
         <span class="rating-value">{{ seller.rating || '0.0' }}</span>
         <span class="divider">•</span>
-        <span class="likes-value">{{ seller.likesCount || 0 }} ❤️</span>
+        <!-- <span class="likes-value">{{ (seller.likesCount) || '0' }} ❤️</span> -->
+        <span v-if="(seller.likesCount !== null)">
+          {{ seller.likesCount }} ❤️
+       </span>
       </div>
     </div>
   </div>
