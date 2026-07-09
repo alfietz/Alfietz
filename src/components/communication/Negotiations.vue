@@ -80,7 +80,20 @@ const statusClass = (status) => {
     </div>
 
     <div v-if="loading && negotiations.length === 0" class="loading-state">
-      <div v-for="n in 3" :key="n" class="skeleton-card"><div class="skeleton-block skeleton-shimmer"></div><div class="skeleton-block short skeleton-shimmer"></div></div>
+      <div v-for="n in 3" :key="n" class="skeleton-neg">
+        <div class="skeleton-neg-top">
+          <div class="skeleton-neg-img shimmer"></div>
+          <div class="skeleton-neg-info">
+            <div class="skeleton-line w60 shimmer"></div>
+            <div class="skeleton-line w40 shimmer"></div>
+          </div>
+          <div class="skeleton-neg-status shimmer"></div>
+        </div>
+        <div class="skeleton-neg-meta">
+          <div class="skeleton-line w30 shimmer"></div>
+          <div class="skeleton-line w20 shimmer"></div>
+        </div>
+      </div>
     </div>
 
     <div v-else-if="negotiations.length === 0" class="empty-state">
@@ -151,14 +164,51 @@ const statusClass = (status) => {
 .spinning { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .loading-state { display: flex; flex-direction: column; gap: 12px; }
-.skeleton-card {
-  padding: 20px; background: var(--wood-walnut);
-  border: 1px solid var(--glass-border); border-radius: 16px;
-  display: flex; flex-direction: column; gap: 12px;
-  overflow: hidden;
+.skeleton-neg {
+  background: var(--wood-walnut);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 16px;
 }
-.skeleton-block { height: 16px; width: 180px; background: var(--wood-deep); border-radius: 4px; }
-.skeleton-block.short { width: 120px; }
+.skeleton-neg-top {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.skeleton-neg-img {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  background: var(--wood-deep);
+  flex-shrink: 0;
+}
+.skeleton-neg-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.skeleton-neg-status {
+  width: 80px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--wood-deep);
+}
+.skeleton-neg-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.skeleton-line {
+  height: 14px;
+  background: var(--wood-deep);
+  border-radius: 4px;
+}
+.skeleton-line.w60 { width: 60%; }
+.skeleton-line.w40 { width: 40%; }
+.skeleton-line.w30 { width: 30%; }
+.skeleton-line.w20 { width: 20%; }
 .empty-state { text-align: center; padding: 80px 20px; color: var(--text-muted); }
 .empty-icon { font-size: 48px; margin-bottom: 20px; }
 .negotiations-list { display: flex; flex-direction: column; gap: 12px; }

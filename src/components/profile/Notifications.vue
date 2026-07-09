@@ -6,6 +6,10 @@ const props = defineProps({
     type: Array,
     required: true,
     default: () => []
+  },
+  isLoading: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -57,28 +61,38 @@ const getEmoji = (message) => {
       <h1 class="title">Notifications</h1>
     </header>
 
-    <!-- List of Notifications -->
     <div class="list-container">
-      <div 
-        v-for="item in notifications" 
-        :key="item.id" 
-        class="notification-card"
-        :class="{ 'is-unread': item.is_unread }"
-        @click="handleClick(item)"
-      >
-        <div class="icon-circle">
-          <span class="notification-emoji">{{ getEmoji(item.message) }}</span>
+      <template v-if="isLoading && !notifications.length">
+        <div v-for="n in 5" :key="n" class="skeleton-noti">
+          <div class="skeleton-circle shimmer"></div>
+          <div class="skeleton-noti-text">
+            <div class="skeleton-line w70 shimmer"></div>
+            <div class="skeleton-line w40 shimmer"></div>
+          </div>
         </div>
-        <div class="text-content">
-          <span class="item-name">{{ item.message }}</span>
-          <span class="item-time">{{ formatTime(item.created_at) }}</span>
+      </template>
+
+      <template v-else>
+        <div 
+          v-for="item in notifications" 
+          :key="item.id" 
+          class="notification-card"
+          :class="{ 'is-unread': item.is_unread }"
+          @click="handleClick(item)"
+        >
+          <div class="icon-circle">
+            <span class="notification-emoji">{{ getEmoji(item.message) }}</span>
+          </div>
+          <div class="text-content">
+            <span class="item-name">{{ item.message }}</span>
+            <span class="item-time">{{ formatTime(item.created_at) }}</span>
+          </div>
         </div>
-      </div>
-      
-      <!-- Show a dynamic fallback if the notifications array is empty -->
-      <div v-if="notifications.length === 0" class="empty-state">
-        You have no new notifications.
-      </div>
+        
+        <div v-if="notifications.length === 0" class="empty-state">
+          You have no new notifications.
+        </div>
+      </template>
     </div>
   </div>
 </template>
@@ -204,4 +218,34 @@ const getEmoji = (message) => {
   background-color: var(--wood-polished) !important;
   border-color: var(--accent-amber) !important;
 }
+
+.skeleton-noti {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: var(--wood-walnut);
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+}
+.skeleton-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--wood-deep);
+  flex-shrink: 0;
+}
+.skeleton-noti-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.skeleton-noti-text .skeleton-line {
+  height: 14px;
+  background: var(--wood-deep);
+  border-radius: 4px;
+}
+.skeleton-noti-text .skeleton-line.w70 { width: 70%; }
+.skeleton-noti-text .skeleton-line.w40 { width: 40%; }
 </style>

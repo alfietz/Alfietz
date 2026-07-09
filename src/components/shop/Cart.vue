@@ -10,6 +10,10 @@ const props = defineProps({
   userData: {
     type: Object,
     required: true
+  },
+  isLoading: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -47,7 +51,24 @@ const cartByTailor = computed(() => {
       <h1 class="title">Your Heritage Cart</h1>
     </div>
 
-    <div v-if="cartItems.length === 0" class="empty-cart-state">
+    <template v-if="isLoading && !cartItems.length">
+      <div v-for="n in 2" :key="n" class="skeleton-cart-group">
+        <div class="skeleton-tailor-header shimmer"></div>
+        <div v-for="m in 2" :key="m" class="skeleton-cart-item">
+          <div class="skeleton-cart-img shimmer"></div>
+          <div class="skeleton-cart-info">
+            <div class="skeleton-line w60 shimmer"></div>
+            <div class="skeleton-line w40 shimmer"></div>
+          </div>
+        </div>
+        <div class="skeleton-cart-footer">
+          <div class="skeleton-line w30 shimmer"></div>
+          <div class="skeleton-btn shimmer"></div>
+        </div>
+      </div>
+    </template>
+
+    <div v-else-if="cartItems.length === 0" class="empty-cart-state">
       <div class="empty-icon">🛒</div>
       <h2 class="empty-title">Your cart is empty</h2>
       <p class="empty-desc">Discover authentic heritage pieces from master artisans across the continent.</p>
@@ -325,5 +346,63 @@ const cartByTailor = computed(() => {
 .checkout-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(22, 101, 52, 0.4);
+}
+
+.skeleton-cart-group {
+  background: var(--wood-walnut);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.skeleton-tailor-header {
+  height: 20px;
+  width: 160px;
+  background: var(--wood-deep);
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+.skeleton-cart-item {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--glass-border);
+}
+.skeleton-cart-item:last-of-type {
+  border-bottom: none;
+}
+.skeleton-cart-img {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  background: var(--wood-deep);
+  flex-shrink: 0;
+}
+.skeleton-cart-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.skeleton-line {
+  height: 14px;
+  background: var(--wood-deep);
+  border-radius: 4px;
+}
+.skeleton-line.w60 { width: 60%; }
+.skeleton-line.w40 { width: 40%; }
+.skeleton-line.w30 { width: 30%; }
+.skeleton-cart-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+}
+.skeleton-btn {
+  width: 140px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--wood-deep);
 }
 </style>
