@@ -29,9 +29,9 @@ const route = useRoute()
 
 const loading = ref(true)
 const hasConnected = ref(false)
-const img0 = useImageLoader()
-const img1 = useImageLoader()
-const img2 = useImageLoader()
+const [img0, onImg0Load, onImg0Err] = useImageLoader()
+const [img1, onImg1Load, onImg1Err] = useImageLoader()
+const [img2, onImg2Load, onImg2Err] = useImageLoader()
 const products = ref([])
 const reviews = ref([])
 const activeFilter = ref('all') // 'all', 'process', 'fabrics'
@@ -730,9 +730,9 @@ const makeCall = () => {
                        class="group relative overflow-hidden bg-alfie-card rounded-xl aspect-[4/5] shadow-lg cursor-pointer"
                        @click="$emit('go-details', product)">
                        
-                      <div class="heritage-img" :class="{ loaded: img0.loaded }">
+                      <div class="heritage-img" :class="{ loaded: img0 }">
                         <div class="heritage-img-shimmer"></div>
-                        <img :src="product.image" :alt="product.name" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition duration-700" @load="img0.onLoad" @error="img0.onError" />
+                        <img :src="product.image" :alt="product.name" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition duration-700" @load="onImg0Load" @error="onImg0Err" />
                       </div>
                       
                       <div class="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition duration-500 flex flex-col justify-center p-8 text-center">
@@ -764,7 +764,7 @@ const makeCall = () => {
           
           <div class="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
               <div v-for="(product, index) in products.slice(0, 8)" :key="index" class="break-inside-avoid relative group rounded-lg overflow-hidden cursor-pointer mb-4">
-                  <div class="heritage-img" :class="{ loaded: img1.loaded }"><div class="heritage-img-shimmer"></div><img :src="product.image" :alt="product.name + ' - Studio Gallery Piece'" loading="lazy" class="w-full h-auto object-cover grayscale-[20%] group-hover:grayscale-0 transition duration-500" @load="img1.onLoad" @error="img1.onError" /></div>
+                  <div class="heritage-img" :class="{ loaded: img1 }"><div class="heritage-img-shimmer"></div><img :src="product.image" :alt="product.name + ' - Studio Gallery Piece'" loading="lazy" class="w-full h-auto object-cover grayscale-[20%] group-hover:grayscale-0 transition duration-500" @load="onImg1Load" @error="onImg1Err" /></div>
                   
                   <div class="absolute top-3 left-3 bg-alfie-dark/90 backdrop-blur-sm text-alfie-accent text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider border border-alfie-accent/30 group-hover:opacity-0 transition duration-300 shadow-lg">
                       TSh {{ product.price }}
@@ -795,7 +795,7 @@ const makeCall = () => {
                   </div>
                   <p class="text-gray-300 text-sm mb-6 relative z-10 italic leading-relaxed">"{{ review.text }}"</p>
                   <div class="flex items-center gap-3 border-t border-white/10 pt-4">
-                      <div class="heritage-img" :class="{ loaded: img2.loaded }"><div class="heritage-img-shimmer"></div><img :src="review.author_avatar" loading="lazy" class="w-8 h-8 rounded-full object-cover" @load="img2.onLoad" @error="img2.onError" /></div>
+                      <div class="heritage-img" :class="{ loaded: img2 }"><div class="heritage-img-shimmer"></div><img :src="review.author_avatar" loading="lazy" class="w-8 h-8 rounded-full object-cover" @load="onImg2Load" @error="onImg2Err" /></div>
                       <p class="text-white text-xs font-bold uppercase tracking-widest">{{ review.author_name }}</p>
                   </div>
               </div>

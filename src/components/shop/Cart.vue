@@ -3,7 +3,7 @@
 import { computed } from 'vue'
 import { useImageLoader } from '../../composables/useImageLoader'
 
-const cartImg = useImageLoader()
+const [cartImg, onCartImgLoad, onCartImgErr] = useImageLoader()
 
 const props = defineProps({
   cartItems: {
@@ -86,7 +86,7 @@ const cartByTailor = computed(() => {
         
         <div class="items-list">
           <div v-for="item in group.items" :key="item.cartId" class="cart-item">
-            <div class="heritage-img cart-img-wrap" :class="{ loaded: cartImg.loaded }"><div class="heritage-img-shimmer"></div><img :src="item.image" :alt="item.name" class="item-img" loading="lazy" @click="$emit('go-details', item)" @load="cartImg.onLoad" @error="cartImg.onError" /></div>
+            <div class="heritage-img cart-img-wrap" :class="{ loaded: cartImg }"><div class="heritage-img-shimmer"></div><img :src="item.image" :alt="item.name" class="item-img" loading="lazy" @click="$emit('go-details', item)" @load="onCartImgLoad" @error="onCartImgErr" /></div>
             <div class="item-info" @click="$emit('go-details', item)">
               <h4 class="item-name">{{ item.name }}</h4>
               <span class="item-price">{{ item.price }}</span>

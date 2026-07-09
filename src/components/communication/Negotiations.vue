@@ -12,8 +12,8 @@ const emit = defineEmits(['go-back', 'go-chat', 'navigate'])
 
 const negotiations = ref([])
 const loading = ref(true)
-const negThumb = useImageLoader()
-const negAvatar = useImageLoader()
+const [negThumb, onNegThumbLoad, onNegThumbErr] = useImageLoader()
+const [negAvatar, onNegAvatarLoad, onNegAvatarErr] = useImageLoader()
 
 onMounted(async () => {
   const cached = localStorage.getItem('alfie_negotiations_cache')
@@ -107,7 +107,7 @@ const statusClass = (status) => {
     <div v-else class="negotiations-list">
       <div v-for="neg in negotiations" :key="neg.id" class="neg-card">
         <div class="neg-top">
-          <div class="heritage-img" :class="{ loaded: negThumb.loaded }"><div class="heritage-img-shimmer"></div><img :src="neg.image || 'https://i.pravatar.cc/150'" class="neg-thumb" @load="negThumb.onLoad" @error="negThumb.onError" /></div>
+          <div class="heritage-img" :class="{ loaded: negThumb }"><div class="heritage-img-shimmer"></div><img :src="neg.image || 'https://i.pravatar.cc/150'" class="neg-thumb" @load="onNegThumbLoad" @error="onNegThumbErr" /></div>
           <div class="neg-info">
             <h3 class="neg-item">{{ neg.itemName }}</h3>
             <p class="neg-price">{{ neg.price }}</p>
@@ -116,7 +116,7 @@ const statusClass = (status) => {
         </div>
         <div class="neg-meta">
           <span class="neg-person">
-            <div class="heritage-img" :class="{ loaded: negAvatar.loaded }"><div class="heritage-img-shimmer"></div><img :src="neg.otherAvatar || 'https://i.pravatar.cc/150?u=unknown'" class="mini-avatar" @load="negAvatar.onLoad" @error="negAvatar.onError" /></div>
+            <div class="heritage-img" :class="{ loaded: negAvatar }"><div class="heritage-img-shimmer"></div><img :src="neg.otherAvatar || 'https://i.pravatar.cc/150?u=unknown'" class="mini-avatar" @load="onNegAvatarLoad" @error="onNegAvatarErr" /></div>
             {{ neg.otherName }}
           </span>
           <span class="neg-date">{{ neg.date }}</span>

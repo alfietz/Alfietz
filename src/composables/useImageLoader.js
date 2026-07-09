@@ -4,5 +4,5 @@ export function useImageLoader() {
   const loaded = ref(false)
   const onLoad = () => { loaded.value = true }
   const onError = () => { loaded.value = true }
-  return { loaded, onLoad, onError }
+  return [loaded, onLoad, onError]
 }

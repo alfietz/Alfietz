@@ -22,9 +22,9 @@ const otherUser = ref(null)
 const messages = ref([])
 const newMessage = ref('')
 const loading = ref(true)
-const headerAvatar = useImageLoader()
-const heroAvatar = useImageLoader()
-const bubbleAvatar = useImageLoader()
+const [headerAvatar, onHeaderAvatarLoad, onHeaderAvatarErr] = useImageLoader()
+const [heroAvatar, onHeroAvatarLoad, onHeroAvatarErr] = useImageLoader()
+const [bubbleAvatar, onBubbleAvatarLoad, onBubbleAvatarErr] = useImageLoader()
 const messagesContainer = ref(null)
 
 const otherUserId = ref(route.params.userId)
@@ -145,7 +145,7 @@ watch(messages, () => {
       
       <div v-if="otherUser" class="user-info">
         <div class="avatar-wrapper-mini">
-          <div class="heritage-img" :class="{ loaded: headerAvatar.loaded }"><div class="heritage-img-shimmer"></div><img :src="otherUser.avatar || 'https://i.pravatar.cc/150'" alt="Avatar" class="header-avatar" @load="headerAvatar.onLoad" @error="headerAvatar.onError" /></div>
+          <div class="heritage-img" :class="{ loaded: headerAvatar }"><div class="heritage-img-shimmer"></div><img :src="otherUser.avatar || 'https://i.pravatar.cc/150'" alt="Avatar" class="header-avatar" @load="onHeaderAvatarLoad" @error="onHeaderAvatarErr" /></div>
           <div class="online-indicator"></div>
         </div>
         <div class="header-text">
@@ -176,7 +176,7 @@ watch(messages, () => {
       <div v-else-if="messages.length === 0" class="empty-chat animate-fade-in">
         <div class="empty-chat-hero">
           <div class="hero-avatar-wrapper">
-            <div class="heritage-img" :class="{ loaded: heroAvatar.loaded }"><div class="heritage-img-shimmer"></div><img :src="otherUser?.avatar || 'https://i.pravatar.cc/150'" class="hero-avatar" @load="heroAvatar.onLoad" @error="heroAvatar.onError" /></div>
+            <div class="heritage-img" :class="{ loaded: heroAvatar }"><div class="heritage-img-shimmer"></div><img :src="otherUser?.avatar || 'https://i.pravatar.cc/150'" class="hero-avatar" @load="onHeroAvatarLoad" @error="onHeroAvatarErr" /></div>
             <div class="pulse-ring"></div>
           </div>
           <h2 class="hero-name">{{ (otherUser?.first_name || otherUser?.firstName) ? (otherUser.first_name || otherUser.firstName) : (otherUser?.username || 'Artisan') }}</h2>
@@ -192,7 +192,7 @@ watch(messages, () => {
           class="message-wrapper"
           :class="{ 'sent': msg.sender_id === props.userData.id, 'received': msg.sender_id !== props.userData.id }"
         >
-          <div v-if="msg.sender_id !== props.userData.id" class="heritage-img" :class="{ loaded: bubbleAvatar.loaded }"><div class="heritage-img-shimmer"></div><img :src="otherUser?.avatar || 'https://i.pravatar.cc/150'" class="bubble-avatar" @load="bubbleAvatar.onLoad" @error="bubbleAvatar.onError" /></div>
+          <div v-if="msg.sender_id !== props.userData.id" class="heritage-img" :class="{ loaded: bubbleAvatar }"><div class="heritage-img-shimmer"></div><img :src="otherUser?.avatar || 'https://i.pravatar.cc/150'" class="bubble-avatar" @load="onBubbleAvatarLoad" @error="onBubbleAvatarErr" /></div>
           <div class="message-bubble">
             <p class="message-content">{{ msg.content }}</p>
             <span class="message-time">

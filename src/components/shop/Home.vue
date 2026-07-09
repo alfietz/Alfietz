@@ -21,8 +21,8 @@ const props = defineProps({
 
 const searchQuery = ref('')
 
-const img0 = useImageLoader()
-const img1 = useImageLoader()
+const [img0, onImg0Load, onImg0Err] = useImageLoader()
+const [img1, onImg1Load, onImg1Err] = useImageLoader()
 
 const emit = defineEmits(['go-details', 'go-notifications', 'go-search', 'go-explore', 'go-categories', 'go-trending', 'go-tailor', 'toggle-like', 'search', 'navigate', 'go-stories'])
 
@@ -95,9 +95,9 @@ const handleSearch = () => {
         <span class="read-link">Read Heritage Stories →</span>
       </div>
       <div class="banner-image">
-        <div class="heritage-img" :class="{ loaded: img0.loaded }">
+        <div class="heritage-img" :class="{ loaded: img0 }">
           <div class="heritage-img-shimmer"></div>
-          <img src="https://images.unsplash.com/photo-1660695828374-4ff51ac9df5d?w=800&auto=format&fit=crop" alt="Kente Story" loading="lazy" @load="img0.onLoad" @error="img0.onError" />
+          <img src="https://images.unsplash.com/photo-1660695828374-4ff51ac9df5d?w=800&auto=format&fit=crop" alt="Kente Story" loading="lazy" @load="onImg0Load" @error="onImg0Err" />
         </div>
       </div>
     </section>
@@ -191,9 +191,9 @@ const handleSearch = () => {
       <div class="scroll-container tribe-feedback-scroll">
         <div v-for="rev in appReviews" :key="rev.id" class="feedback-bubble-card">
           <div class="bubble-header">
-            <div class="heritage-img" :class="{ loaded: img1.loaded }">
+            <div class="heritage-img" :class="{ loaded: img1 }">
               <div class="heritage-img-shimmer"></div>
-              <img :src="rev.avatar" class="bubble-avatar" loading="lazy" @load="img1.onLoad" @error="img1.onError" />
+              <img :src="rev.avatar" class="bubble-avatar" loading="lazy" @load="onImg1Load" @error="onImg1Err" />
             </div>
             <div class="bubble-info">
               <span class="bubble-author">{{ rev.author }}</span>
