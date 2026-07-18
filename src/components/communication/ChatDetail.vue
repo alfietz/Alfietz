@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, nextTick, watch } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick, watch, onActivated, onDeactivated } from 'vue'
 import { db } from '../../db/client'
 import { useImageLoader } from '../../composables/useImageLoader'
 import { useRoute } from 'vue-router'
@@ -44,6 +44,22 @@ const initChat = async () => {
 
 onMounted(async () => {
   await initChat()
+  startPolling()
+  document.addEventListener('visibilitychange', handleVisibilityChange)
+})
+
+onUnmounted(() => {
+  stopPolling()
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
+})
+
+onActivated(() => {
+  fetchMessages(false, 'activated')
+  startPolling()
+})
+
+onDeactivated(() => {
+  stopPolling()
 })
 
 watch(() => route.params.userId, async (newId) => {
@@ -76,7 +92,7 @@ const fetchMessages = async (showLoading = false, reason = 'unknown') => {
     
     // Only update if data changed
     if (JSON.stringify(res.rows) !== JSON.stringify(messages.value)) {
-      messages.value = res.rows
+      messages.value = res.rows.reverse()
       await markAsRead()
     }
   } catch (e) {
@@ -88,24 +104,41 @@ const fetchMessages = async (showLoading = false, reason = 'unknown') => {
 
 const sendMessage = async () => {
   if (!newMessage.value.trim()) return
-  
+
   const content = newMessage.value.trim()
+  const tempId = 'temp-' + Date.now()
+  const tempMessage = {
+    id: tempId,
+    sender_id: props.userData.id,
+    content,
+    created_at: new Date().toISOString(),
+    _temp: true
+  }
+
+  messages.value.push(tempMessage)
   newMessage.value = ''
-  
+
+  await nextTick()
+  scrollToBottom()
+
   try {
-    await db.runAction('send_message', { 
-      senderId: props.userData.id, 
-      receiverId: otherUserId.value, 
-      content 
+    const res = await db.runAction('send_message', {
+      senderId: props.userData.id,
+      receiverId: otherUserId.value,
+      content
     });
-    
-    // Refresh the message list after sending
-    await fetchMessages(false, 'sendMessage')
-    
-    await nextTick()
-    scrollToBottom()
+
+    const realId = res.id || res.message?.id
+    if (realId) {
+      const idx = messages.value.findIndex(m => m.id === tempId)
+      if (idx !== -1) {
+        messages.value[idx] = { ...messages.value[idx], id: realId, _temp: false }
+      }
+    }
   } catch (e) {
     console.error("Error sending message:", e)
+    messages.value = messages.value.filter(m => m.id !== tempId)
+    newMessage.value = content
   }
 }
 
@@ -126,12 +159,42 @@ const scrollToBottom = () => {
   }
 }
 
+const POLL_INTERVAL = 15000
+let pollTimer = null
+
+const startPolling = () => {
+  stopPolling()
+  pollTimer = setInterval(() => fetchMessages(false, 'poll'), POLL_INTERVAL)
+}
+
+const stopPolling = () => {
+  if (pollTimer) {
+    clearInterval(pollTimer)
+    pollTimer = null
+  }
+}
+
+const handleVisibilityChange = () => {
+  if (document.hidden) {
+    stopPolling()
+  } else {
+    startPolling()
+  }
+}
+
 const addEmoji = (emoji) => {
   newMessage.value += emoji
 }
 
 watch(messages, () => {
-  nextTick(() => scrollToBottom())
+  nextTick(() => {
+    const el = messagesContainer.value
+    if (!el) return
+    const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100
+    if (isNearBottom) {
+      scrollToBottom()
+    }
+  })
 }, { deep: true })
 </script>
 

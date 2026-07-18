@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, onActivated, onDeactivated } from 'vue'
 import { useImageLoader } from '../../composables/useImageLoader'
 import { db } from '../../db/client'
 
@@ -113,6 +113,15 @@ onMounted(() => {
 onUnmounted(() => {
   stopPolling()
   document.removeEventListener('visibilitychange', handleVisibilityChange)
+})
+
+onActivated(() => {
+  fetchConversations()
+  startPolling()
+})
+
+onDeactivated(() => {
+  stopPolling()
 })
 </script>
 
