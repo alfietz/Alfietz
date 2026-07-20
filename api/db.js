@@ -752,7 +752,7 @@ export default async function handler(req, res) {
               from: 'Alfietz <info@alfietz.shop>',
               to: tailorEmail,
               subject: 'New Custom Quote Request',
-              text: `You have received a new quote request from ${customerName} for "${params.itemName}".\n\nLog in to your Tailor Console to respond: https://alfietz.shop`
+              text: `You have received a new quote request from ${customerName} for "${params.itemName}".\n\nLog in to your Tailor Console to respond: https://alfietz.shop/tailor-console`
             });
             if (error) console.error('Negotiation Email Error:', error);
           }
@@ -991,7 +991,7 @@ export default async function handler(req, res) {
               from: 'Alfietz <info@alfietz.shop>',
               to: receiverEmail,
               subject: 'New Message on Alfietz',
-              text: `Habari ${receiverName}!\n\nYou have a new message from ${senderName} on Alfietz.\n\nLog in to read and reply: https://alfietz.shop`
+              text: `Habari ${receiverName}!\n\nYou have a new message from ${senderName} on Alfietz.\n\nLog in to read and reply: https://alfietz.shop/chats`
             });
             if (error) console.error('Message Email Error:', error);
           }
@@ -1151,7 +1151,7 @@ export default async function handler(req, res) {
               from: 'Alfietz <info@alfietz.shop>',
               to: sanitize(customer[0]),
               subject: 'Your Heritage Order is Confirmed!',
-              text: `Habari ${customerName}!\n\nYour order for "${params.itemName}" has been placed successfully.\n\nOrder Details:\n- Item: ${params.itemName}\n- Price: ${params.price}\n- Size: ${params.size}\n- Color: ${params.color}\n\nThank you for supporting African artisans through Alfietz!`
+              text: `Habari ${customerName}!\n\nYour order for "${params.itemName}" has been placed successfully.\n\nOrder Details:\n- Item: ${params.itemName}\n- Price: ${params.price}\n- Size: ${params.size}\n- Color: ${params.color}\n\nView your orders: https://alfietz.shop/orders\n\nThank you for supporting African artisans through Alfietz!`
             });
             if (error) {
               console.error('Order Email Error:', error);
@@ -1171,7 +1171,7 @@ export default async function handler(req, res) {
               from: 'Alfietz <info@alfietz.shop>',
               to: sanitize(tailor[0]),
               subject: 'New Order Received!',
-              text: `Habari ${tailorName}!\n\nYou have received a new order for "${params.itemName}".\n\nLog in to your Tailor Console to view details: https://alfietz.shop`
+              text: `Habari ${tailorName}!\n\nYou have received a new order for "${params.itemName}".\n\nLog in to your Tailor Console to view details: https://alfietz.shop/tailor-console`
             });
             if (error) console.error('Tailor Order Email Error:', error);
           }
@@ -1233,7 +1233,7 @@ export default async function handler(req, res) {
               from: 'Alfietz <info@alfietz.shop>',
               to: customerEmail,
               subject: `Negotiation Update: ${params.status}`,
-              text: `Habari ${customerName}!\n\nYour negotiation for "${itemName}" has been updated to: ${params.status}.\n\nLog in to view details: https://alfietz.shop`
+              text: `Habari ${customerName}!\n\nYour negotiation for "${itemName}" has been updated to: ${params.status}.\n\nLog in to view details: https://alfietz.shop/negotiations`
             });
             if (error) console.error('Negotiation Update Email Error:', error);
           }
