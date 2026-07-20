@@ -241,15 +241,21 @@ const loadProductData = async (activeId) => {
       avatar: r.avatar
     }))
 
-    // Fetch similar products
-    const similarRes = await db.runAction('get_similar_products', { 
-      categoryId: product.value.category_id, 
-      productId: activeId 
-    });
-    similarProducts.value = similarRes.rows.map(p => ({
-      ...p,
-      liked: props.favoriteItems.some(fav => fav.id === p.id)
-    }))
+    // Fetch similar products (isolated — failure shouldn't hide the product)
+    try {
+      if (product.value.category_id) {
+        const similarRes = await db.runAction('get_similar_products', { 
+          categoryId: product.value.category_id, 
+          productId: activeId 
+        });
+        similarProducts.value = (similarRes.rows || []).map(p => ({
+          ...p,
+          liked: props.favoriteItems.some(fav => fav.id === p.id)
+        }));
+      }
+    } catch (e) {
+      console.warn('Similar products fetch failed:', e)
+    }
     
   } catch (e) {
     console.error('Fetch error:', e)
