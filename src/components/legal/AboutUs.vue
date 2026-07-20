@@ -22,7 +22,7 @@ defineEmits(['go-back'])
       <!-- App Identity -->
       <div class="brand-showcase">
         <div class="logo-container">
-          <img src="../../assets/logo.png" alt="Alfie Logo" class="logo-img" />
+          <img src="../../assets/logo.svg" alt="Alfie Tz Logo" class="logo-img" />
         </div>
         <p class="company-name">{{ t('independentMarketplace') }}</p>
       </div>
