@@ -67,7 +67,7 @@ const validateForm = () => {
     return false
   }
   // Basic phone validation (allows +, spaces, and digits, min 7 chars after cleaning)
-  const cleanedPhone = tempUser.value.whatsapp.replace(/[^0-9]/g, '')
+  const cleanedPhone = (tempUser.value.whatsapp || '').replace(/[^0-9]/g, '')
   if (cleanedPhone.length < 7) {
     errorMessage.value = props.t('errInvalidPhone')
     return false

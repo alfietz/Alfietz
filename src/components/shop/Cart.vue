@@ -38,7 +38,7 @@ const cartByTailor = computed(() => {
     }
     groups[tailorId].items.push(item)
     // Simple parsing to calculate a rough total if price is numeric-ish
-    const priceNum = parseFloat(item.price.replace(/[^0-9.]/g, '')) || 0
+    const priceNum = parseFloat((item.price || '').replace(/[^0-9.]/g, '')) || 0
     groups[tailorId].total += priceNum
   })
   return Object.values(groups)

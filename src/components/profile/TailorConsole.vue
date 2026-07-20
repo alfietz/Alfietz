@@ -113,7 +113,7 @@ const fetchData = async () => {
     data.orders.forEach(o => {
       if (o.status === 'Pending' || o.status === 'Cancelled') return
       
-      const priceVal = parseInt(o.price.replace(/[^0-9]/g, '')) || 0
+      const priceVal = parseInt((o.price || '').replace(/[^0-9]/g, '')) || 0
       totalRevenue += priceVal
       
       const orderDate = new Date(o.created_at)
@@ -249,6 +249,7 @@ const handleAcceptNegotiation = async (neg) => {
     emit('order', {
       itemName: neg.item,
       tailorId: props.userData.id,
+      customerId: neg.customer_id,
       price: neg.offer,
       size: neg.size || 'M',
       color: neg.color || 'Default',

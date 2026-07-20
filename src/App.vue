@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, KeepAlive } from 'vue'
 import { db } from './db/client'
 import { useRouter, useRoute } from 'vue-router'
 
@@ -573,7 +573,7 @@ const handleUploadWork = async (data) => {
 
 const handleNewOrder = async (data) => {
   console.log('[Data] Saving new order:', data);
-  const customerId = userData.value.id;
+  const customerId = data.customerId || userData.value.id;
   const tailorId = data.tailorId;
 
   try {
@@ -795,6 +795,10 @@ const showToast = (message, type = 'info') => {
   setTimeout(() => toast.value.show = false, 3000)
 }
 
+window.addEventListener('app:error', (e) => {
+  showToast(e.detail.message, 'error')
+})
+
 watch([allProducts, userData], () => {
   if (userData.value.id !== 'guest') {
     userProductCount.value = allProducts.value.filter(p => p.owner_id === userData.value.id).length;
@@ -902,102 +906,102 @@ const showNavBar = computed(() => {
 
     <main :class="{ 'with-nav': showNavBar }">
     <router-view v-slot="{ Component }">
-      <keep-alive>
-        <transition name="page-fade" mode="out-in">
+      <transition name="page-fade" mode="out-in">
+        <KeepAlive :max="10">
         <component 
-          :is="Component" 
-          :t="t"
-          :user-data="userData"
-          :language="currentLanguage"
-          :categories="categories"
-          :trending-products="trendingProducts"
-          :trending-sellers="trendingSellers"
-          :explore-items="filteredExploreItems"
-          :favorite-items="favoriteItems"
-          :my-products="allProducts.filter(p => p.owner_id === userData.id)"
-          :product-count="userProductCount"
-          :product-id="route.params.id || selectedProduct?.id"
-          :tailor-id="selectedReviewsTailorId"
-          :is-app="isAppReview"
-          :current-user-id="userData.id"
-          :category="route.params.category || selectedCategory"
-          :seller="selectedSeller"
-          :results="searchResults"
-          :search-history="searchHistory"
-          :cart-items="cartItems"
-          :notifications="userNotifications"
-          :app-reviews="appReviews"
-          :portfolio-updates="portfolioUpdates"
-          :is-loading="isGlobalLoading"
-          :editing-product="selectedEditProduct"
-          @navigate="navigateTo"
-          @go-back="handleGoBack"
-          @login="handleLogin"
-          @signup="handleSignUp"
-          @add-to-cart="handleAddToCart"
-          @remove-item="handleRemoveFromCart"
-          @checkout="handleCartCheckout"
-          @submit="(val) => {
-            if (route.name === 'forgot-password') handlePasswordReset(val)
-            else if (route.name === 'verify-code') handleVerifyCode(val)
-            else if (route.name === 'reset-password') handleResetPassword(val)
-            else if (route.name === 'feedback') handleFeedbackSubmit(val)
-            else if (route.name === 'write-review') handleWriteReview(val)
-          }"
-          @go-signup="navigateTo('signup')"
-          @go-login="navigateTo('login')"
-          @go-forgot="navigateTo('forgot-password')"
-          @go-settings="navigateTo('settings')"
-          @go-edit-profile="navigateTo('edit-profile')"
-          @go-console="navigateTo('tailor-console')"
-          @go-orders="navigateTo('orders')"
-          @go-negotiations="navigateTo('negotiations')"
-          @go-edit="(p) => { selectedEditProduct = p; navigateTo('upload-work') }"
-          @go-upload="navigateTo('upload-work')"
-          @go-app-review="navigateTo('app-review')"
-          @logout="handleLogout"
-          @go-reviews="(tailorId) => navigateTo('reviews', { tailorId })"
-          @go-feedback="navigateTo('feedback')"
-          @go-chats="navigateTo('chats')"
-          @go-chat="handleGoChat"
-          @go-product="(p) => navigateTo('product-details', { selectedProduct: p })"
-          @go-details="(p) => navigateTo('product-details', { selectedProduct: p })"
-          @go-search-details="(p) => navigateTo('product-details', { selectedProduct: p })"
-          @toggle-favorite="(p) => toggleLike(p)"
-          @toggle-like="(p) => toggleLike(p)"
-          @toggle-search-favorite="(p) => toggleLike(p)"
-          @delete="handleProductDelete"
-          @select-category="(name) => navigateTo('explore', { selectedCategory: name })"
-          @go-explore="(name) => navigateTo('explore', { selectedCategory: name })"
-          @go-notifications="navigateTo('notifications')"
-          @go-search="navigateTo('search')"
-          @go-search-tailor="(s) => navigateTo('tailor-details', { selectedSeller: s })"
-          @go-categories="navigateTo('category-list')"
-          @go-trending="navigateTo('explore', { selectedCategory: 'Trending Trends' })"
-          @go-tailor="(s) => navigateTo('tailor-details', { selectedSeller: s })"
-          @search="handleSearch"
-          @update:user-data="handleUpdateProfile"
-          @update:language="(val) => { currentLanguage = val; setStored('language', val); }"
-          @update:role="handleUpdateRole"
-          @go-help="navigateTo('help')"
-          @go-privacy="navigateTo('privacy')"
-          @go-terms="navigateTo('terms')"
-          @go-about="navigateTo('about')"
-          @go-returns="navigateTo('returns')"
-          @go-guidelines="navigateTo('guidelines')"
-          @go-safety="navigateTo('safety')"
-          @go-measurements="navigateTo('measurements')"
-          @go-ip-policy="navigateTo('ip-policy')"
-          @go-stories="navigateTo('stories')"
-          @upload="handleUploadWork"
-          @order="handleNewOrder"
-          @negotiate="handleNewNegotiation"
-          @update-status="handleUpdateOrderStatus"
-          @submit-app-experience="handleAppExperienceSubmit"
-          @loaded="userData.id !== 'guest' ? navigateTo('home') : navigateTo('login')"
-        />
-      </transition>
-      </keep-alive>
+        :is="Component" 
+        :t="t"
+        :user-data="userData"
+        :language="currentLanguage"
+        :categories="categories"
+        :trending-products="trendingProducts"
+        :trending-sellers="trendingSellers"
+        :explore-items="filteredExploreItems"
+        :favorite-items="favoriteItems"
+        :my-products="allProducts.filter(p => p.owner_id === userData.id)"
+        :product-count="userProductCount"
+        :product-id="route.params.id || selectedProduct?.id"
+        :tailor-id="selectedReviewsTailorId"
+        :is-app="isAppReview"
+        :current-user-id="userData.id"
+        :category="route.params.category || selectedCategory"
+        :seller="selectedSeller"
+        :results="searchResults"
+        :search-history="searchHistory"
+        :cart-items="cartItems"
+        :notifications="userNotifications"
+        :app-reviews="appReviews"
+        :portfolio-updates="portfolioUpdates"
+        :is-loading="isGlobalLoading"
+        :editing-product="selectedEditProduct"
+        @navigate="navigateTo"
+        @go-back="handleGoBack"
+        @login="handleLogin"
+        @signup="handleSignUp"
+        @add-to-cart="handleAddToCart"
+        @remove-item="handleRemoveFromCart"
+        @checkout="handleCartCheckout"
+        @submit="(val) => {
+          if (route.name === 'forgot-password') handlePasswordReset(val)
+          else if (route.name === 'verify-code') handleVerifyCode(val)
+          else if (route.name === 'reset-password') handleResetPassword(val)
+          else if (route.name === 'feedback') handleFeedbackSubmit(val)
+          else if (route.name === 'write-review') handleWriteReview(val)
+        }"
+        @go-signup="navigateTo('signup')"
+        @go-login="navigateTo('login')"
+        @go-forgot="navigateTo('forgot-password')"
+        @go-settings="navigateTo('settings')"
+        @go-edit-profile="navigateTo('edit-profile')"
+        @go-console="navigateTo('tailor-console')"
+        @go-orders="navigateTo('orders')"
+        @go-negotiations="navigateTo('negotiations')"
+        @go-edit="(p) => { selectedEditProduct = p; navigateTo('upload-work') }"
+        @go-upload="navigateTo('upload-work')"
+        @go-app-review="navigateTo('app-review')"
+        @logout="handleLogout"
+        @go-reviews="(tailorId) => navigateTo('reviews', { tailorId })"
+        @go-feedback="navigateTo('feedback')"
+        @go-chats="navigateTo('chats')"
+        @go-chat="handleGoChat"
+        @go-product="(p) => navigateTo('product-details', { selectedProduct: p })"
+        @go-details="(p) => navigateTo('product-details', { selectedProduct: p })"
+        @go-search-details="(p) => navigateTo('product-details', { selectedProduct: p })"
+        @toggle-favorite="(p) => toggleLike(p)"
+        @toggle-like="(p) => toggleLike(p)"
+        @toggle-search-favorite="(p) => toggleLike(p)"
+        @delete="handleProductDelete"
+        @select-category="(name) => navigateTo('explore', { selectedCategory: name })"
+        @go-explore="(name) => navigateTo('explore', { selectedCategory: name })"
+        @go-notifications="navigateTo('notifications')"
+        @go-search="navigateTo('search')"
+        @go-search-tailor="(s) => navigateTo('tailor-details', { selectedSeller: s })"
+        @go-categories="navigateTo('category-list')"
+        @go-trending="navigateTo('explore', { selectedCategory: 'Trending Trends' })"
+        @go-tailor="(s) => navigateTo('tailor-details', { selectedSeller: s })"
+        @search="handleSearch"
+        @update:user-data="handleUpdateProfile"
+        @update:language="(val) => { currentLanguage = val; setStored('language', val); }"
+        @update:role="handleUpdateRole"
+        @go-help="navigateTo('help')"
+        @go-privacy="navigateTo('privacy')"
+        @go-terms="navigateTo('terms')"
+        @go-about="navigateTo('about')"
+        @go-returns="navigateTo('returns')"
+        @go-guidelines="navigateTo('guidelines')"
+        @go-safety="navigateTo('safety')"
+        @go-measurements="navigateTo('measurements')"
+        @go-ip-policy="navigateTo('ip-policy')"
+        @go-stories="navigateTo('stories')"
+        @upload="handleUploadWork"
+        @order="handleNewOrder"
+        @negotiate="handleNewNegotiation"
+        @update-status="handleUpdateOrderStatus"
+        @submit-app-experience="handleAppExperienceSubmit"
+        @loaded="userData.id !== 'guest' ? navigateTo('home') : navigateTo('login')"
+      />
+        </KeepAlive>
+    </transition>
     </router-view>
     </main>
 

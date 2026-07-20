@@ -241,15 +241,21 @@ const loadProductData = async (activeId) => {
       avatar: r.avatar
     }))
 
-    // Fetch similar products
-    const similarRes = await db.runAction('get_similar_products', { 
-      categoryId: product.value.category_id, 
-      productId: activeId 
-    });
-    similarProducts.value = similarRes.rows.map(p => ({
-      ...p,
-      liked: props.favoriteItems.some(fav => fav.id === p.id)
-    }))
+    // Fetch similar products (isolated — failure shouldn't hide the product)
+    try {
+      if (product.value.category_id) {
+        const similarRes = await db.runAction('get_similar_products', { 
+          categoryId: product.value.category_id, 
+          productId: activeId 
+        });
+        similarProducts.value = (similarRes.rows || []).map(p => ({
+          ...p,
+          liked: props.favoriteItems.some(fav => fav.id === p.id)
+        }));
+      }
+    } catch (e) {
+      console.warn('Similar products fetch failed:', e)
+    }
     
   } catch (e) {
     console.error('Fetch error:', e)
@@ -679,7 +685,7 @@ const shareProduct = async () => {
             <button v-if="isOwner" class="icon-btn edit-btn-top" @click="$emit('go-edit', product)">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-amber)" stroke-width="2.5"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 9.5-9.5z"/></svg>
             </button>
-            <button class="icon-btn delete-btn" @click="handleDelete">
+            <button v-if="isOwner" class="icon-btn delete-btn" @click="handleDelete">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C62828" stroke-width="2.5"><path d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
             </button>
             <button class="icon-btn wa-share-btn" @click="shareToWhatsApp" title="Share to WhatsApp">
