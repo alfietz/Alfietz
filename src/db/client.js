@@ -59,6 +59,7 @@ export const db = {
       return data;
     } catch (error) {
       console.error(`Action Error [${action}]:`, error);
+      window.dispatchEvent(new CustomEvent('app:error', { detail: { message: `${action}: ${error.message}` } }));
       throw error;
     }
   },

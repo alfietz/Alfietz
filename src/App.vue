@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, KeepAlive } from 'vue'
 import { db } from './db/client'
 import { useRouter, useRoute } from 'vue-router'
 
@@ -795,6 +795,10 @@ const showToast = (message, type = 'info') => {
   setTimeout(() => toast.value.show = false, 3000)
 }
 
+window.addEventListener('app:error', (e) => {
+  showToast(e.detail.message, 'error')
+})
+
 watch([allProducts, userData], () => {
   if (userData.value.id !== 'guest') {
     userProductCount.value = allProducts.value.filter(p => p.owner_id === userData.value.id).length;
@@ -903,7 +907,8 @@ const showNavBar = computed(() => {
     <main :class="{ 'with-nav': showNavBar }">
     <router-view v-slot="{ Component }">
       <transition name="page-fade" mode="out-in">
-      <component 
+        <KeepAlive :max="10">
+        <component 
         :is="Component" 
         :t="t"
         :user-data="userData"
@@ -995,6 +1000,7 @@ const showNavBar = computed(() => {
         @submit-app-experience="handleAppExperienceSubmit"
         @loaded="userData.id !== 'guest' ? navigateTo('home') : navigateTo('login')"
       />
+        </KeepAlive>
     </transition>
     </router-view>
     </main>
