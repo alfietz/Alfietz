@@ -739,6 +739,25 @@ export default async function handler(req, res) {
         const negId = 'n' + Date.now();
         sql = "INSERT INTO negotiations (id, item_name, customer_id, tailor_id, proposed_price, status, size, color, notes, image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         args = [negId, params.itemName, params.customerId, params.tailorId, params.price, 'Awaiting Reply', params.size, params.color, params.notes, params.image];
+
+        if (resend) {
+          const [tailorRes, customerRes] = await Promise.all([
+            client.execute({ sql: "SELECT email FROM users WHERE id = ?", args: [params.tailorId] }),
+            client.execute({ sql: "SELECT first_name FROM users WHERE id = ?", args: [params.customerId] })
+          ]);
+          if (tailorRes.rows.length > 0 && customerRes.rows.length > 0) {
+            const tailorEmail = sanitize(tailorRes.rows[0][0]);
+            const customerName = sanitize(customerRes.rows[0][0]);
+            const { error } = await resend.emails.send({
+              from: 'Alfietz <info@alfietz.shop>',
+              to: tailorEmail,
+              subject: 'New Custom Quote Request',
+              text: `You have received a new quote request from ${customerName} for "${params.itemName}".\n\nLog in to your Tailor Console to respond: https://alfietz.shop/tailor-console`
+            });
+            if (error) console.error('Negotiation Email Error:', error);
+          }
+        }
+
         publishEvent('negotiation:new', { negotiationId: negId, customerId: params.customerId }, `user-${params.tailorId}`);
         break;
 
@@ -958,6 +977,26 @@ export default async function handler(req, res) {
       case 'send_message':
         sql = 'INSERT INTO messages (sender_id, receiver_id, content) VALUES (?, ?, ?)';
         args = [params.senderId, params.receiverId, params.content];
+
+        if (resend) {
+          const [senderRes, receiverRes] = await Promise.all([
+            client.execute({ sql: "SELECT first_name FROM users WHERE id = ?", args: [params.senderId] }),
+            client.execute({ sql: "SELECT email, first_name FROM users WHERE id = ?", args: [params.receiverId] })
+          ]);
+          if (senderRes.rows.length > 0 && receiverRes.rows.length > 0) {
+            const senderName = sanitize(senderRes.rows[0][0]);
+            const receiverEmail = sanitize(receiverRes.rows[0][0]);
+            const receiverName = sanitize(receiverRes.rows[0][1]);
+            const { error } = await resend.emails.send({
+              from: 'Alfietz <info@alfietz.shop>',
+              to: receiverEmail,
+              subject: 'New Message on Alfietz',
+              text: `Habari ${receiverName}!\n\nYou have a new message from ${senderName} on Alfietz.\n\nLog in to read and reply: https://alfietz.shop/chats`
+            });
+            if (error) console.error('Message Email Error:', error);
+          }
+        }
+
         publishEvent('chat:new', { senderId: params.senderId, content: params.content }, `user-${params.receiverId}`);
         break;
       case 'mark_messages_read':
@@ -1112,7 +1151,7 @@ export default async function handler(req, res) {
               from: 'Alfietz <info@alfietz.shop>',
               to: sanitize(customer[0]),
               subject: 'Your Heritage Order is Confirmed!',
-              text: `Habari ${customerName}!\n\nYour order for "${params.itemName}" has been placed successfully.\n\nOrder Details:\n- Item: ${params.itemName}\n- Price: ${params.price}\n- Size: ${params.size}\n- Color: ${params.color}\n\nThank you for supporting African artisans through Alfietz!`
+              text: `Habari ${customerName}!\n\nYour order for "${params.itemName}" has been placed successfully.\n\nOrder Details:\n- Item: ${params.itemName}\n- Price: ${params.price}\n- Size: ${params.size}\n- Color: ${params.color}\n\nView your orders: https://alfietz.shop/orders\n\nThank you for supporting African artisans through Alfietz!`
             });
             if (error) {
               console.error('Order Email Error:', error);
@@ -1120,6 +1159,24 @@ export default async function handler(req, res) {
           }
         }
         
+        if (resend) {
+          const tailorRes = await client.execute({
+            sql: "SELECT email, first_name FROM users WHERE id = ?",
+            args: [params.tailorId]
+          });
+          if (tailorRes.rows.length > 0) {
+            const tailor = tailorRes.rows[0];
+            const tailorName = sanitize(tailor[1]);
+            const { error } = await resend.emails.send({
+              from: 'Alfietz <info@alfietz.shop>',
+              to: sanitize(tailor[0]),
+              subject: 'New Order Received!',
+              text: `Habari ${tailorName}!\n\nYou have received a new order for "${params.itemName}".\n\nLog in to your Tailor Console to view details: https://alfietz.shop/tailor-console`
+            });
+            if (error) console.error('Tailor Order Email Error:', error);
+          }
+        }
+
         customResponse = { success: true };
         publishEvent('order:new', { orderId: params.id, customerId: params.customerId }, `user-${params.tailorId}`);
         break;
@@ -1162,6 +1219,26 @@ export default async function handler(req, res) {
       case 'update_negotiation_status':
         sql = 'UPDATE negotiations SET status = ? WHERE id = ?';
         args = [params.status, params.negotiationId];
+
+        if (resend) {
+          const [negRes, customerRes] = await Promise.all([
+            client.execute({ sql: "SELECT item_name FROM negotiations WHERE id = ?", args: [params.negotiationId] }),
+            client.execute({ sql: "SELECT email, first_name FROM users WHERE id = ?", args: [params.customerId] })
+          ]);
+          if (negRes.rows.length > 0 && customerRes.rows.length > 0) {
+            const itemName = sanitize(negRes.rows[0][0]);
+            const customerEmail = sanitize(customerRes.rows[0][0]);
+            const customerName = sanitize(customerRes.rows[0][1]);
+            const { error } = await resend.emails.send({
+              from: 'Alfietz <info@alfietz.shop>',
+              to: customerEmail,
+              subject: `Negotiation Update: ${params.status}`,
+              text: `Habari ${customerName}!\n\nYour negotiation for "${itemName}" has been updated to: ${params.status}.\n\nLog in to view details: https://alfietz.shop/negotiations`
+            });
+            if (error) console.error('Negotiation Update Email Error:', error);
+          }
+        }
+
         publishEvent('negotiation:update', { negotiationId: params.negotiationId, status: params.status }, `user-${params.customerId}`);
         break;
 
