@@ -3,6 +3,7 @@ import { ref, onMounted, nextTick, watch } from 'vue'
 import { db } from '../../db/client'
 import { useImageLoader } from '../../composables/useImageLoader'
 import { useRoute } from 'vue-router'
+import { useSocket } from '../../composables/useSocket'
 
 const props = defineProps({
   userData: {
@@ -29,11 +30,33 @@ const messagesContainer = ref(null)
 
 const otherUserId = ref(route.params.userId)
 
+const CACHE_PREFIX = 'alfie_app_chat_messages_'
+
+const getCachedMessages = (convId) => {
+  const raw = localStorage.getItem(CACHE_PREFIX + convId)
+  if (!raw) return null
+  try { return JSON.parse(raw) } catch { return null }
+}
+
+const setCachedMessages = (convId, msgs) => {
+  const trimmed = msgs.slice(-200)
+  localStorage.setItem(CACHE_PREFIX + convId, JSON.stringify(trimmed))
+}
+
+const removeCachedMessages = (convId) => {
+  localStorage.removeItem(CACHE_PREFIX + convId)
+}
+
 const initChat = async () => {
   try {
     loading.value = true
+    const cached = getCachedMessages(otherUserId.value)
+    if (cached && cached.length) {
+      messages.value = cached
+      loading.value = false
+    }
     await fetchUserDetails()
-    await fetchMessages(false, 'initChat') // Don't set loading inside fetchMessages to avoid double spinner
+    await fetchMessages(false, 'initChat')
     await markAsRead()
   } catch (e) {
     console.error("Chat Init Error:", e)
@@ -45,6 +68,13 @@ const initChat = async () => {
 onMounted(async () => {
   if (props.userData.id === 'guest') return
   await initChat()
+
+  const s = useSocket()
+  s.on('chat:new', (data) => {
+    if (data.senderId === otherUserId.value) {
+      fetchMessages(false, 'socket')
+    }
+  })
 })
 
 watch(() => route.params.userId, async (newId) => {
@@ -75,9 +105,12 @@ const fetchMessages = async (showLoading = false, reason = 'unknown') => {
       otherId: otherUserId.value 
     });
     
+    const reversed = res.rows.reverse()
+    
     // Only update if data changed
-    if (JSON.stringify(res.rows) !== JSON.stringify(messages.value)) {
-      messages.value = res.rows.reverse()
+    if (JSON.stringify(reversed) !== JSON.stringify(messages.value)) {
+      messages.value = reversed
+      setCachedMessages(otherUserId.value, reversed)
       await markAsRead()
     }
   } catch (e) {
@@ -120,6 +153,7 @@ const sendMessage = async () => {
         messages.value[idx] = { ...messages.value[idx], id: realId, _temp: false }
       }
     }
+    setCachedMessages(otherUserId.value, messages.value)
   } catch (e) {
     console.error("Error sending message:", e)
     messages.value = messages.value.filter(m => m.id !== tempId)

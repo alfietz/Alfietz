@@ -51,8 +51,8 @@ const response = await fetch(`${tursoUrl}/v1/execute`, {
 **Severity:** CRITICAL
 
 The `.env` file contains LIVE credentials:
-- **Turso JWT Token:** Full read/write to the production database (`eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9...`)
-- **Resend API Key:** Can send emails as `info@alfietz.shop` (`re_bTYTms7s_D41D97P2DmjauZViU6fKULBG`)
+- **Turso JWT Token:** Full read/write to the production database (`<REDACTED>`)
+- **Resend API Key:** Can send emails as `info@alfietz.shop` (`<REDACTED>`)
 
 **Impact:** Anyone with access to the repo (or the git history) can:
 - Execute arbitrary SQL against the production Turso database
@@ -83,7 +83,7 @@ The `.env` file contains LIVE credentials:
 **Severity:** HIGH
 
 ```js
-const IMGBB_API_KEY = '789903544b6554a772331b1ffe6e4cc4'
+const IMGBB_API_KEY = '<REDACTED>'
 ```
 
 **Impact:** This key is compiled into the production JavaScript bundle. Anyone who opens browser DevTools can extract it and:

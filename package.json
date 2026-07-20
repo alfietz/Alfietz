@@ -10,11 +10,16 @@
   },
   "dependencies": {
     "@libsql/client": "^0.17.2",
+    "@socket.io/redis-adapter": "^8.3.0",
+    "@upstash/redis": "^1.38.0",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.3.1",
+    "ioredis": "^5.11.1",
     "resend": "^6.12.3",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
     "vue": "^3.5.30",
     "vue-router": "^5.0.6"
   },

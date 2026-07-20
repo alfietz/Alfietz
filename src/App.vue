@@ -18,6 +18,7 @@ import SkeletonLoader from './components/layout/SkeletonLoader.vue'
 import Cart from './components/shop/Cart.vue'
 import { SpeedInsights } from "@vercel/speed-insights/vue"
 import { Analytics } from "@vercel/analytics/vue"
+import { useSocket } from './composables/useSocket'
 
 // ==========================================
 // STATE MANAGEMENT
@@ -32,6 +33,24 @@ const getStored = (key, def) => {
 
 const setStored = (key, val) => {
   localStorage.setItem(STORAGE_KEY_PREFIX + key, JSON.stringify(val))
+}
+
+const getCached = (key, def, maxAge = 0) => {
+  const raw = localStorage.getItem(STORAGE_KEY_PREFIX + key)
+  if (!raw) return def
+  try {
+    const p = JSON.parse(raw)
+    if (maxAge && p._ts && Date.now() - p._ts > maxAge) return def
+    return p._data ?? p
+  } catch { return def }
+}
+
+const setCached = (key, data) => {
+  localStorage.setItem(STORAGE_KEY_PREFIX + key, JSON.stringify({ _ts: Date.now(), _data: data }))
+}
+
+const removeStored = (key) => {
+  localStorage.removeItem(STORAGE_KEY_PREFIX + key)
 }
 
 const userData = ref(getStored('user_data', {
@@ -103,13 +122,45 @@ const userNotifications = ref([])
 const userProductCount = ref(0)
 const unreadChatCount = ref(0)
 const searchResults = ref([])
+const recentlyViewed = ref(getStored('recently_viewed', []))
 const appReviews = ref([])
 const portfolioUpdates = ref([])
+
+const handleTrackView = (item) => {
+  const list = recentlyViewed.value.filter(v => !(v.id === item.id && v.type === item.type))
+  list.unshift({ ...item, timestamp: Date.now() })
+  if (list.length > 20) list.length = 20
+  recentlyViewed.value = list
+  setStored('recently_viewed', list)
+}
 
 const t = (key) => {
   const lang = currentLanguage.value || 'en'
   return translations[lang][key] || key
 }
+
+const socket = useSocket()
+
+if (userData.value.id !== 'guest') {
+  socket.connect(userData.value.id)
+}
+
+socket.on('chat:new', (data) => {
+  unreadChatCount.value++
+  showToast('New message received', 'info')
+})
+
+socket.on('order:new', (data) => {
+  showToast('New order received!', 'success')
+})
+
+socket.on('negotiation:new', (data) => {
+  showToast('New negotiation offer', 'info')
+})
+
+socket.on('negotiation:update', (data) => {
+  showToast('Negotiation updated', 'info')
+})
 
 const filteredExploreItems = computed(() => {
   const cat = route.params.category || selectedCategory.value
@@ -333,6 +384,7 @@ const handleLogin = async (data) => {
       }
       
       await fetchInitialData();
+      socket.connect(userData.value.id);
       showToast(`Welcome back, ${u.first_name}!`, 'success');
       navigateTo('home');
     }
@@ -366,6 +418,7 @@ const handleSignUp = async (data) => {
     setStored('user_data', signupData);
     
     await fetchInitialData();
+    socket.connect(userData.value.id);
     showToast('Welcome to the heritage tribe!', 'success');
     navigateTo('home');
   } catch (e) {
@@ -377,6 +430,7 @@ const handleSignUp = async (data) => {
 }
 
 const handleLogout = () => {
+  socket.disconnect()
   db.clearToken()
   userData.value = { id: 'guest', username: 'guest' }
   setStored('user_data', { id: 'guest', username: 'guest' })
@@ -746,22 +800,28 @@ const handleGoChat = (userId) => {
 }
 
 const handleSearch = async (query, navigate = true) => {
-  // If query is empty, just navigate to search page
   if (!query && navigate) {
     navigateTo('search');
     return;
   }
   if (!query) return;
 
+  const cacheKey = 'search_' + query.toLowerCase().trim().replace(/\s+/g, '_')
+
+  const cached = getCached(cacheKey, null, 600000)
+  if (cached && !navigate) {
+    searchResults.value = cached
+    return
+  }
+
   isGlobalLoading.value = navigate;
   loadingMessage.value = 'Searching the heritage...';
   try {
     const res = await db.runAction('search', { query, userId: userData.value.id });
 
-    // Fetch favorites state
     const favoriteIds = favoriteItems.value.map(f => f.id);
 
-    searchResults.value = {
+    const results = {
       query: res.query || query,
       products: (res.products || []).map(p => ({
         ...p,
@@ -774,6 +834,9 @@ const handleSearch = async (query, navigate = true) => {
         isVerified: t.is_verified === 1 || t.is_verified === true
       }))
     };
+
+    searchResults.value = results
+    setCached(cacheKey, results)
 
     if (navigate) {
       navigateTo('search-results');
