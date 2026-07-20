@@ -249,6 +249,7 @@ const handleAcceptNegotiation = async (neg) => {
     emit('order', {
       itemName: neg.item,
       tailorId: props.userData.id,
+      customerId: neg.customer_id,
       price: neg.offer,
       size: neg.size || 'M',
       color: neg.color || 'Default',

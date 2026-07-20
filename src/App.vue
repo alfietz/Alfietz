@@ -573,7 +573,7 @@ const handleUploadWork = async (data) => {
 
 const handleNewOrder = async (data) => {
   console.log('[Data] Saving new order:', data);
-  const customerId = userData.value.id;
+  const customerId = data.customerId || userData.value.id;
   const tailorId = data.tailorId;
 
   try {
