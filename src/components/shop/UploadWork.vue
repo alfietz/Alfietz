@@ -230,7 +230,7 @@ ${productData.value.description}
 
   const formattedData = {
     ...productData.value,
-    price: `TSh ${Number(productData.value.price).toLocaleString()}`,
+    price: `TSh ${(Number(productData.value.price) || 0).toLocaleString()}`,
     description: enrichedDescription,
     variants_json: JSON.stringify(productData.value.colors),
     gallery_json: JSON.stringify(productData.value.gallery)

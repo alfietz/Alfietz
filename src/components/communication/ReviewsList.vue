@@ -109,6 +109,7 @@ watch(() => [props.productId, props.tailorId], fetchReviews)
 function formatDate(dateStr) {
   if (!dateStr) return props.t('recently')
   const date = new Date(dateStr)
+  if (isNaN(date.getTime())) return props.t('recently')
   const now = new Date()
   const diffTime = Math.abs(now - date)
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
