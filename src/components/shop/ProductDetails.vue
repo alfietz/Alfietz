@@ -7,6 +7,7 @@ import { db } from '../../db/client'
 import { useRoute } from 'vue-router'
 import { useImageLoader } from '../../composables/useImageLoader'
 import { useSeo } from '../../composables/useSeo'
+import { encodeId } from '../../utils/id'
 
 const { updateSeo } = useSeo()
 
@@ -96,7 +97,7 @@ watch(product, (p) => {
     ogTitle: title,
     ogDescription: desc,
     ogImage: image,
-    ogUrl: `https://alfietz.shop/product/${p.id}`,
+    ogUrl: `https://alfietz.shop/product/${encodeId(p.id)}`,
     jsonld: {
       '@context': 'https://schema.org',
       '@type': 'Product',
@@ -108,7 +109,7 @@ watch(product, (p) => {
         '@type': 'Offer',
         price: p.price || '0',
         priceCurrency: 'TZS',
-        availability: 'https://schema.org/InStock',
+        availability: p.status === 'Out of Stock' ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
       },
     },
   })

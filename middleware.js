@@ -1,3 +1,8 @@
+import Hashids from 'hashids';
+
+const hashids = new Hashids('alfietz-product-hash', 4);
+const decodeId = (hash) => { const d = hashids.decode(String(hash)); return d.length > 0 ? d[0] : null; };
+
 export const config = {
   matcher: ['/product/:productId*', '/tailor/:tailorId*', '/@:username'],
 };
@@ -29,8 +34,9 @@ export default async function middleware(req) {
           let sql = '';
           let params = [];
           if (type === 'product') {
-            sql = 'SELECT name, description, image FROM products WHERE id = ?';
-            params = [id];
+            sql = 'SELECT name, description, image, price, status FROM products WHERE id = ?';
+            const decoded = decodeId(id);
+            params = [decoded ?? id];
           } else if (type === 'tailor') {
             sql = "SELECT first_name || ' ' || last_name as name, gives as description, avatar as image FROM users WHERE id = ?";
             params = [id];
@@ -53,13 +59,13 @@ export default async function middleware(req) {
           const item = data?.results?.[0]?.response?.result?.rows?.[0];
 
           if (item) {
-            // We can't easily modify the full HTML in Vercel Middleware without a re-response
-            // but we can redirect to a dedicated SEO proxy or return a simplified HTML head.
-            // For Vercel Edge, the best pattern is to return a custom Response with the tags.
-            
             const title = `Alfietz - ${item.name || 'Heritage Craft'}`;
             const description = item.description || 'Discover authentic African heritage craftsmanship.';
             const image = item.image || 'https://alfietz.shop/og-image.png';
+            const ogType = type === 'product' ? 'product' : 'website';
+            const priceTags = type === 'product' && item.price
+              ? `\n                  <meta property="product:price:amount" content="${item.price}" />\n                  <meta property="product:price:currency" content="TZS" />`
+              : '';
 
             return new Response(
               `<!DOCTYPE html>
@@ -70,7 +76,8 @@ export default async function middleware(req) {
                   <meta property="og:title" content="${title}" />
                   <meta property="og:description" content="${description}" />
                   <meta property="og:image" content="${image}" />
-                  <meta property="og:type" content="website" />
+                  <meta property="og:url" content="${url.href}" />
+                  <meta property="og:type" content="${ogType}" />${priceTags}
                   <meta name="twitter:card" content="summary_large_image" />
                   <meta name="twitter:title" content="${title}" />
                   <meta name="twitter:description" content="${description}" />
