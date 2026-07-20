@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted, onActivated, onDeactivated } from 'vue'
+import { ref, onMounted, onActivated } from 'vue'
 import { useImageLoader } from '../../composables/useImageLoader'
 import { db } from '../../db/client'
 
@@ -23,6 +23,10 @@ const loading = ref(true)
 const [chatAvatar, onChatAvatarLoad, onChatAvatarErr] = useImageLoader()
 
 onMounted(async () => {
+  if (props.userData.id === 'guest') {
+    loading.value = false
+    return
+  }
   const cached = localStorage.getItem(STORAGE_KEY)
   if (cached) {
     try {
@@ -33,10 +37,10 @@ onMounted(async () => {
     }
   }
   await fetchConversations()
-  startPolling()
 })
 
 const fetchConversations = async () => {
+  if (props.userData.id === 'guest') return
   try {
     const res = await db.runAction('get_chats', { userId: props.userData.id })
     
@@ -66,62 +70,8 @@ function formatTime(dateStr) {
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
-const POLL_INTERVAL = 15000
-let pollTimer = null
-let lastMaxMessageId = parseInt(localStorage.getItem('alfie_last_msg_id') || '0')
-
-const startPolling = () => {
-  stopPolling()
-  pollTimer = setInterval(pollNewMessages, POLL_INTERVAL)
-}
-
-const stopPolling = () => {
-  if (pollTimer) {
-    clearInterval(pollTimer)
-    pollTimer = null
-  }
-}
-
-const pollNewMessages = async () => {
-  try {
-    const res = await db.runAction('check_new_messages', {
-      userId: props.userData.id,
-      lastMessageId: lastMaxMessageId
-    })
-    if (res.hasNew) {
-      lastMaxMessageId = parseInt(res.maxMessageId) || lastMaxMessageId
-      localStorage.setItem('alfie_last_msg_id', String(lastMaxMessageId))
-      await fetchConversations()
-    }
-  } catch (e) {
-    console.error('Poll error:', e)
-  }
-}
-
-const handleVisibilityChange = () => {
-  if (document.hidden) {
-    stopPolling()
-  } else {
-    startPolling()
-  }
-}
-
-onMounted(() => {
-  document.addEventListener('visibilitychange', handleVisibilityChange)
-})
-
-onUnmounted(() => {
-  stopPolling()
-  document.removeEventListener('visibilitychange', handleVisibilityChange)
-})
-
 onActivated(() => {
   fetchConversations()
-  startPolling()
-})
-
-onDeactivated(() => {
-  stopPolling()
 })
 </script>
 

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick, watch, onActivated, onDeactivated } from 'vue'
+import { ref, onMounted, nextTick, watch } from 'vue'
 import { db } from '../../db/client'
 import { useImageLoader } from '../../composables/useImageLoader'
 import { useRoute } from 'vue-router'
@@ -43,23 +43,8 @@ const initChat = async () => {
 }
 
 onMounted(async () => {
+  if (props.userData.id === 'guest') return
   await initChat()
-  startPolling()
-  document.addEventListener('visibilitychange', handleVisibilityChange)
-})
-
-onUnmounted(() => {
-  stopPolling()
-  document.removeEventListener('visibilitychange', handleVisibilityChange)
-})
-
-onActivated(() => {
-  fetchMessages(false, 'activated')
-  startPolling()
-})
-
-onDeactivated(() => {
-  stopPolling()
 })
 
 watch(() => route.params.userId, async (newId) => {
@@ -156,29 +141,6 @@ const markAsRead = async () => {
 const scrollToBottom = () => {
   if (messagesContainer.value) {
     messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
-  }
-}
-
-const POLL_INTERVAL = 15000
-let pollTimer = null
-
-const startPolling = () => {
-  stopPolling()
-  pollTimer = setInterval(() => fetchMessages(false, 'poll'), POLL_INTERVAL)
-}
-
-const stopPolling = () => {
-  if (pollTimer) {
-    clearInterval(pollTimer)
-    pollTimer = null
-  }
-}
-
-const handleVisibilityChange = () => {
-  if (document.hidden) {
-    stopPolling()
-  } else {
-    startPolling()
   }
 }
 
