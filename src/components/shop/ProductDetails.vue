@@ -168,7 +168,24 @@ const loadProductData = async (activeId) => {
       return
     }
 
-    // Fetch full product + seller info + reviews
+    const cacheKey = 'alfie_app_product_' + activeId
+    const cachedRaw = localStorage.getItem(cacheKey)
+    if (cachedRaw) {
+      try {
+        const cached = JSON.parse(cachedRaw)
+        if (cached._ts && Date.now() - cached._ts < 1800000 && cached._data) {
+          const p = cached._data
+          product.value = { ...p, liked: props.favoriteItems.some(fav => fav.id === p.id), isFavorite: props.favoriteItems.some(fav => fav.id === p.id) }
+          reviews.value = p._reviews || []
+          similarProducts.value = (p._similar || []).map(sp => ({ ...sp, liked: props.favoriteItems.some(fav => fav.id === sp.id) }))
+          if (p._gallery) gallery.value = p._gallery
+          if (p._colors) parsedColors.value = p._colors
+          if (p._selectedColorId !== undefined) selectedColorId.value = p._selectedColorId
+          loading.value = false
+        }
+      } catch {}
+    }
+
     const res = await db.runAction('get_product_details', { productId: activeId });
     
     if (!res.product) {
@@ -183,7 +200,6 @@ const loadProductData = async (activeId) => {
       isFavorite: isLiked
     }
     
-    // Parse variants
     const safeJsonParse = (val) => {
       if (!val) return null
       if (typeof val === 'object') return val
@@ -202,12 +218,10 @@ const loadProductData = async (activeId) => {
       }
     }
 
-    // Parse gallery
     if (product.value.gallery_json) {
       gallery.value = safeJsonParse(product.value.gallery_json) || []
     }
     
-    // Fallback to description parsing if no structured variants or parsing failed
     if (parsedColors.value.length === 0) {
       const desc = product.value.description || ''
       const colorMatch = desc.match(/Colors:\s*(.*)/i)
@@ -226,22 +240,19 @@ const loadProductData = async (activeId) => {
       }
     }
 
-    // Initial variant selection
     if (parsedColors.value.length > 0) {
       selectedColorId.value = parsedColors.value[0].id
     }
 
-    // Set reviews
     reviews.value = res.reviews.map(r => ({
       id: r.id,
-      author: r.first_name, // Just first name as requested
+      author: r.first_name,
       rating: r.rating,
       text: r.text,
       time: 'Recently',
       avatar: r.avatar
     }))
 
-    // Fetch similar products (isolated — failure shouldn't hide the product)
     try {
       if (product.value.category_id) {
         const similarRes = await db.runAction('get_similar_products', { 
@@ -256,6 +267,30 @@ const loadProductData = async (activeId) => {
     } catch (e) {
       console.warn('Similar products fetch failed:', e)
     }
+
+    localStorage.setItem(cacheKey, JSON.stringify({
+      _ts: Date.now(),
+      _data: {
+        ...product.value,
+        _reviews: reviews.value,
+        _similar: similarProducts.value,
+        _gallery: gallery.value,
+        _colors: parsedColors.value,
+        _selectedColorId: selectedColorId.value
+      }
+    }))
+
+    try {
+      localStorage.setItem('alfie_app_recently_viewed', JSON.stringify(
+        (() => {
+          const existing = JSON.parse(localStorage.getItem('alfie_app_recently_viewed') || '[]')
+          const filtered = existing.filter(v => !(v.id == activeId && v.type === 'product'))
+          filtered.unshift({ id: activeId, type: 'product', name: product.value.name, image: product.value.image, timestamp: Date.now() })
+          if (filtered.length > 20) filtered.length = 20
+          return filtered
+        })()
+      ))
+    } catch {}
     
   } catch (e) {
     console.error('Fetch error:', e)

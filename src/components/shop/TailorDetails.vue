@@ -272,16 +272,31 @@ const loadTailorData = async () => {
   const username = route.params.username
   if (!username) return
 
-  // Clean the username (remove leading @)
   const cleanUsername = username.startsWith('@') ? username.slice(1) : username;
+
+  const cacheKey = 'alfie_app_tailor_' + cleanUsername
 
   try {
     loading.value = true
     
-    // Reset products and reviews to avoid showing old data
     products.value = []
     reviews.value = []
-    
+
+    const cachedRaw = localStorage.getItem(cacheKey)
+    if (cachedRaw) {
+      try {
+        const cached = JSON.parse(cachedRaw)
+        if (cached._ts && Date.now() - cached._ts < 1800000 && cached._data) {
+          const d = cached._data
+          sellerData.value = { ...sellerData.value, ...d._sellerData }
+          products.value = d._products.map(p => ({ ...p, liked: props.favoriteItems.some(fav => fav.id === p.id) }))
+          reviews.value = d._reviews
+          tailorStats.value = d._stats || { likes: 0, clients: 0 }
+          loading.value = false
+        }
+      } catch {}
+    }
+
     const data = await db.runAction('get_tailor_details', { username: cleanUsername });
     
     const s = data.tailor;
@@ -326,6 +341,28 @@ const loadTailorData = async () => {
       ...r,
       author_name: (r.first_name || r.last_name) ? `${r.first_name || ''} ${r.last_name || ''}`.trim() : r.username
     }))
+
+    localStorage.setItem(cacheKey, JSON.stringify({
+      _ts: Date.now(),
+      _data: {
+        _sellerData: sellerData.value,
+        _products: products.value,
+        _reviews: reviews.value,
+        _stats: tailorStats.value
+      }
+    }))
+
+    try {
+      localStorage.setItem('alfie_app_recently_viewed', JSON.stringify(
+        (() => {
+          const existing = JSON.parse(localStorage.getItem('alfie_app_recently_viewed') || '[]')
+          const filtered = existing.filter(v => !(v.id === cleanUsername && v.type === 'tailor'))
+          filtered.unshift({ id: cleanUsername, type: 'tailor', name: sellerData.value.name, image: sellerData.value.avatar, timestamp: Date.now() })
+          if (filtered.length > 20) filtered.length = 20
+          return filtered
+        })()
+      ))
+    } catch {}
 
     updateSeo({
       title: `${sellerData.value.name} | Alfietz Artisan Portfolio`,

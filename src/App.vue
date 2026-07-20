@@ -34,6 +34,24 @@ const setStored = (key, val) => {
   localStorage.setItem(STORAGE_KEY_PREFIX + key, JSON.stringify(val))
 }
 
+const getCached = (key, def, maxAge = 0) => {
+  const raw = localStorage.getItem(STORAGE_KEY_PREFIX + key)
+  if (!raw) return def
+  try {
+    const p = JSON.parse(raw)
+    if (maxAge && p._ts && Date.now() - p._ts > maxAge) return def
+    return p._data ?? p
+  } catch { return def }
+}
+
+const setCached = (key, data) => {
+  localStorage.setItem(STORAGE_KEY_PREFIX + key, JSON.stringify({ _ts: Date.now(), _data: data }))
+}
+
+const removeStored = (key) => {
+  localStorage.removeItem(STORAGE_KEY_PREFIX + key)
+}
+
 const userData = ref(getStored('user_data', {
   id: 'guest',
   username: 'johnabram',
@@ -103,8 +121,17 @@ const userNotifications = ref([])
 const userProductCount = ref(0)
 const unreadChatCount = ref(0)
 const searchResults = ref([])
+const recentlyViewed = ref(getStored('recently_viewed', []))
 const appReviews = ref([])
 const portfolioUpdates = ref([])
+
+const handleTrackView = (item) => {
+  const list = recentlyViewed.value.filter(v => !(v.id === item.id && v.type === item.type))
+  list.unshift({ ...item, timestamp: Date.now() })
+  if (list.length > 20) list.length = 20
+  recentlyViewed.value = list
+  setStored('recently_viewed', list)
+}
 
 const t = (key) => {
   const lang = currentLanguage.value || 'en'
@@ -746,22 +773,28 @@ const handleGoChat = (userId) => {
 }
 
 const handleSearch = async (query, navigate = true) => {
-  // If query is empty, just navigate to search page
   if (!query && navigate) {
     navigateTo('search');
     return;
   }
   if (!query) return;
 
+  const cacheKey = 'search_' + query.toLowerCase().trim().replace(/\s+/g, '_')
+
+  const cached = getCached(cacheKey, null, 600000)
+  if (cached && !navigate) {
+    searchResults.value = cached
+    return
+  }
+
   isGlobalLoading.value = navigate;
   loadingMessage.value = 'Searching the heritage...';
   try {
     const res = await db.runAction('search', { query, userId: userData.value.id });
 
-    // Fetch favorites state
     const favoriteIds = favoriteItems.value.map(f => f.id);
 
-    searchResults.value = {
+    const results = {
       query: res.query || query,
       products: (res.products || []).map(p => ({
         ...p,
@@ -774,6 +807,9 @@ const handleSearch = async (query, navigate = true) => {
         isVerified: t.is_verified === 1 || t.is_verified === true
       }))
     };
+
+    searchResults.value = results
+    setCached(cacheKey, results)
 
     if (navigate) {
       navigateTo('search-results');
