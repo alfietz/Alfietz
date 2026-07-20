@@ -847,6 +847,9 @@ export default async function handler(req, res) {
         break;
 
       case 'get_similar_products':
+        sql = 'SELECT p.*, c.name as categoryName FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE p.category_id = ? AND p.id != ? ORDER BY p.likes_count DESC LIMIT 10';
+        args = [params.categoryId, params.productId];
+        break;
 
       case 'get_user_by_id':
         sql = 'SELECT id, username, first_name, last_name, avatar, user_type FROM users WHERE id = ?';
