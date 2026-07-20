@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { db } from '../../db/client'
 import BaseDialog from '../layout/BaseDialog.vue'
 import LoadingSpinner from '../layout/LoadingSpinner.vue'
+import { useSocket } from '../../composables/useSocket'
 
 const props = defineProps({
   userData: {
@@ -54,6 +55,11 @@ const showDialog = (options) => {
 
 onMounted(async () => {
   await fetchData()
+
+  const s = useSocket()
+  s.on('order:new', () => { fetchData() })
+  s.on('negotiation:new', () => { fetchData() })
+  s.on('negotiation:update', () => { fetchData() })
 })
 
 const fetchData = async () => {

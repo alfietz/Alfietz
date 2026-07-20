@@ -18,6 +18,7 @@ import SkeletonLoader from './components/layout/SkeletonLoader.vue'
 import Cart from './components/shop/Cart.vue'
 import { SpeedInsights } from "@vercel/speed-insights/vue"
 import { Analytics } from "@vercel/analytics/vue"
+import { useSocket } from './composables/useSocket'
 
 // ==========================================
 // STATE MANAGEMENT
@@ -137,6 +138,29 @@ const t = (key) => {
   const lang = currentLanguage.value || 'en'
   return translations[lang][key] || key
 }
+
+const socket = useSocket()
+
+if (userData.value.id !== 'guest') {
+  socket.connect(userData.value.id)
+}
+
+socket.on('chat:new', (data) => {
+  unreadChatCount.value++
+  showToast('New message received', 'info')
+})
+
+socket.on('order:new', (data) => {
+  showToast('New order received!', 'success')
+})
+
+socket.on('negotiation:new', (data) => {
+  showToast('New negotiation offer', 'info')
+})
+
+socket.on('negotiation:update', (data) => {
+  showToast('Negotiation updated', 'info')
+})
 
 const filteredExploreItems = computed(() => {
   const cat = route.params.category || selectedCategory.value
@@ -360,6 +384,7 @@ const handleLogin = async (data) => {
       }
       
       await fetchInitialData();
+      socket.connect(userData.value.id);
       showToast(`Welcome back, ${u.first_name}!`, 'success');
       navigateTo('home');
     }
@@ -393,6 +418,7 @@ const handleSignUp = async (data) => {
     setStored('user_data', signupData);
     
     await fetchInitialData();
+    socket.connect(userData.value.id);
     showToast('Welcome to the heritage tribe!', 'success');
     navigateTo('home');
   } catch (e) {
@@ -404,6 +430,7 @@ const handleSignUp = async (data) => {
 }
 
 const handleLogout = () => {
+  socket.disconnect()
   db.clearToken()
   userData.value = { id: 'guest', username: 'guest' }
   setStored('user_data', { id: 'guest', username: 'guest' })

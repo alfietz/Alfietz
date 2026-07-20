@@ -2,6 +2,7 @@
 import { ref, onMounted, onActivated } from 'vue'
 import { useImageLoader } from '../../composables/useImageLoader'
 import { db } from '../../db/client'
+import { useSocket } from '../../composables/useSocket'
 
 const props = defineProps({
   userData: {
@@ -37,6 +38,11 @@ onMounted(async () => {
     }
   }
   await fetchConversations()
+
+  const s = useSocket()
+  s.on('chat:new', () => {
+    fetchConversations()
+  })
 })
 
 const fetchConversations = async () => {

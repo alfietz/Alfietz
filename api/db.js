@@ -5,6 +5,29 @@ import { fileURLToPath } from 'url';
 import bcrypt from 'bcryptjs';
 import crypto from 'node:crypto';
 import { Resend } from 'resend';
+import { Redis } from '@upstash/redis';
+
+const upstashRedis = (() => {
+  try {
+    if (process.env.UPSTASH_REDIS_URL && process.env.UPSTASH_REDIS_TOKEN) {
+      return new Redis({
+        url: process.env.UPSTASH_REDIS_URL,
+        token: process.env.UPSTASH_REDIS_TOKEN,
+        automaticDeserialization: false
+      });
+    }
+  } catch {}
+  return null;
+})();
+
+const publishEvent = async (event, data, targetRoom) => {
+  if (!upstashRedis) return;
+  try {
+    await upstashRedis.publish('alfie:events', JSON.stringify({ event, data, targetRoom }));
+  } catch (e) {
+    console.error('[Publish] Error:', e);
+  }
+};
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -716,6 +739,7 @@ export default async function handler(req, res) {
         const negId = 'n' + Date.now();
         sql = "INSERT INTO negotiations (id, item_name, customer_id, tailor_id, proposed_price, status, size, color, notes, image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         args = [negId, params.itemName, params.customerId, params.tailorId, params.price, 'Awaiting Reply', params.size, params.color, params.notes, params.image];
+        publishEvent('negotiation:new', { negotiationId: negId, customerId: params.customerId }, `user-${params.tailorId}`);
         break;
 
       case 'toggle_like':
@@ -934,6 +958,7 @@ export default async function handler(req, res) {
       case 'send_message':
         sql = 'INSERT INTO messages (sender_id, receiver_id, content) VALUES (?, ?, ?)';
         args = [params.senderId, params.receiverId, params.content];
+        publishEvent('chat:new', { senderId: params.senderId, content: params.content }, `user-${params.receiverId}`);
         break;
       case 'mark_messages_read':
         sql = 'UPDATE messages SET is_read = 1 WHERE sender_id = ? AND receiver_id = ?';
@@ -1096,6 +1121,7 @@ export default async function handler(req, res) {
         }
         
         customResponse = { success: true };
+        publishEvent('order:new', { orderId: params.id, customerId: params.customerId }, `user-${params.tailorId}`);
         break;
 
       case 'submit_feedback':
@@ -1136,6 +1162,7 @@ export default async function handler(req, res) {
       case 'update_negotiation_status':
         sql = 'UPDATE negotiations SET status = ? WHERE id = ?';
         args = [params.status, params.negotiationId];
+        publishEvent('negotiation:update', { negotiationId: params.negotiationId, status: params.status }, `user-${params.customerId}`);
         break;
 
       default:

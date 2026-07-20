@@ -3,6 +3,7 @@ import { ref, onMounted, nextTick, watch } from 'vue'
 import { db } from '../../db/client'
 import { useImageLoader } from '../../composables/useImageLoader'
 import { useRoute } from 'vue-router'
+import { useSocket } from '../../composables/useSocket'
 
 const props = defineProps({
   userData: {
@@ -67,6 +68,13 @@ const initChat = async () => {
 onMounted(async () => {
   if (props.userData.id === 'guest') return
   await initChat()
+
+  const s = useSocket()
+  s.on('chat:new', (data) => {
+    if (data.senderId === otherUserId.value) {
+      fetchMessages(false, 'socket')
+    }
+  })
 })
 
 watch(() => route.params.userId, async (newId) => {
