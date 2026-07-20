@@ -83,7 +83,7 @@ The `.env` file contains LIVE credentials:
 **Severity:** HIGH
 
 ```js
-const IMGBB_API_KEY = '780929904b655323df4a23asd31b1fsadfe6e4cc4'
+const IMGBB_API_KEY = '789903544b6554a772331b1ffe6e4cc4'
 ```
 
 **Impact:** This key is compiled into the production JavaScript bundle. Anyone who opens browser DevTools can extract it and:

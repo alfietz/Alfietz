@@ -35,11 +35,11 @@ const imageLoaded = ref(false)
       <div v-if="seller.isVerified" class="shop-verified-tag">100+ Served • Physical Shop</div>
       <div class="seller-rating">
         <span class="star">★</span>
-        <span class="rating-value">{{ seller.rating || '0.0' }}</span>
+        <span class="rating-value">{{ !isNaN(Number(seller.rating)) ? Number(seller.rating).toFixed(1) : '0.0' }}</span>
         <span class="divider">•</span>
         <!-- <span class="likes-value">{{ (seller.likesCount) || '0' }} ❤️</span> -->
-        <span v-if="(seller.likesCount !== null)">
-          {{ seller.likesCount }} ❤️
+        <span v-if="typeof seller.likesCount === 'number' && seller.likesCount >= 0">
+          {{ Math.round(seller.likesCount) }} ❤️
        </span>
       </div>
     </div>
