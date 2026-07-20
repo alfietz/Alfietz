@@ -248,7 +248,7 @@ const loadProductData = async (activeId) => {
           categoryId: product.value.category_id, 
           productId: activeId 
         });
-        similarProducts.value = (similarRes.rows || []).map(p => ({
+        similarProducts.value = (similarRes?.rows || []).map(p => ({
           ...p,
           liked: props.favoriteItems.some(fav => fav.id === p.id)
         }));

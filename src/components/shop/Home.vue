@@ -200,7 +200,7 @@ const handleSearch = () => {
           <div class="bubble-header">
             <div class="heritage-img" :class="{ loaded: img1 }">
               <div class="heritage-img-shimmer"></div>
-              <img :src="rev.avatar" class="bubble-avatar" loading="lazy" @load="onImg1Load" @error="onImg1Err" />
+              <img :src="rev.avatar" class="bubble-avatar" alt="" loading="lazy" @load="onImg1Load" @error="onImg1Err" />
             </div>
             <div class="bubble-info">
               <span class="bubble-author">{{ rev.author }}</span>
@@ -340,7 +340,7 @@ const handleSearch = () => {
 }
 
 .search-submit-btn {
-  background: var(--accent-amber);
+  background: #b85a00;
   color: white;
   border: none;
   border-radius: 12px;
