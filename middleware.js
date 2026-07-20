@@ -1,13 +1,13 @@
 export const config = {
-  matcher: ['/product/:productId*', '/tailor/:tailorId*', '/@:username', '/legal/:legalPath*'],
+  matcher: ['/product/:productId*', '/tailor/:tailorId*', '/@:username'],
 };
 
 export default async function middleware(req) {
   const url = new URL(req.url);
   const userAgent = req.headers.get('user-agent') || '';
   
-  // Detection for social media bots
-  const isBot = /WhatsApp|facebookexternalhit|Twitterbot|LinkedInBot|Pinterest|Slackbot|TelegramBot|Discordbot/i.test(userAgent);
+  // Detection for social media bots and search crawlers
+  const isBot = /WhatsApp|facebookexternalhit|facebot|Twitterbot|LinkedInBot|Pinterest|Slackbot|TelegramBot|Discordbot|Googlebot|Bingbot|Baiduspider|YandexBot|DuckDuckBot|Slurp|Applebot/i.test(userAgent);
 
   if (isBot) {
     const pathParts = url.pathname.split('/');
@@ -27,12 +27,16 @@ export default async function middleware(req) {
 
         if (tursoUrl && tursoToken) {
           let sql = '';
+          let params = [];
           if (type === 'product') {
-            sql = `SELECT name, description, image FROM products WHERE id = '${id}'`;
+            sql = 'SELECT name, description, image FROM products WHERE id = ?';
+            params = [id];
           } else if (type === 'tailor') {
-            sql = `SELECT first_name || ' ' || last_name as name, gives as description, avatar as image FROM users WHERE id = '${id}'`;
+            sql = "SELECT first_name || ' ' || last_name as name, gives as description, avatar as image FROM users WHERE id = ?";
+            params = [id];
           } else if (type === 'tailor-by-username') {
-            sql = `SELECT first_name || ' ' || last_name as name, gives as description, avatar as image FROM users WHERE username = '${id}'`;
+            sql = "SELECT first_name || ' ' || last_name as name, gives as description, avatar as image FROM users WHERE username = ?";
+            params = [id];
           }
           const response = await fetch(`${tursoUrl}/v1/execute`, {
             method: 'POST',
@@ -41,7 +45,7 @@ export default async function middleware(req) {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              statements: [{ q: sql }],
+              statements: [{ q: sql, params: { args: params } }],
             }),
           });
 
@@ -61,7 +65,8 @@ export default async function middleware(req) {
               `<!DOCTYPE html>
               <html>
                 <head>
-                  <title>${title}</title>
+                   <title>${title}</title>
+                  <meta name="description" content="${description}" />
                   <meta property="og:title" content="${title}" />
                   <meta property="og:description" content="${description}" />
                   <meta property="og:image" content="${image}" />

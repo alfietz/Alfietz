@@ -583,7 +583,7 @@ export default async function handler(req, res) {
       case 'get_tailor_details':
         const tailorRes = await client.execute({ 
           sql: `
-            SELECT u.id, u.username, u.first_name, u.last_name, u.avatar, u.gives, u.whatsapp, u.email, u.profile_views, u.is_verified,
+            SELECT u.id, u.username, u.first_name, u.last_name, u.avatar, u.gives, u.whatsapp, u.email, u.profile_views, u.is_verified, u.last_city, u.last_country,
                    tp.quirk, tp.case_study_title, tp.case_study_quote, tp.case_study_challenge, tp.case_study_execution, tp.case_study_result, tp.case_study_image, tp.services_json, tp.contacts_json
             FROM users u 
             LEFT JOIN tailor_profiles tp ON u.id = tp.user_id
