@@ -10,13 +10,11 @@ export const config = {
 export default async function middleware(req) {
   const url = new URL(req.url);
   const userAgent = req.headers.get('user-agent') || '';
-  
-  // Detection for social media bots and search crawlers
   const isBot = /WhatsApp|facebookexternalhit|facebot|Twitterbot|LinkedInBot|Pinterest|Slackbot|TelegramBot|Discordbot|Googlebot|Bingbot|Baiduspider|YandexBot|DuckDuckBot|Slurp|Applebot/i.test(userAgent);
 
   if (isBot) {
     const pathParts = url.pathname.split('/');
-    let type = pathParts[1]; // 'product', 'tailor' or '@username'
+    let type = pathParts[1];
     let id = pathParts[2];
 
     if (type.startsWith('@')) {
@@ -25,74 +23,86 @@ export default async function middleware(req) {
     }
 
     if (id || type === 'tailor-by-username') {
+      let tursoUrl = process.env.TURSO_URL || '';
+      const tursoToken = process.env.TURSO_AUTH_TOKEN;
+
+      if (tursoUrl.startsWith('libsql://')) {
+        tursoUrl = 'https://' + tursoUrl.slice(9);
+      }
+
+      if (!tursoUrl || !tursoToken) {
+        return new Response(null, { headers: { 'x-middleware-next': '1' } });
+      }
+
       try {
-        // Fetch data from Turso via HTTP
-        const tursoUrl = process.env.VITE_TURSO_URL;
-        const tursoToken = process.env.VITE_TURSO_AUTH_TOKEN;
+        let sql = '';
+        if (type === 'product') {
+          const decoded = decodeId(id);
+          sql = 'SELECT name, description, image, price, status FROM products WHERE id = ' + (Number(decoded ?? id) || 0);
+        } else if (type === 'tailor') {
+          sql = "SELECT first_name || ' ' || last_name as name, gives as description, avatar as image FROM users WHERE id = " + (Number(id) || 0);
+        } else if (type === 'tailor-by-username') {
+          sql = "SELECT first_name || ' ' || last_name as name, gives as description, avatar as image FROM users WHERE username = '" + id.replace(/'/g, "''") + "'";
+        }
 
-        if (tursoUrl && tursoToken) {
-          let sql = '';
-          let params = [];
-          if (type === 'product') {
-            sql = 'SELECT name, description, image, price, status FROM products WHERE id = ?';
-            const decoded = decodeId(id);
-            params = [decoded ?? id];
-          } else if (type === 'tailor') {
-            sql = "SELECT first_name || ' ' || last_name as name, gives as description, avatar as image FROM users WHERE id = ?";
-            params = [id];
-          } else if (type === 'tailor-by-username') {
-            sql = "SELECT first_name || ' ' || last_name as name, gives as description, avatar as image FROM users WHERE username = ?";
-            params = [id];
-          }
-          const response = await fetch(`${tursoUrl}/v1/execute`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${tursoToken}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              statements: [{ q: sql, params: { args: params } }],
-            }),
-          });
+        const apiUrl = `${tursoUrl.replace(/\/$/, '')}/v1/execute`;
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${tursoToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ stmt: { sql } }),
+        });
 
-          const data = await response.json();
-          const item = data?.results?.[0]?.response?.result?.rows?.[0];
+        if (!response.ok) {
+          return new Response(null, { headers: { 'x-middleware-next': '1' } });
+        }
 
-          if (item) {
-            const title = `Alfietz - ${item.name || 'Heritage Craft'}`;
-            const description = item.description || 'Discover authentic African heritage craftsmanship.';
-            const image = item.image || 'https://alfietz.shop/og-image.png';
-            const ogType = type === 'product' ? 'product' : 'website';
-            const priceTags = type === 'product' && item.price
-              ? `\n                  <meta property="product:price:amount" content="${item.price}" />\n                  <meta property="product:price:currency" content="TZS" />`
-              : '';
+        const data = await response.json();
+        const cols = data?.result?.cols || [];
+        const rows = data?.result?.rows || [];
+        const row = rows[0] || [];
 
-            return new Response(
-              `<!DOCTYPE html>
-              <html>
-                <head>
-                   <title>${title}</title>
-                  <meta name="description" content="${description}" />
-                  <meta property="og:title" content="${title}" />
-                  <meta property="og:description" content="${description}" />
-                  <meta property="og:image" content="${image}" />
-                  <meta property="og:url" content="${url.href}" />
-                  <meta property="og:type" content="${ogType}" />${priceTags}
-                  <meta name="twitter:card" content="summary_large_image" />
-                  <meta name="twitter:title" content="${title}" />
-                  <meta name="twitter:description" content="${description}" />
-                  <meta name="twitter:image" content="${image}" />
-                </head>
-                <body>
-                  <p>Redirecting to Alfietz Heritage...</p>
-                  <script>window.location.href = '${url.href}';</script>
-                </body>
-              </html>`,
-              {
-                headers: { 'Content-Type': 'text/html' },
-              }
-            );
-          }
+        if (row.length) {
+          const item = Object.fromEntries(cols.map((c, i) => [c.name, row[i]?.value ?? '']));
+
+          const title = `Alfietz - ${item.name || 'Heritage Craft'}`;
+          const description = item.description || 'Discover authentic African heritage craftsmanship.';
+          const image = item.image || 'https://alfietz.shop/og-image.png';
+          const ogType = type === 'product' ? 'product' : 'website';
+          const priceTags = type === 'product' && item.price
+            ? `\n                  <meta property="product:price:amount" content="${item.price}" />\n                  <meta property="product:price:currency" content="TZS" />`
+            : '';
+
+          return new Response(
+            `<!DOCTYPE html>
+            <html>
+              <head>
+                 <title>${title}</title>
+                <meta name="description" content="${description}" />
+                <meta property="og:title" content="${title}" />
+                <meta property="og:description" content="${description}" />
+                <meta property="og:image" content="${image}" />
+                <meta property="og:url" content="${url.href}" />
+                <meta property="og:type" content="${ogType}" />${priceTags}
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content="${title}" />
+                <meta name="twitter:description" content="${description}" />
+                <meta name="twitter:image" content="${image}" />
+              </head>
+              <body>
+                <p>Redirecting to Alfietz Heritage...</p>
+                <script>window.location.href = '${url.href}';</script>
+              </body>
+            </html>`,
+            {
+              headers: {
+                'Content-Type': 'text/html',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+              },
+            }
+          );
         }
       } catch (e) {
         console.error('Edge Middleware Error:', e);
@@ -101,8 +111,6 @@ export default async function middleware(req) {
   }
 
   return new Response(null, {
-    headers: {
-      'x-middleware-next': '1',
-    },
+    headers: { 'x-middleware-next': '1' },
   });
 }
