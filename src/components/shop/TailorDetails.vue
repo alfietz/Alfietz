@@ -2,6 +2,7 @@
 <script setup>
 import { ref, onMounted, computed, watch, reactive } from 'vue'
 import SectionHeader from '../layout/SectionHeader.vue'
+import ErrorPage from '../layout/ErrorPage.vue'
 import EditableText from '../layout/EditableText.vue'
 import EditableImage from '../layout/EditableImage.vue'
 import { db } from '../../db/client'
@@ -12,6 +13,10 @@ import { useRoute } from 'vue-router'
 const { updateSeo } = useSeo()
 
 const props = defineProps({
+  t: {
+    type: Function,
+    required: true
+  },
   seller: {
     type: Object,
     required: false,
@@ -509,12 +514,7 @@ const makeCall = () => {
     </div>
   </div>
 
-  <div v-else-if="!sellerData.id" class="error-container">
-    <div class="error-icon">🔍</div>
-    <h3>Artisan Not Found</h3>
-    <p>This path of the heritage seems to be lost.</p>
-    <button class="primary-btn-mini" @click="$emit('go-back')">Go Back</button>
-  </div>
+  <ErrorPage v-else-if="!sellerData.id" :code="404" title="Tailor Not Found" message="This artisan does not exist or is no longer active." :t="t" @navigate="$emit('navigate', 'home')" />
 
   <div v-else class="tailor-page pattern-heritage animate-fade">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">

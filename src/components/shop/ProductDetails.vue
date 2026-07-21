@@ -2,6 +2,7 @@
 import { ref, computed, watch, onMounted, h } from 'vue'
 import ProductCard from './ProductCard.vue'
 import SectionHeader from '../layout/SectionHeader.vue'
+import ErrorPage from '../layout/ErrorPage.vue'
 import BaseDialog from '../layout/BaseDialog.vue'
 import { db } from '../../db/client'
 import { useRoute } from 'vue-router'
@@ -538,11 +539,7 @@ const shareProduct = async () => {
     </div>
   </div>
   
-  <div v-else-if="error" class="error-container">
-    <div class="error-icon">⚠️</div>
-    <p>{{ error }}</p>
-    <button @click="$emit('go-back')" class="back-btn">Back to Home</button>
-  </div>
+  <ErrorPage v-else-if="error" :code="404" title="Product Not Found" :message="error" :t="t" @navigate="$emit('navigate', 'home')" />
 
   <div v-else-if="product" class="product-page animate-fade">
     <div class="layout-container">

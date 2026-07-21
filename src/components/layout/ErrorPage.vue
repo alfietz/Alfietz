@@ -6,6 +6,14 @@ const props = defineProps({
     type: [Number, String],
     default: 404
   },
+  title: {
+    type: String,
+    default: ''
+  },
+  message: {
+    type: String,
+    default: ''
+  },
   t: {
     type: Function,
     required: true
@@ -15,6 +23,9 @@ const props = defineProps({
 const emit = defineEmits(['navigate'])
 
 const errorData = computed(() => {
+  if (props.title && props.message) {
+    return { title: props.title, message: props.message, icon: '🧭' }
+  }
   switch (Number(props.code)) {
     case 403:
       return {
