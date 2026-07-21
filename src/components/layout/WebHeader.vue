@@ -60,10 +60,10 @@ onUnmounted(() => {
       <div class="logo" @click="$emit('navigate', 'home')">
         <div class="logo-wrapper group">
           <div class="logo-circle">
-            <img src="../../assets/logo.png" alt="Alfie Logo" class="logo-img" />
+            <img src="../../assets/logo.svg" alt="Alfie Tz Logo" class="logo-img" />
             <div class="logo-glow"></div>
           </div>
-          <span class="brand-name">Alfie</span>
+          <span class="brand-name">Alfie Tz</span>
         </div>
       </div>
 

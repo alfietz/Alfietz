@@ -2,6 +2,7 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
 import { db } from '../../db/client'
+import { encodeId } from '../../utils/id'
 
 const props = defineProps({
   productId: {
@@ -202,7 +203,7 @@ function formatDate(dateStr) {
           </div>
 
           <!-- Product Context (for Tailor View) -->
-          <div v-if="review.productName" class="product-context" @click="$emit('go-product', { id: review.productId, name: review.productName, image: review.productImage })">
+          <div v-if="review.productName" class="product-context" @click="$emit('go-product', { id: encodeId(review.productId), name: review.productName, image: review.productImage })">
             <div class="product-mini-img-box">
               <img :src="review.productImage" alt="Product" />
             </div>

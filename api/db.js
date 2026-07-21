@@ -6,6 +6,10 @@ import bcrypt from 'bcryptjs';
 import crypto from 'node:crypto';
 import { Resend } from 'resend';
 import { Redis } from '@upstash/redis';
+import Hashids from 'hashids';
+
+const hashids = new Hashids('alfietz-product-hash', 4);
+const decodeId = (hash) => { const d = hashids.decode(String(hash)); return d.length > 0 ? d[0] : null; };
 
 const upstashRedis = (() => {
   try {
@@ -563,6 +567,7 @@ export default async function handler(req, res) {
         break;
 
       case 'get_product_details':
+        const pid0 = decodeId(params.productId) ?? params.productId;
         const prodRes = await client.execute({
           sql: `
             SELECT p.*, u.username as owner_username, u.first_name, u.last_name, u.avatar as owner_avatar, u.whatsapp as sellerPhone, c.name as categoryName
@@ -571,11 +576,11 @@ export default async function handler(req, res) {
             LEFT JOIN categories c ON p.category_id = c.id
             WHERE p.id = ?
           `,
-          args: [params.productId]
+          args: [pid0]
         });
         const revsRes = await client.execute({
           sql: "SELECT r.*, u.first_name, u.last_name, u.avatar FROM reviews r JOIN users u ON r.user_id = u.id WHERE r.product_id = ?",
-          args: [params.productId]
+          args: [pid0]
         });
         customResponse = { product: mapRows(prodRes)[0], reviews: mapRows(revsRes) };
         break;
@@ -583,7 +588,7 @@ export default async function handler(req, res) {
       case 'get_tailor_details':
         const tailorRes = await client.execute({ 
           sql: `
-            SELECT u.id, u.username, u.first_name, u.last_name, u.avatar, u.gives, u.whatsapp, u.email, u.profile_views, u.is_verified,
+            SELECT u.id, u.username, u.first_name, u.last_name, u.avatar, u.gives, u.whatsapp, u.email, u.profile_views, u.is_verified, u.last_city, u.last_country,
                    tp.quirk, tp.case_study_title, tp.case_study_quote, tp.case_study_challenge, tp.case_study_execution, tp.case_study_result, tp.case_study_image, tp.services_json, tp.contacts_json
             FROM users u 
             LEFT JOIN tailor_profiles tp ON u.id = tp.user_id
@@ -762,12 +767,13 @@ export default async function handler(req, res) {
         break;
 
       case 'toggle_like':
+        const pid1 = decodeId(params.productId) ?? params.productId;
         if (params.isAdding) {
-          await client.execute({ sql: 'INSERT OR IGNORE INTO favorites (user_id, product_id) VALUES (?, ?)', args: [params.userId, params.productId] });
-          await client.execute({ sql: 'UPDATE products SET likes_count = likes_count + 1 WHERE id = ?', args: [params.productId] });
+          await client.execute({ sql: 'INSERT OR IGNORE INTO favorites (user_id, product_id) VALUES (?, ?)', args: [params.userId, pid1] });
+          await client.execute({ sql: 'UPDATE products SET likes_count = likes_count + 1 WHERE id = ?', args: [pid1] });
         } else {
-          await client.execute({ sql: 'DELETE FROM favorites WHERE user_id = ? AND product_id = ?', args: [params.userId, params.productId] });
-          await client.execute({ sql: 'UPDATE products SET likes_count = MAX(0, likes_count - 1) WHERE id = ?', args: [params.productId] });
+          await client.execute({ sql: 'DELETE FROM favorites WHERE user_id = ? AND product_id = ?', args: [params.userId, pid1] });
+          await client.execute({ sql: 'UPDATE products SET likes_count = MAX(0, likes_count - 1) WHERE id = ?', args: [pid1] });
         }
         customResponse = { success: true };
         break;
@@ -891,7 +897,7 @@ export default async function handler(req, res) {
 
       case 'get_similar_products':
         sql = 'SELECT p.*, c.name as categoryName FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE p.category_id = ? AND p.id != ? ORDER BY p.likes_count DESC LIMIT 10';
-        args = [params.categoryId, params.productId];
+        args = [params.categoryId, decodeId(params.productId) ?? params.productId];
         break;
 
       case 'get_user_by_id':
@@ -941,14 +947,15 @@ export default async function handler(req, res) {
         await trackSession(currentUserId);
         break;
       case 'delete_product':
-        await client.execute({ sql: 'DELETE FROM favorites WHERE product_id = ?', args: [params.productId] });
-        await client.execute({ sql: 'DELETE FROM reviews WHERE product_id = ?', args: [params.productId] });
+        const pid2 = decodeId(params.productId) ?? params.productId;
+        await client.execute({ sql: 'DELETE FROM favorites WHERE product_id = ?', args: [pid2] });
+        await client.execute({ sql: 'DELETE FROM reviews WHERE product_id = ?', args: [pid2] });
         sql = 'DELETE FROM products WHERE id = ? AND owner_id = ?';
-        args = [params.productId, params.userId];
+        args = [pid2, params.userId];
         break;
       case 'write_review':
         sql = 'INSERT INTO reviews (product_id, user_id, rating, text, image) VALUES (?, ?, ?, ?, ?)';
-        args = [params.productId, params.userId, params.rating, params.text, params.image];
+        args = [decodeId(params.productId) ?? params.productId, params.userId, params.rating, params.text, params.image];
         break;
       case 'submit_app_review':
         sql = 'INSERT INTO app_reviews (user_id, rating, text, image) VALUES (?, ?, ?, ?)';
@@ -972,7 +979,7 @@ export default async function handler(req, res) {
         break;
       case 'toggle_stock':
         sql = 'UPDATE products SET status = ? WHERE id = ?';
-        args = [params.status, params.productId];
+        args = [params.status, decodeId(params.productId) ?? params.productId];
         break;
       case 'send_message':
         sql = 'INSERT INTO messages (sender_id, receiver_id, content) VALUES (?, ?, ?)';
@@ -1128,7 +1135,7 @@ export default async function handler(req, res) {
 
       case 'update_product':
         sql = 'UPDATE products SET name = ?, price = ?, description = ?, material = ?, image = ?, category_id = ?, status = ?, variants_json = ?, gallery_json = ? WHERE id = ? AND owner_id = ?';
-        args = [params.name, params.price, params.description, params.material, params.image, params.category_id, params.status, JSON.stringify(params.colors), JSON.stringify(params.gallery), params.id, currentUserId];
+        args = [params.name, params.price, params.description, params.material, params.image, params.category_id, params.status, JSON.stringify(params.colors), JSON.stringify(params.gallery), decodeId(params.id) ?? params.id, currentUserId];
         break;
 
       case 'create_order':
@@ -1191,6 +1198,7 @@ export default async function handler(req, res) {
           sql = "SELECT r.*, u.first_name, u.last_name, u.username, u.avatar FROM app_reviews r JOIN users u ON r.user_id = u.id ORDER BY r.created_at DESC";
           args = [];
         } else if (params.productId) {
+          const pid3 = decodeId(params.productId) ?? params.productId;
           sql = `
             SELECT r.*, u.first_name, u.last_name, u.username, u.avatar, p.name as product_name, p.image as product_image 
             FROM reviews r 
@@ -1199,7 +1207,7 @@ export default async function handler(req, res) {
             WHERE r.product_id = ? 
             ORDER BY r.created_at DESC
           `;
-          args = [params.productId];
+          args = [pid3];
         } else if (params.tailorId) {
           sql = `
             SELECT r.*, u.first_name, u.last_name, u.username, u.avatar, 

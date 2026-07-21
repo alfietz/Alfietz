@@ -18,6 +18,7 @@ import SkeletonLoader from './components/layout/SkeletonLoader.vue'
 import Cart from './components/shop/Cart.vue'
 import { SpeedInsights } from "@vercel/speed-insights/vue"
 import { Analytics } from "@vercel/analytics/vue"
+import { encodeId } from './utils/id'
 import { useSocket } from './composables/useSocket'
 
 // ==========================================
@@ -230,7 +231,7 @@ const navigateTo = (screenName, extraState = {}) => {
     selectedProduct.value = extraState.selectedProduct
     setStored('selected_product', extraState.selectedProduct)
     console.log(`[NavigateTo] Going to product: ${extraState.selectedProduct.id}`);
-    router.push({ name: 'product-details', params: { id: extraState.selectedProduct.id } })
+    router.push({ name: 'product-details', params: { id: encodeId(extraState.selectedProduct.id) } })
     return
   }
   if (extraState.selectedSeller) {

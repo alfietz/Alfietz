@@ -32,7 +32,7 @@ const selectLang = (lang) => {
       
       <!-- User Logo -->
       <div class="logo-container splash-logo">
-        <img src="../../assets/logo.png" alt="Tribe Design Logo" class="logo-img" />
+        <img src="../../assets/logo.svg" alt="Alfie Tz Logo" class="logo-img" />
       </div>
 
       <div class="tagline-container" v-if="!showButtons">

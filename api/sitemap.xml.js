@@ -2,6 +2,10 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import Hashids from 'hashids';
+
+const hashids = new Hashids('alfietz-product-hash', 4);
+const encodeId = (id) => hashids.encode(Number(id));
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -60,7 +64,7 @@ export default async function handler(req, res) {
 
   try {
     const [productsRes, tailorsRes, categoriesRes] = await Promise.all([
-      query("SELECT id, updated_at FROM products WHERE is_available = 1"),
+      query("SELECT id, updated_at FROM products WHERE status = 'In Stock'"),
       query("SELECT username FROM users WHERE user_type = 'supplier'"),
       query("SELECT DISTINCT category_name FROM products WHERE category_name IS NOT NULL"),
     ]);
@@ -80,7 +84,7 @@ export default async function handler(req, res) {
     for (const p of productsRes.rows) {
       urls += `
   <url>
-    <loc>${BASE_URL}/product/${p.id}</loc>
+    <loc>${BASE_URL}/product/${encodeId(p.id)}</loc>
     <lastmod>${p.updated_at || new Date().toISOString().split('T')[0]}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>

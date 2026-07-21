@@ -17,7 +17,7 @@ defineProps({
           <div class="aura-ring ring-3"></div>
           
           <div class="logo-vault">
-            <img src="../../assets/logo.png" alt="Alfie Logo" class="banner-logo-img" />
+            <img src="../../assets/logo.svg" alt="Alfie Tz Logo" class="banner-logo-img" />
             <div class="vault-glow"></div>
             <div class="tech-scanner"></div>
           </div>

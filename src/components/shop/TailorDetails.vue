@@ -324,7 +324,9 @@ const loadTailorData = async () => {
       case_study_result: s.case_study_result,
       case_study_image: s.case_study_image,
       services_json: s.services_json,
-      contacts_json: s.contacts_json
+      contacts_json: s.contacts_json,
+      last_city: s.last_city,
+      last_country: s.last_country
     }
 
     products.value = data.products.map(p => ({
@@ -379,8 +381,8 @@ const loadTailorData = async () => {
         "telephone": sellerData.value.whatsapp,
         "address": {
           "@type": "PostalAddress",
-          "addressLocality": "Nairobi",
-          "addressCountry": "KE"
+          "addressLocality": sellerData.value.last_city || 'Nairobi',
+          "addressCountry": sellerData.value.last_country || 'KE'
         },
         "description": sellerData.value.bio || '',
         "priceRange": "TSh",
