@@ -8,7 +8,6 @@ permissions:
   contents: read
   pull-requests: read
   issues: write
-  id-token: write
 
 jobs:
   review:
@@ -21,23 +20,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Sign in to OpenCode
-        env:
-          AUDIENCE: https://opencode.ai/console
-        run: |
-          oidc=$(curl -sSf --oauth2-bearer "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=$AUDIENCE" | jq -r .value)
-          token=$(curl -sSf https://opencode.ai/console/auth/oauth/token \
-            -d grant_type=urn:ietf:params:oauth:grant-type:token-exchange \
-            -d subject_token_type=urn:ietf:params:oauth:token-type:jwt \
-            -d client_id=sk_d47ae6a9-b100-4bdd-8d74-f2240c6515d6 \
-            -d subject_token="$oidc" | jq -r .access_token)
-          echo "::add-mask::$token"
-          echo "OPENCODE_API_KEY=$token" >> "$GITHUB_ENV"
-
       - name: Run OpenCode
         uses: anomalyco/opencode/github@latest
         env:
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           model: opencode-go/deepseek-v4.1-flash
