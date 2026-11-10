@@ -8,7 +8,9 @@ const ALLOWED_ORIGINS = [
   'https://alfietz.vercel.app',
   'https://alfietz-zeta.vercel.app',
   'http://localhost:3000',
-  'http://localhost:5173'
+  'http://localhost:5173',
+  'http://localhost',
+  'capacitor://localhost'
 ];
 
 let io;
