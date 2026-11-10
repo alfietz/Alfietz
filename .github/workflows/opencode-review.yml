@@ -26,7 +26,7 @@ jobs:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          model: opencode/big-pickle
+          model: opencode-go/deepseek-v4.1-flash
           use_github_token: true
           prompt: |
             Review this pull request for the Alfietz Vue 3 + Vite marketplace.
