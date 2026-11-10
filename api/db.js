@@ -157,7 +157,7 @@ function createHttpClient(url, authToken) {
 export default async function handler(req, res) {
   // CORS Headers
   res.setHeader('Access-Control-Allow-Credentials', true);
-  const allowedOrigins = ['https://alfietz.shop', 'https://alfietz.vercel.app', 'https://alfietz-zeta.vercel.app', 'http://localhost:3000', 'http://localhost:5173', 'http://localhost', 'capacitor://localhost'];
+  const allowedOrigins = ['https://alfietz.shop', 'https://alfietz.vercel.app', 'https://alfietz-zeta.vercel.app', 'http://localhost:3000', 'http://localhost:5173', 'http://localhost', 'https://localhost', 'capacitor://localhost'];
   const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
