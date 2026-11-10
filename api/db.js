@@ -69,41 +69,36 @@ const sanitize = (val) => typeof val === 'bigint' ? val.toString() : val;
 
 async function checkRateLimit(client, key, limit, windowSeconds) {
   const now = Math.floor(Date.now() / 1000);
-  
-  // Clean up expired entries for this key
-  await client.execute({
-    sql: "DELETE FROM rate_limits WHERE expires_at < ?",
-    args: [now]
-  });
+  const expiresAt = now + windowSeconds;
 
-  // Atomic increment or initialize
-  await client.execute({
-    sql: `
-      INSERT INTO rate_limits (key, count, expires_at) 
-      VALUES (?, 1, ?) 
-      ON CONFLICT(key) DO UPDATE SET count = count + 1
-    `,
-    args: [key, now + windowSeconds]
-  });
+  try {
+    // Single round trip: reset on expiry, otherwise increment, and return the result.
+    const res = await client.execute({
+      sql: `
+        INSERT INTO rate_limits (key, count, expires_at)
+        VALUES (?, 1, ?)
+        ON CONFLICT(key) DO UPDATE SET
+          count = CASE WHEN rate_limits.expires_at < ? THEN 1 ELSE rate_limits.count + 1 END,
+          expires_at = CASE WHEN rate_limits.expires_at < ? THEN ? ELSE rate_limits.expires_at END
+        RETURNING count, expires_at
+      `,
+      args: [key, expiresAt, now, now, expiresAt]
+    });
 
-  const res = await client.execute({
-    sql: "SELECT count, expires_at FROM rate_limits WHERE key = ?",
-    args: [key]
-  });
-
-  if (res.rows.length > 0) {
     const row = res.rows[0];
-    const count = parseInt(sanitize(row[0] !== undefined ? row[0] : row.count));
-    const expiresAt = parseInt(sanitize(row[1] !== undefined ? row[1] : row.expires_at));
+    const count = parseInt(sanitize(row ? (row[0] !== undefined ? row[0] : row.count) : 1));
+    const resetAt = parseInt(sanitize(row ? (row[1] !== undefined ? row[1] : row.expires_at) : expiresAt));
 
     if (count > limit) {
-      return { allowed: false, remaining: 0, reset: expiresAt - now };
+      return { allowed: false, remaining: 0, reset: Math.max(0, resetAt - now) };
     }
 
-    return { allowed: true, remaining: limit - count };
+    return { allowed: true, remaining: Math.max(0, limit - count) };
+  } catch (error) {
+    // Never block traffic if rate limiting is unavailable.
+    console.error('Rate limit error:', error.message);
+    return { allowed: true, remaining: limit, reset: 0 };
   }
-  
-  return { allowed: true, remaining: limit - 1 };
 }
 
 function createHttpClient(url, authToken) {
@@ -204,7 +199,8 @@ export default async function handler(req, res) {
     const resend = resendApiKey ? new Resend(resendApiKey) : null;
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
 
-    // Auto-migrate: Ensure required tables exist
+    // Schema setup lives in scripts/init-db.js. Set RUN_MIGRATIONS=1 to run it here.
+    if (process.env.RUN_MIGRATIONS === '1') {
     await client.execute(`
       CREATE TABLE IF NOT EXISTS users (
         id TEXT PRIMARY KEY,
@@ -292,6 +288,7 @@ export default async function handler(req, res) {
     const hasCreatedAt = tableInfo.rows.some(row => sanitize(row[1]) === 'created_at');
     if (!hasCreatedAt) {
       await client.execute("ALTER TABLE products ADD COLUMN created_at DATETIME").catch(e => console.error("Migration failed:", e));
+    }
     }
 
     // Session Tracking Helper
@@ -400,10 +397,17 @@ export default async function handler(req, res) {
       return res.status(429).json({ error: `Too many requests. Please try again in ${globalLimit.reset} seconds.` });
     }
 
+    const MAX_INLINE_IMAGE = 40000;
     const mapRows = (result) => {
       return result.rows.map(row => {
         const obj = {};
         result.columns.forEach((col, i) => { obj[col] = sanitize(row[i]); });
+        for (const key of Object.keys(obj)) {
+          const value = obj[key];
+          if (typeof value === 'string' && value.startsWith('data:') && value.length > MAX_INLINE_IMAGE) {
+            obj[key] = null;
+          }
+        }
         return obj;
       });
     };
@@ -456,7 +460,7 @@ export default async function handler(req, res) {
           client.execute("SELECT * FROM categories"),
           client.execute("SELECT p.*, c.name as categoryName FROM products p LEFT JOIN categories c ON p.category_id = c.id ORDER BY p.likes_count DESC LIMIT 4"),
           client.execute("SELECT p.*, c.name as categoryName FROM products p LEFT JOIN categories c ON p.category_id = c.id ORDER BY p.id DESC LIMIT 50"),
-          client.execute("SELECT r.*, u.first_name, u.last_name, u.avatar FROM app_reviews r JOIN users u ON r.user_id = u.id ORDER BY r.created_at DESC LIMIT 5"),
+          client.execute("SELECT r.id, r.user_id, r.rating, r.text, CASE WHEN r.image IS NULL OR length(r.image) <= 40000 THEN r.image ELSE NULL END AS image, r.created_at, u.first_name, u.last_name, u.avatar FROM app_reviews r JOIN users u ON r.user_id = u.id ORDER BY r.created_at DESC LIMIT 5"),
           client.execute({
             sql: `
               SELECT u.id, u.username, u.first_name, u.last_name, u.avatar, u.user_type, u.gives, u.profile_views, u.is_verified, u.last_country,
@@ -579,7 +583,7 @@ export default async function handler(req, res) {
           args: [pid0]
         });
         const revsRes = await client.execute({
-          sql: "SELECT r.*, u.first_name, u.last_name, u.avatar FROM reviews r JOIN users u ON r.user_id = u.id WHERE r.product_id = ?",
+          sql: "SELECT r.id, r.product_id, r.user_id, r.rating, r.text, CASE WHEN r.image IS NULL OR length(r.image) <= 40000 THEN r.image ELSE NULL END AS image, r.created_at, u.first_name, u.last_name, u.avatar FROM reviews r JOIN users u ON r.user_id = u.id WHERE r.product_id = ?",
           args: [pid0]
         });
         customResponse = { product: mapRows(prodRes)[0], reviews: mapRows(revsRes) };
@@ -603,7 +607,7 @@ export default async function handler(req, res) {
         const [tProds, tStats, tRevs] = await Promise.all([
           client.execute({ sql: "SELECT p.*, c.name as categoryName FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE p.owner_id = ? ORDER BY p.id DESC", args: [tailorId] }),
           client.execute({ sql: "SELECT (SELECT SUM(likes_count) FROM products WHERE owner_id = ?) as total_likes, (SELECT COUNT(*) FROM orders WHERE tailor_id = ?) as total_clients", args: [tailorId, tailorId] }),
-          client.execute({ sql: "SELECT r.*, u.first_name, u.last_name, u.username, u.avatar as author_avatar FROM reviews r JOIN users u ON r.user_id = u.id WHERE r.product_id IN (SELECT id FROM products WHERE owner_id = ?) ORDER BY r.created_at DESC LIMIT 3", args: [tailorId] })
+          client.execute({ sql: "SELECT r.id, r.product_id, r.user_id, r.rating, r.text, CASE WHEN r.image IS NULL OR length(r.image) <= 40000 THEN r.image ELSE NULL END AS image, r.created_at, u.first_name, u.last_name, u.username, u.avatar as author_avatar FROM reviews r JOIN users u ON r.user_id = u.id WHERE r.product_id IN (SELECT id FROM products WHERE owner_id = ?) ORDER BY r.created_at DESC LIMIT 3", args: [tailorId] })
         ]);
         customResponse = { tailor: tailorObj, products: mapRows(tProds), stats: mapRows(tStats)[0], reviews: mapRows(tRevs) };
         break;
@@ -850,7 +854,7 @@ export default async function handler(req, res) {
             args: [currentUserId] 
           }),
           client.execute({ sql: "SELECT p.*, c.name as categoryName FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE p.owner_id = ? ORDER BY p.id DESC", args: [currentUserId] }),
-          client.execute({ sql: "SELECT r.*, u.first_name, u.last_name, u.username, u.avatar as author_avatar FROM reviews r JOIN users u ON r.user_id = u.id WHERE r.product_id IN (SELECT id FROM products WHERE owner_id = ?) ORDER BY r.created_at DESC LIMIT 5", args: [currentUserId] })
+          client.execute({ sql: "SELECT r.id, r.product_id, r.user_id, r.rating, r.text, CASE WHEN r.image IS NULL OR length(r.image) <= 40000 THEN r.image ELSE NULL END AS image, r.created_at, u.first_name, u.last_name, u.username, u.avatar as author_avatar FROM reviews r JOIN users u ON r.user_id = u.id WHERE r.product_id IN (SELECT id FROM products WHERE owner_id = ?) ORDER BY r.created_at DESC LIMIT 5", args: [currentUserId] })
         ]);
         customResponse = { 
           orders: mapRows(cOrders), 
@@ -1195,12 +1199,15 @@ export default async function handler(req, res) {
 
       case 'get_reviews':
         if (params.isApp) {
-          sql = "SELECT r.*, u.first_name, u.last_name, u.username, u.avatar FROM app_reviews r JOIN users u ON r.user_id = u.id ORDER BY r.created_at DESC";
+          sql = "SELECT r.id, r.user_id, r.rating, r.text, CASE WHEN r.image IS NULL OR length(r.image) <= 40000 THEN r.image ELSE NULL END AS image, r.created_at, u.first_name, u.last_name, u.username, u.avatar FROM app_reviews r JOIN users u ON r.user_id = u.id ORDER BY r.created_at DESC";
           args = [];
         } else if (params.productId) {
           const pid3 = decodeId(params.productId) ?? params.productId;
           sql = `
-            SELECT r.*, u.first_name, u.last_name, u.username, u.avatar, p.name as product_name, p.image as product_image 
+            SELECT r.id, r.product_id, r.user_id, r.rating, r.text,
+                   CASE WHEN r.image IS NULL OR length(r.image) <= 40000 THEN r.image ELSE NULL END AS image,
+                   r.created_at, u.first_name, u.last_name, u.username, u.avatar,
+                   p.name as product_name, p.image as product_image
             FROM reviews r 
             JOIN users u ON r.user_id = u.id 
             JOIN products p ON r.product_id = p.id
@@ -1210,7 +1217,9 @@ export default async function handler(req, res) {
           args = [pid3];
         } else if (params.tailorId) {
           sql = `
-            SELECT r.*, u.first_name, u.last_name, u.username, u.avatar, 
+            SELECT r.id, r.product_id, r.user_id, r.rating, r.text,
+                   CASE WHEN r.image IS NULL OR length(r.image) <= 40000 THEN r.image ELSE NULL END AS image,
+                   r.created_at, u.first_name, u.last_name, u.username, u.avatar,
                    p.name as product_name, p.image as product_image,
                    t.first_name as tailor_first, t.last_name as tailor_last, t.username as tailor_username
             FROM reviews r 

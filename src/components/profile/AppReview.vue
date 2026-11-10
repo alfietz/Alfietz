@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
+import { compressImageFile } from '../../utils/image'
 
 const props = defineProps({
   t: {
@@ -18,15 +19,15 @@ const imageBase64 = ref(null)
 
 const remainingChars = computed(() => maxChars - reviewText.value.length)
 
-const handleImageUpload = (event) => {
+const handleImageUpload = async (event) => {
   const file = event.target.files[0]
-  if (file) {
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      imagePreview.value = e.target.result
-      imageBase64.value = e.target.result
-    }
-    reader.readAsDataURL(file)
+  if (!file) return
+  try {
+    const dataUrl = await compressImageFile(file)
+    imagePreview.value = dataUrl
+    imageBase64.value = dataUrl
+  } catch (error) {
+    console.error('Image processing failed:', error)
   }
 }
 

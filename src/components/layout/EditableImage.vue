@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue'
+import { compressImageFile } from '../../utils/image'
 
 const props = defineProps({
   src: {
@@ -29,16 +30,13 @@ const triggerUpload = () => {
   }
 }
 
-const handleFile = (e) => {
+const handleFile = async (e) => {
   const file = e.target.files[0]
-  if (file) {
-    // In a real app, we'd upload to a server. 
-    // Here we'll just create a local preview URL.
-    const reader = new FileReader()
-    reader.onload = (event) => {
-      emit('change', event.target.result)
-    }
-    reader.readAsDataURL(file)
+  if (!file) return
+  try {
+    emit('change', await compressImageFile(file))
+  } catch (error) {
+    console.error('Image processing failed:', error)
   }
 }
 </script>

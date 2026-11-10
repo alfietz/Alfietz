@@ -1,6 +1,7 @@
 <!-------- (WriteReview.vue) ./src/components/communication/WriteReview.vue ------------>
 <script setup>
 import { ref, computed } from 'vue'
+import { compressImageFile } from '../../utils/image'
 
 const props = defineProps({
   t: {
@@ -44,17 +45,18 @@ const toggleTag = (tag) => {
   }
 }
 
-const handleImageUpload = (event) => {
+const handleImageUpload = async (event) => {
   const file = event.target.files[0]
   if (!file) return
-  
+
   isUploading.value = true
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    reviewImage.value = e.target.result
+  try {
+    reviewImage.value = await compressImageFile(file)
+  } catch (error) {
+    console.error('Image processing failed:', error)
+  } finally {
     isUploading.value = false
   }
-  reader.readAsDataURL(file)
 }
 
 const removeImage = () => {
