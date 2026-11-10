@@ -20,20 +20,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Key fingerprint
-        env:
-          KEY: ${{ secrets.OPENCODE_API_KEY }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          len=${#KEY}
-          hash=$(printf '%s' "$KEY" | sha256sum | cut -c1-12)
-          body="OPENCODE_API_KEY length=${len} sha256_prefix=${hash}"
-          curl -sS -X POST \
-            -H "Authorization: Bearer $GITHUB_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}/issues/${{ github.event.pull_request.number }}/comments" \
-            -d "{\"body\":\"${body}\"}"
-
       - name: Run OpenCode
         uses: anomalyco/opencode/github@latest
         env:
