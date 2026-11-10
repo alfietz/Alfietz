@@ -69,27 +69,26 @@ const sanitize = (val) => typeof val === 'bigint' ? val.toString() : val;
 
 async function checkRateLimit(client, key, limit, windowSeconds) {
   const now = Math.floor(Date.now() / 1000);
-  
-  // Clean up expired entries for this key
-  await client.execute({
-    sql: "DELETE FROM rate_limits WHERE expires_at < ?",
-    args: [now]
-  });
 
-  // Atomic increment or initialize
-  await client.execute({
-    sql: `
-      INSERT INTO rate_limits (key, count, expires_at) 
-      VALUES (?, 1, ?) 
-      ON CONFLICT(key) DO UPDATE SET count = count + 1
-    `,
-    args: [key, now + windowSeconds]
-  });
-
-  const res = await client.execute({
-    sql: "SELECT count, expires_at FROM rate_limits WHERE key = ?",
-    args: [key]
-  });
+  // Cleanup, increment and read run in a single pipeline round-trip.
+  const [, , res] = await client.batch([
+    {
+      sql: "DELETE FROM rate_limits WHERE expires_at < ?",
+      args: [now]
+    },
+    {
+      sql: `
+        INSERT INTO rate_limits (key, count, expires_at) 
+        VALUES (?, 1, ?) 
+        ON CONFLICT(key) DO UPDATE SET count = count + 1
+      `,
+      args: [key, now + windowSeconds]
+    },
+    {
+      sql: "SELECT count, expires_at FROM rate_limits WHERE key = ?",
+      args: [key]
+    }
+  ]);
 
   if (res.rows.length > 0) {
     const row = res.rows[0];
@@ -107,38 +106,22 @@ async function checkRateLimit(client, key, limit, windowSeconds) {
 }
 
 function createHttpClient(url, authToken) {
-  async function execute(sqlOrOpts, args) {
+  const dbUrl = url.replace(/^[a-z][a-z0-9+.-]*:\/\//, '');
+  const endpoint = `https://${dbUrl}/v2/pipeline`;
+
+  const toTypedArg = (a) => {
+    if (a == null) return { type: "null", value: null };
+    if (typeof a === "number" || typeof a === "bigint") return { type: "integer", value: String(a) };
+    return { type: "text", value: String(a) };
+  };
+
+  const normalizeStatement = (sqlOrOpts, args) => {
     const sql = typeof sqlOrOpts === 'object' ? sqlOrOpts.sql : sqlOrOpts;
     const params = typeof sqlOrOpts === 'object' ? (sqlOrOpts.args || []) : (args || []);
-    const typedArgs = params.map(a => {
-      if (a == null) return { type: "null", value: null };
-      if (typeof a === "number" || typeof a === "bigint") return { type: "integer", value: String(a) };
-      return { type: "text", value: String(a) };
-    });
+    return { sql, args: params.map(toTypedArg) };
+  };
 
-    const dbUrl = url.replace(/^[a-z][a-z0-9+.-]*:\/\//, '');
-    const response = await fetch(`https://${dbUrl}/v2/pipeline`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${authToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        requests: [{ type: 'execute', stmt: { sql, args: typedArgs } }]
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`DB HTTP ${response.status}: ${await response.text()}`);
-    }
-
-    const data = await response.json();
-    const result = data.results?.[0]?.response?.result;
-    if (!result) {
-      const err = data.results?.[0]?.response?.error;
-      throw new Error(err?.message || 'Unknown database error');
-    }
-
+  const mapResult = (result) => {
     const rawCols = result.cols || result.columns || [];
     const columns = rawCols.map(c => typeof c === 'object' ? c.name : c);
     const rows = (result.rows || []).map(row => {
@@ -154,9 +137,194 @@ function createHttpClient(url, authToken) {
       rowsAffected: result.affected_row_count ?? result.rowsAffected ?? 0,
       lastInsertRowid: result.last_insert_rowid != null ? result.last_insert_rowid : undefined
     };
+  };
+
+  const send = async (statements, { ignoreErrors = false } = {}) => {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        requests: statements.map(stmt => ({ type: 'execute', stmt }))
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`DB HTTP ${response.status}: ${await response.text()}`);
+    }
+
+    const data = await response.json();
+    const results = data.results || [];
+    if (results.length !== statements.length && !ignoreErrors) {
+      throw new Error('Database pipeline returned an unexpected number of results');
+    }
+    return results;
+  };
+
+  async function batch(sqlOrOptsList, { ignoreErrors = false } = {}) {
+    const statements = sqlOrOptsList.map(s => normalizeStatement(s));
+    const entries = await send(statements, { ignoreErrors });
+
+    return statements.map((_, i) => {
+      const entry = entries[i];
+      const result = entry?.response?.result;
+      if (!result) {
+        const err = entry?.response?.error;
+        const error = new Error(
+          err?.message || (entry ? 'Unknown database error' : 'Database pipeline aborted before this statement')
+        );
+        if (ignoreErrors) {
+          return { rows: [], columns: [], rowsAffected: 0, error };
+        }
+        error.statementIndex = i;
+        throw error;
+      }
+      return mapResult(result);
+    });
   }
 
-  return { execute };
+  async function execute(sqlOrOpts, args) {
+    const sql = typeof sqlOrOpts === 'object' ? sqlOrOpts.sql : sqlOrOpts;
+    const params = typeof sqlOrOpts === 'object' ? (sqlOrOpts.args || []) : (args || []);
+    const [result] = await batch([{ sql, args: params }]);
+    return result;
+  }
+
+  return { execute, batch };
+}
+
+// Schema setup is idempotent, so run it once per warm server instance instead
+// of on every request. This removes ~36 sequential Turso round-trips per call.
+const schemaInitPromises = new Map();
+
+function ensureSchema(client, cacheKey) {
+  let promise = schemaInitPromises.get(cacheKey);
+  if (!promise) {
+    promise = runSchemaMigrations(client);
+    schemaInitPromises.set(cacheKey, promise);
+    promise.catch(() => schemaInitPromises.delete(cacheKey));
+  }
+  return promise;
+}
+
+async function runSchemaMigrations(client) {
+  const createTables = [
+    `CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      username TEXT UNIQUE,
+      first_name TEXT,
+      last_name TEXT,
+      email TEXT UNIQUE,
+      password TEXT,
+      whatsapp TEXT,
+      avatar TEXT,
+      user_type TEXT DEFAULT 'buyer',
+      needs TEXT,
+      gives TEXT,
+      theme TEXT DEFAULT 'dark',
+      profile_views INTEGER DEFAULT 0
+    )`,
+    "CREATE TABLE IF NOT EXISTS rate_limits (key TEXT PRIMARY KEY, count INTEGER, expires_at INTEGER)",
+    "CREATE TABLE IF NOT EXISTS verification_codes (email TEXT PRIMARY KEY, code TEXT, expires_at INTEGER)",
+    "CREATE TABLE IF NOT EXISTS session_tokens (token TEXT PRIMARY KEY, user_id TEXT, expires_at INTEGER)",
+    `CREATE TABLE IF NOT EXISTS tailor_profiles (
+      user_id TEXT PRIMARY KEY,
+      quirk TEXT,
+      case_study_title TEXT,
+      case_study_quote TEXT,
+      case_study_challenge TEXT,
+      case_study_execution TEXT,
+      case_study_result TEXT,
+      case_study_image TEXT,
+      services_json TEXT,
+      contacts_json TEXT,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )`,
+    `CREATE TABLE IF NOT EXISTS login_history (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT,
+      ip_address TEXT,
+      user_agent TEXT,
+      device_name TEXT,
+      city TEXT,
+      region TEXT,
+      country TEXT,
+      latitude TEXT,
+      longitude TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+    "CREATE TABLE IF NOT EXISTS categories (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE, count INTEGER DEFAULT 0)",
+    `CREATE TABLE IF NOT EXISTS products (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, price TEXT,
+      description TEXT, material TEXT, image TEXT, category_id INTEGER,
+      likes_count INTEGER DEFAULT 0, owner_id TEXT, status TEXT DEFAULT 'In Stock',
+      variants_json TEXT, gallery_json TEXT,
+      FOREIGN KEY(category_id) REFERENCES categories(id),
+      FOREIGN KEY(owner_id) REFERENCES users(id)
+    )`,
+    "CREATE TABLE IF NOT EXISTS favorites (user_id TEXT, product_id INTEGER, PRIMARY KEY (user_id, product_id))",
+    "CREATE TABLE IF NOT EXISTS reviews (id INTEGER PRIMARY KEY AUTOINCREMENT, product_id INTEGER, user_id TEXT, rating INTEGER, text TEXT, image TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
+    "CREATE TABLE IF NOT EXISTS app_reviews (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, rating INTEGER, text TEXT, image TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
+    "CREATE TABLE IF NOT EXISTS notifications (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, message TEXT, is_unread BOOLEAN DEFAULT 1, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
+    "CREATE TABLE IF NOT EXISTS feedback (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, message TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
+    "CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY AUTOINCREMENT, sender_id TEXT, receiver_id TEXT, content TEXT, is_read BOOLEAN DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
+    "CREATE TABLE IF NOT EXISTS orders (id TEXT PRIMARY KEY, item_name TEXT, customer_id TEXT, tailor_id TEXT, price TEXT, status TEXT DEFAULT 'Pending', size TEXT, color TEXT, notes TEXT, image TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
+    "CREATE TABLE IF NOT EXISTS negotiations (id TEXT PRIMARY KEY, item_name TEXT, customer_id TEXT, tailor_id TEXT, proposed_price TEXT, status TEXT DEFAULT 'Awaiting Reply', size TEXT, color TEXT, notes TEXT, image TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)"
+  ];
+
+  const createIndexes = [
+    "CREATE INDEX IF NOT EXISTS idx_favorites_user ON favorites(user_id)",
+    "CREATE INDEX IF NOT EXISTS idx_favorites_product ON favorites(product_id)",
+    "CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, created_at)",
+    "CREATE INDEX IF NOT EXISTS idx_messages_receiver ON messages(receiver_id, is_read)",
+    "CREATE INDEX IF NOT EXISTS idx_reviews_product ON reviews(product_id)",
+    "CREATE INDEX IF NOT EXISTS idx_app_reviews_created ON app_reviews(created_at)",
+    "CREATE INDEX IF NOT EXISTS idx_products_owner ON products(owner_id)",
+    "CREATE INDEX IF NOT EXISTS idx_products_category ON products(category_id)",
+    "CREATE INDEX IF NOT EXISTS idx_products_likes ON products(likes_count)",
+    "CREATE INDEX IF NOT EXISTS idx_orders_tailor ON orders(tailor_id)",
+    "CREATE INDEX IF NOT EXISTS idx_orders_customer ON orders(customer_id)",
+    "CREATE INDEX IF NOT EXISTS idx_negotiations_tailor ON negotiations(tailor_id)",
+    "CREATE INDEX IF NOT EXISTS idx_negotiations_customer ON negotiations(customer_id)",
+    "CREATE INDEX IF NOT EXISTS idx_rate_limits_expires ON rate_limits(expires_at)"
+  ];
+
+  // One round-trip for all table + index creation.
+  await client.batch([
+    ...createTables.map(sql => ({ sql })),
+    ...createIndexes.map(sql => ({ sql }))
+  ], { ignoreErrors: true });
+
+  const columnMigrations = [
+    { table: 'users', column: 'is_verified', sql: "ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT 0" },
+    { table: 'users', column: 'last_city', sql: "ALTER TABLE users ADD COLUMN last_city TEXT" },
+    { table: 'users', column: 'last_country', sql: "ALTER TABLE users ADD COLUMN last_country TEXT" },
+    { table: 'users', column: 'last_lat', sql: "ALTER TABLE users ADD COLUMN last_lat TEXT" },
+    { table: 'users', column: 'last_long', sql: "ALTER TABLE users ADD COLUMN last_long TEXT" },
+    { table: 'users', column: 'profile_views', sql: "ALTER TABLE users ADD COLUMN profile_views INTEGER DEFAULT 0" },
+    { table: 'reviews', column: 'image', sql: "ALTER TABLE reviews ADD COLUMN image TEXT" },
+    { table: 'notifications', column: 'type', sql: "ALTER TABLE notifications ADD COLUMN type TEXT" },
+    { table: 'notifications', column: 'target_id', sql: "ALTER TABLE notifications ADD COLUMN target_id TEXT" },
+    { table: 'products', column: 'created_at', sql: "ALTER TABLE products ADD COLUMN created_at DATETIME" }
+  ];
+
+  // Inspect existing columns in one round-trip, then only run missing ALTERs.
+  const tables = [...new Set(columnMigrations.map(m => m.table))];
+  const tableInfos = await client.batch(tables.map(table => ({ sql: `PRAGMA table_info(${table})` })));
+  const existingColumns = {};
+  tables.forEach((table, i) => {
+    existingColumns[table] = new Set(tableInfos[i].rows.map(row => sanitize(row[1])));
+  });
+
+  const missingColumns = columnMigrations
+    .filter(m => !existingColumns[m.table].has(m.column))
+    .map(m => ({ sql: m.sql }));
+
+  if (missingColumns.length > 0) {
+    await client.batch(missingColumns, { ignoreErrors: true });
+  }
 }
 
 export default async function handler(req, res) {
@@ -204,95 +372,8 @@ export default async function handler(req, res) {
     const resend = resendApiKey ? new Resend(resendApiKey) : null;
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
 
-    // Auto-migrate: Ensure required tables exist
-    await client.execute(`
-      CREATE TABLE IF NOT EXISTS users (
-        id TEXT PRIMARY KEY,
-        username TEXT UNIQUE,
-        first_name TEXT,
-        last_name TEXT,
-        email TEXT UNIQUE,
-        password TEXT,
-        whatsapp TEXT,
-        avatar TEXT,
-        user_type TEXT DEFAULT 'buyer',
-        needs TEXT,
-        gives TEXT,
-        theme TEXT DEFAULT 'dark',
-        profile_views INTEGER DEFAULT 0
-      )
-    `);
-    await client.execute("CREATE TABLE IF NOT EXISTS rate_limits (key TEXT PRIMARY KEY, count INTEGER, expires_at INTEGER)");
-    await client.execute("CREATE TABLE IF NOT EXISTS verification_codes (email TEXT PRIMARY KEY, code TEXT, expires_at INTEGER)");
-    await client.execute("CREATE TABLE IF NOT EXISTS session_tokens (token TEXT PRIMARY KEY, user_id TEXT, expires_at INTEGER)");
-    await client.execute(`
-      CREATE TABLE IF NOT EXISTS tailor_profiles (
-        user_id TEXT PRIMARY KEY,
-        quirk TEXT,
-        case_study_title TEXT,
-        case_study_quote TEXT,
-        case_study_challenge TEXT,
-        case_study_execution TEXT,
-        case_study_result TEXT,
-        case_study_image TEXT,
-        services_json TEXT,
-        contacts_json TEXT,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-      )
-    `);
-    await client.execute(`
-      CREATE TABLE IF NOT EXISTS login_history (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id TEXT,
-        ip_address TEXT,
-        user_agent TEXT,
-        device_name TEXT,
-        city TEXT,
-        region TEXT,
-        country TEXT,
-        latitude TEXT,
-        longitude TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-    await client.execute("CREATE TABLE IF NOT EXISTS categories (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE, count INTEGER DEFAULT 0)");
-    await client.execute(`
-      CREATE TABLE IF NOT EXISTS products (
-        id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, price TEXT,
-        description TEXT, material TEXT, image TEXT, category_id INTEGER,
-        likes_count INTEGER DEFAULT 0, owner_id TEXT, status TEXT DEFAULT 'In Stock',
-        variants_json TEXT, gallery_json TEXT,
-        FOREIGN KEY(category_id) REFERENCES categories(id),
-        FOREIGN KEY(owner_id) REFERENCES users(id)
-      )
-    `);
-    await client.execute("CREATE TABLE IF NOT EXISTS favorites (user_id TEXT, product_id INTEGER, PRIMARY KEY (user_id, product_id))");
-    await client.execute("CREATE TABLE IF NOT EXISTS reviews (id INTEGER PRIMARY KEY AUTOINCREMENT, product_id INTEGER, user_id TEXT, rating INTEGER, text TEXT, image TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
-    await client.execute("CREATE TABLE IF NOT EXISTS app_reviews (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, rating INTEGER, text TEXT, image TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
-    await client.execute("CREATE TABLE IF NOT EXISTS notifications (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, message TEXT, is_unread BOOLEAN DEFAULT 1, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
-    await client.execute("CREATE TABLE IF NOT EXISTS feedback (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, message TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
-    await client.execute("CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY AUTOINCREMENT, sender_id TEXT, receiver_id TEXT, content TEXT, is_read BOOLEAN DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
-    await client.execute("CREATE TABLE IF NOT EXISTS orders (id TEXT PRIMARY KEY, item_name TEXT, customer_id TEXT, tailor_id TEXT, price TEXT, status TEXT DEFAULT 'Pending', size TEXT, color TEXT, notes TEXT, image TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
-    await client.execute("CREATE TABLE IF NOT EXISTS negotiations (id TEXT PRIMARY KEY, item_name TEXT, customer_id TEXT, tailor_id TEXT, proposed_price TEXT, status TEXT DEFAULT 'Awaiting Reply', size TEXT, color TEXT, notes TEXT, image TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
-
-    // Add missing columns if they don't exist
-    await client.execute("ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT 0").catch(() => {});
-    await client.execute("ALTER TABLE users ADD COLUMN last_city TEXT").catch(() => {});
-    await client.execute("ALTER TABLE users ADD COLUMN last_country TEXT").catch(() => {});
-    await client.execute("ALTER TABLE users ADD COLUMN last_lat TEXT").catch(() => {});
-    await client.execute("ALTER TABLE users ADD COLUMN last_long TEXT").catch(() => {});
-    await client.execute("ALTER TABLE users ADD COLUMN profile_views INTEGER DEFAULT 0").catch(() => {});
-    
-    await client.execute("ALTER TABLE reviews ADD COLUMN image TEXT").catch(() => {});
-    await client.execute("ALTER TABLE notifications ADD COLUMN type TEXT").catch(() => {});
-    await client.execute("ALTER TABLE notifications ADD COLUMN target_id TEXT").catch(() => {});
-    
-    // Robust column check for products.created_at
-    const tableInfo = await client.execute("PRAGMA table_info(products)");
-    const hasCreatedAt = tableInfo.rows.some(row => sanitize(row[1]) === 'created_at');
-    if (!hasCreatedAt) {
-      await client.execute("ALTER TABLE products ADD COLUMN created_at DATETIME").catch(e => console.error("Migration failed:", e));
-    }
+    // Ensure schema exists (cached per warm server instance, batched round-trips).
+    await ensureSchema(client, url);
 
     // Session Tracking Helper
     const trackSession = async (userId) => {
@@ -452,12 +533,12 @@ export default async function handler(req, res) {
         const userCountry = req.headers['x-vercel-ip-country'] || 'Unknown';
         const userCity = req.headers['x-vercel-ip-city'] || 'Unknown';
 
-        const [cats, trending, all, appReviews, suppliers, recent] = await Promise.all([
-          client.execute("SELECT * FROM categories"),
-          client.execute("SELECT p.*, c.name as categoryName FROM products p LEFT JOIN categories c ON p.category_id = c.id ORDER BY p.likes_count DESC LIMIT 4"),
-          client.execute("SELECT p.*, c.name as categoryName FROM products p LEFT JOIN categories c ON p.category_id = c.id ORDER BY p.id DESC LIMIT 50"),
-          client.execute("SELECT r.*, u.first_name, u.last_name, u.avatar FROM app_reviews r JOIN users u ON r.user_id = u.id ORDER BY r.created_at DESC LIMIT 5"),
-          client.execute({
+        const [cats, trending, all, appReviews, suppliers, recent] = await client.batch([
+          { sql: "SELECT * FROM categories" },
+          { sql: "SELECT p.*, c.name as categoryName FROM products p LEFT JOIN categories c ON p.category_id = c.id ORDER BY p.likes_count DESC LIMIT 4" },
+          { sql: "SELECT p.*, c.name as categoryName FROM products p LEFT JOIN categories c ON p.category_id = c.id ORDER BY p.id DESC LIMIT 50" },
+          { sql: "SELECT r.*, u.first_name, u.last_name, u.avatar FROM app_reviews r JOIN users u ON r.user_id = u.id ORDER BY r.created_at DESC LIMIT 5" },
+          {
             sql: `
               SELECT u.id, u.username, u.first_name, u.last_name, u.avatar, u.user_type, u.gives, u.profile_views, u.is_verified, u.last_country,
                      (SELECT AVG(rating) FROM reviews WHERE product_id IN (SELECT id FROM products WHERE owner_id = u.id)) as avg_rating,
@@ -467,14 +548,16 @@ export default async function handler(req, res) {
               ORDER BY (CASE WHEN u.last_country = ? THEN 1 ELSE 0 END) DESC, profile_views DESC LIMIT 8
             `,
             args: [userCountry]
-          }),
-          client.execute(`
-            SELECT p.id, p.name, u.username, u.first_name
-            FROM products p
-            JOIN users u ON p.owner_id = u.id
-            ORDER BY p.id DESC
-            LIMIT 5
-          `)
+          },
+          {
+            sql: `
+              SELECT p.id, p.name, u.username, u.first_name
+              FROM products p
+              JOIN users u ON p.owner_id = u.id
+              ORDER BY p.id DESC
+              LIMIT 5
+            `
+          }
         ]);
 
         let favorites = [];
@@ -483,26 +566,26 @@ export default async function handler(req, res) {
 
         if (userId !== 'guest') {
           // ... (existing code for logged in user)
-          const [favsRes, notifsRes, countRes, userStatsRes] = await Promise.all([
-            client.execute({ sql: "SELECT product_id FROM favorites WHERE user_id = ?", args: [userId] }),
-            client.execute({ sql: "SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC", args: [userId] }),
-            client.execute({ sql: "SELECT COUNT(*) as total FROM products WHERE owner_id = ?", args: [userId] }),
-            client.execute({ 
+          const [favsRes, notifsRes, countRes, userStatsRes, unreadChatRes] = await client.batch([
+            { sql: "SELECT product_id FROM favorites WHERE user_id = ?", args: [userId] },
+            { sql: "SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC", args: [userId] },
+            { sql: "SELECT COUNT(*) as total FROM products WHERE owner_id = ?", args: [userId] },
+            {
               sql: `
                 SELECT 
                   (SELECT AVG(rating) FROM reviews WHERE product_id IN (SELECT id FROM products WHERE owner_id = u.id)) as avg_rating,
                   (SELECT SUM(likes_count) FROM products WHERE owner_id = u.id) as total_likes,
                   last_city, last_country
                 FROM users u WHERE u.id = ?
-              `, 
-              args: [userId] 
-            })
+              `,
+              args: [userId]
+            },
+            { sql: "SELECT COUNT(*) as cnt FROM messages WHERE receiver_id = ? AND is_read = 0", args: [userId] }
           ]);
           favorites = favsRes.rows.map(r => sanitize(r.product_id));
           notifications = mapRows(notifsRes);
           productCount = sanitize(countRes.rows[0]?.total || 0);
-          
-          const unreadChatRes = await client.execute({ sql: "SELECT COUNT(*) as cnt FROM messages WHERE receiver_id = ? AND is_read = 0", args: [userId] });
+
           customResponse = { ...customResponse, unreadChatCount: sanitize(unreadChatRes.rows[0]?.cnt || 0) };
           
           const uStats = userStatsRes.rows[0];
